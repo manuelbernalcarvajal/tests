@@ -48,14 +48,14 @@
 <body>
 
 <div class="container">
-  <!-- 1. Pantalla de Selección Dinámica -->
+  <!-- Pantalla 1: Selección Dinámica -->
   <div id="view-menu" class="card">
     <h1>Simulador de Examen</h1>
-    <p>Selecciona una materia o realiza un simulacro global con preguntas de todas las carpetas.</p>
+    <p>Selecciona una materia o realiza un simulacro global con preguntas aleatorias de todas las carpetas.</p>
     <div id="category-buttons" class="btn-group"></div>
   </div>
 
-  <!-- 2. Pantalla de Test -->
+  <!-- Pantalla 2: Examen en Curso -->
   <div id="view-test" class="card hide">
     <div class="progress"><div id="progress-bar" class="progress-fill"></div></div>
     
@@ -67,7 +67,7 @@
     <h3 id="question-text" style="line-height: 1.45; margin-bottom: 18px;"></h3>
     <div id="options-container"></div>
     <p style="font-size: 0.8rem; color: var(--neutral); margin-top: 6px;">
-      * Pulsa sobre una opción ya seleccionada para desmarcarla y dejarla en blanco.
+      * Haz clic sobre una opción marcada para desmarcarla y dejarla en blanco (sin penalización).
     </p>
 
     <div class="nav-bar">
@@ -76,7 +76,7 @@
     </div>
   </div>
 
-  <!-- 3. Pantalla de Resultados -->
+  <!-- Pantalla 3: Calificación y Revisión -->
   <div id="view-results" class="card hide">
     <h2>Informe de Calificación</h2>
     <div id="status-badge"></div>
@@ -84,14 +84,36 @@
     
     <div id="stats-summary" style="background: #f8fafc; border: 1px solid var(--border); padding: 16px; border-radius: 8px; margin-bottom: 20px; line-height: 1.6;"></div>
 
-    <button class="btn" onclick="location.reload()" style="margin-bottom: 28px;">Volver a temas</button>
+    <button class="btn" onclick="location.reload()" style="margin-bottom: 28px;">Volver a materias</button>
     
-    <h3>Revisión detallada</h3>
+    <h3>Revisión de respuestas</h3>
     <div id="review-list"></div>
   </div>
 </div>
 
 <script>
+  // Detecta dinámicamente la carpeta raíz donde se ejecuta index.html
+  function getBaseUrl() {
+    let url = window.location.origin + window.location.pathname;
+    
+    // Si la URL termina en un archivo (ej. index.html o index.htm), lo elimina
+    if (url.endsWith('.html') || url.endsWith('.htm')) {
+      url = url.substring(0, url.lastIndexOf('/') + 1);
+    } else if (!url.endsWith('/')) {
+      url += '/';
+    }
+    return url;
+  }
+
+  // Resuelve cualquier ruta relativa contra la URL base detectada
+  function resolveUrl(relativePath) {
+    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
+      return relativePath;
+    }
+    const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
+    return getBaseUrl() + cleanPath;
+  }
+
   let config = {};
   let examQuestions = [];
   let currentIndex = 0;
@@ -106,17 +128,20 @@
     return a;
   }
 
-  // Carga config.json y genera dinámicamente los botones
+  // 1. Lee config.json desde la misma carpeta del index
   async function init() {
+    const configUrl = resolveUrl('config.json');
     try {
-      const res = await fetch('config.json');
+      const res = await fetch(configUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status} al pedir ${configUrl}`);
+
       config = await res.json();
       const container = document.getElementById('category-buttons');
       container.innerHTML = '';
 
       const categories = Object.keys(config);
 
-      // Botón "Todo" (agrega todas las rutas de todos los JSON declarados)
+      // Botón "Todo"
       const btnAll = document.createElement('button');
       btnAll.className = 'btn btn-todo';
       btnAll.textContent = '📚 Todo (Simulacro Global)';
@@ -124,7 +149,7 @@
       btnAll.onclick = () => startExam('Simulacro Global (Todo)', allFiles);
       container.appendChild(btnAll);
 
-      // Botón por cada categoría leída de config.json
+      // Botones dinámicos por cada clave en config.json
       categories.forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'btn';
@@ -133,30 +158,33 @@
         container.appendChild(btn);
       });
     } catch (e) {
-      alert("No se pudo cargar el archivo config.json. Comprueba que existe en la raíz.");
+      alert(`No se pudo cargar config.json.\nRuta consultada:\n${configUrl}\n\nVerifica que el archivo exista en esa ubicación.`);
       console.error(e);
     }
   }
 
-  // Descarga los JSON necesarios, los unifica y arma el examen
+  // 2. Descarga todos los JSON de la categoría elegida resolviendo sus rutas
   async function startExam(categoryTitle, files) {
-    if (!files || files.length === 0) return alert("No hay archivos asignados a este tema.");
+    if (!files || files.length === 0) return alert("No hay archivos configurados para este tema.");
 
     try {
-      const fetches = files.map(url => fetch(url).then(r => {
-        if (!r.ok) throw new Error(`Error ${r.status} al leer ${url}`);
-        return r.json();
-      }));
+      const fetches = files.map(filePath => {
+        const fullUrl = resolveUrl(filePath);
+        return fetch(fullUrl).then(r => {
+          if (!r.ok) throw new Error(`Error ${r.status} al leer ${fullUrl}`);
+          return r.json();
+        });
+      });
 
       const results = await Promise.all(fetches);
       const allQuestions = results.flat();
 
       if (allQuestions.length === 0) return alert("Los JSON cargados no contienen preguntas.");
 
-      // Extraer máximo 35 preguntas aleatorias
+      // Seleccionar hasta 35 preguntas aleatorias
       const pool = shuffle(allQuestions).slice(0, 35);
 
-      // Barajar opciones guardando internamente cuál es la correcta
+      // Barajar opciones conservando el indicador de respuesta correcta
       examQuestions = pool.map(q => {
         const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
           text,
@@ -177,7 +205,7 @@
       document.getElementById('label-category').textContent = categoryTitle;
       renderQuestion();
     } catch (err) {
-      alert("Error leyendo los archivos JSON. Comprueba las rutas en config.json.");
+      alert("Error al cargar los JSON de las preguntas. Revisa la consola para más detalles.");
       console.error(err);
     }
   }
@@ -198,7 +226,7 @@
       btn.className = `option-btn ${userAnswers[currentIndex] === idx ? 'selected' : ''}`;
       btn.textContent = opt.text;
 
-      // Clic para marcar o desmarcar (dejar en blanco)
+      // Desmarcar si se vuelve a pulsar la opción activa
       btn.onclick = () => {
         userAnswers[currentIndex] = (userAnswers[currentIndex] === idx) ? null : idx;
         renderQuestion();
@@ -224,7 +252,7 @@
     }
   };
 
-  // Corrección con el baremo oficial de Acceso a la Abogacía
+  // Corrección oficial: Acierto +1, Fallo -0.3333, Blanco 0
   function finishExam() {
     document.getElementById('view-test').classList.add('hide');
     document.getElementById('view-results').classList.remove('hide');
