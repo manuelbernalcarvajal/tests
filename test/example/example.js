@@ -1,4 +1,4 @@
-[
+registrarPreguntas([
   {
     "pregunta": "Pregunta",
     "opciones": [
@@ -21,4 +21,4 @@
     "correcta": 1,
     "explicacion": "dss."
   },
-]
+]);
