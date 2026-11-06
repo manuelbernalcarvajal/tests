@@ -44,14 +44,17 @@
     .badge-fail { background: #fee2e2; color: #991b1b; }
     .hide { display: none; }
   </style>
+
+  <!-- Carga config.js sin restricciones de CORS ni fetch -->
+  <script src="config.js"></script>
 </head>
 <body>
 
 <div class="container">
-  <!-- Pantalla 1: Selección Dinámica -->
+  <!-- Pantalla 1: Selección de Materia -->
   <div id="view-menu" class="card">
     <h1>Simulador de Examen</h1>
-    <p>Selecciona una materia o realiza un simulacro global con preguntas aleatorias de todas las carpetas.</p>
+    <p>Selecciona una materia o realiza un simulacro global con preguntas aleatorias de todos los archivos.</p>
     <div id="category-buttons" class="btn-group"></div>
   </div>
 
@@ -67,7 +70,7 @@
     <h3 id="question-text" style="line-height: 1.45; margin-bottom: 18px;"></h3>
     <div id="options-container"></div>
     <p style="font-size: 0.8rem; color: var(--neutral); margin-top: 6px;">
-      * Haz clic sobre una opción marcada para desmarcarla y dejarla en blanco (sin penalización).
+      * Clic sobre la opción marcada para desmarcarla y dejarla en blanco (no penaliza).
     </p>
 
     <div class="nav-bar">
@@ -92,32 +95,32 @@
 </div>
 
 <script>
-  // Detecta dinámicamente la carpeta raíz donde se ejecuta index.html
-  function getBaseUrl() {
-    let url = window.location.origin + window.location.pathname;
-    
-    // Si la URL termina en un archivo (ej. index.html o index.htm), lo elimina
-    if (url.endsWith('.html') || url.endsWith('.htm')) {
-      url = url.substring(0, url.lastIndexOf('/') + 1);
-    } else if (!url.endsWith('/')) {
-      url += '/';
-    }
-    return url;
-  }
-
-  // Resuelve cualquier ruta relativa contra la URL base detectada
-  function resolveUrl(relativePath) {
-    if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
-      return relativePath;
-    }
-    const cleanPath = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath;
-    return getBaseUrl() + cleanPath;
-  }
-
-  let config = {};
   let examQuestions = [];
   let currentIndex = 0;
   let userAnswers = [];
+  let bufferPreguntas = [];
+
+  // Receptor global para los archivos de preguntas (.js)
+  window.registrarPreguntas = function(preguntas) {
+    if (Array.isArray(preguntas)) {
+      bufferPreguntas.push(...preguntas);
+    }
+  };
+
+  // Carga un archivo JS inyectando una etiqueta script en el documento
+  function cargarScript(ruta) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      // Asegura ruta relativa limpia sin slash inicial
+      script.src = ruta.replace(/^\//, '');
+      script.onload = () => {
+        script.remove(); // Limpieza del DOM tras ejecutar
+        resolve();
+      };
+      script.onerror = () => reject(new Error(`No se pudo cargar el script: ${ruta}`));
+      document.body.appendChild(script);
+    });
+  }
 
   function shuffle(arr) {
     const a = [...arr];
@@ -128,63 +131,54 @@
     return a;
   }
 
-  // 1. Lee config.json desde la misma carpeta del index
-  async function init() {
-    const configUrl = resolveUrl('config.json');
-    try {
-      const res = await fetch(configUrl);
-      if (!res.ok) throw new Error(`HTTP ${res.status} al pedir ${configUrl}`);
-
-      config = await res.json();
-      const container = document.getElementById('category-buttons');
-      container.innerHTML = '';
-
-      const categories = Object.keys(config);
-
-      // Botón "Todo"
-      const btnAll = document.createElement('button');
-      btnAll.className = 'btn btn-todo';
-      btnAll.textContent = '📚 Todo (Simulacro Global)';
-      const allFiles = Object.values(config).flat();
-      btnAll.onclick = () => startExam('Simulacro Global (Todo)', allFiles);
-      container.appendChild(btnAll);
-
-      // Botones dinámicos por cada clave en config.json
-      categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        btn.textContent = cat;
-        btn.onclick = () => startExam(cat, config[cat]);
-        container.appendChild(btn);
-      });
-    } catch (e) {
-      alert(`No se pudo cargar config.json.\nRuta consultada:\n${configUrl}\n\nVerifica que el archivo exista en esa ubicación.`);
-      console.error(e);
+  // Inicialización de botones leyendo window.CONFIG_TESTS
+  function init() {
+    const config = window.CONFIG_TESTS;
+    if (!config || typeof config !== 'object') {
+      alert("Error: No se encontró la variable CONFIG_TESTS. Revisa que config.js esté en la raíz.");
+      return;
     }
+
+    const container = document.getElementById('category-buttons');
+    container.innerHTML = '';
+
+    const categories = Object.keys(config);
+
+    // Botón "Todo"
+    const btnAll = document.createElement('button');
+    btnAll.className = 'btn btn-todo';
+    btnAll.textContent = '📚 Todo (Simulacro Global)';
+    const allFiles = Object.values(config).flat();
+    btnAll.onclick = () => startExam('Simulacro Global (Todo)', allFiles);
+    container.appendChild(btnAll);
+
+    // Botones individuales por asignatura
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = cat;
+      btn.onclick = () => startExam(cat, config[cat]);
+      container.appendChild(btn);
+    });
   }
 
-  // 2. Descarga todos los JSON de la categoría elegida resolviendo sus rutas
+  // Descarga dinámica de scripts y preparación del test
   async function startExam(categoryTitle, files) {
     if (!files || files.length === 0) return alert("No hay archivos configurados para este tema.");
 
+    bufferPreguntas = [];
+
     try {
-      const fetches = files.map(filePath => {
-        const fullUrl = resolveUrl(filePath);
-        return fetch(fullUrl).then(r => {
-          if (!r.ok) throw new Error(`Error ${r.status} al leer ${fullUrl}`);
-          return r.json();
-        });
-      });
+      // Carga todos los .js en paralelo
+      await Promise.all(files.map(cargarScript));
 
-      const results = await Promise.all(fetches);
-      const allQuestions = results.flat();
+      if (bufferPreguntas.length === 0) {
+        return alert("Los archivos cargados no contienen preguntas registradas.");
+      }
 
-      if (allQuestions.length === 0) return alert("Los JSON cargados no contienen preguntas.");
+      // Barajar y tomar un máximo de 35 preguntas
+      const pool = shuffle(bufferPreguntas).slice(0, 35);
 
-      // Seleccionar hasta 35 preguntas aleatorias
-      const pool = shuffle(allQuestions).slice(0, 35);
-
-      // Barajar opciones conservando el indicador de respuesta correcta
       examQuestions = pool.map(q => {
         const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
           text,
@@ -205,7 +199,7 @@
       document.getElementById('label-category').textContent = categoryTitle;
       renderQuestion();
     } catch (err) {
-      alert("Error al cargar los JSON de las preguntas. Revisa la consola para más detalles.");
+      alert("Error al cargar los archivos JavaScript de preguntas. Revisa que las rutas existan y coincidan en mayúsculas/minúsculas.");
       console.error(err);
     }
   }
@@ -226,7 +220,7 @@
       btn.className = `option-btn ${userAnswers[currentIndex] === idx ? 'selected' : ''}`;
       btn.textContent = opt.text;
 
-      // Desmarcar si se vuelve a pulsar la opción activa
+      // Clic para marcar o desmarcar
       btn.onclick = () => {
         userAnswers[currentIndex] = (userAnswers[currentIndex] === idx) ? null : idx;
         renderQuestion();
@@ -252,7 +246,7 @@
     }
   };
 
-  // Corrección oficial: Acierto +1, Fallo -0.3333, Blanco 0
+  // Corrección oficial Abogacía: +1 acierto, -0.333 fallo, 0 blanco
   function finishExam() {
     document.getElementById('view-test').classList.add('hide');
     document.getElementById('view-results').classList.remove('hide');
@@ -321,7 +315,7 @@
     `;
   }
 
-  init();
+  window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
