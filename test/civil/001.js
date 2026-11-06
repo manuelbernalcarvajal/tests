@@ -1,4 +1,4 @@
-[
+registrarPreguntas([
   {
     "pregunta": "¿Qué teoría rige en el Derecho civil común español para la adquisición y transmisión derivativa de los derechos reales por contrato?",
     "opciones": [
@@ -549,4 +549,4 @@
     "correcta": 1,
     "explicacion": "El art. 22 del Reglamento permite optar expresamente por la ley nacional de la persona (de la que sea titular al hacer la disposición o al momento de fallecer)."
   }
-]
+]);
