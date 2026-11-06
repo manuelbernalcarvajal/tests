@@ -1,4 +1,4 @@
-[
+registrarPreguntas([
   {
     "pregunta": "¿Qué consecuencia dogmática impone la función integradora de la buena fe contractual consagrada en el artículo 1258 del Código Civil?",
     "opciones": [
@@ -549,4 +549,4 @@
     "correcta": 1,
     "explicacion": "El art. 35 del Reglamento contiene la cláusula tradicional de reserva de orden público internacional, habilitando la inaplicación de cualquier precepto foráneo cuya eficacia lesione derechos humanos y principios fundamentales vertebradores del ordenamiento (como la no discriminación por razón de sexo)."
   }
-]
+]);
