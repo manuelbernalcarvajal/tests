@@ -1,6 +1,6 @@
-{
+window.CONFIG_TESTS = {
   "Civil": [
     "test/civil/001.json",
     "test/civil/002.json"
   ],
-}
+};
