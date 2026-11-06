@@ -30,7 +30,7 @@
     tr:last-child td { border-bottom: none; }
     .category-row { background: #f8fafc; font-weight: bold; color: var(--primary); }
     .badge { display: inline-block; padding: 2px 8px; background: #e2e8f0; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-    .loading { font-style: italic; color: #64748b; }
+    .status-msg { font-size: 0.95rem; color: #64748b; margin: 16px 0; }
     .btn-return { display: inline-block; margin-top: 20px; text-decoration: none; color: var(--accent); font-size: 0.9rem; font-weight: 600; }
   </style>
 
@@ -41,7 +41,7 @@
 <div class="container">
   <div class="card">
     <h1>Recuento de Preguntas</h1>
-    <p id="status-text" class="loading">Cargando y analizando archivos de preguntas...</p>
+    <p id="status-text" class="status-msg">Iniciando análisis...</p>
 
     <div class="stats-grid" id="stats-summary" style="display: none;">
       <div class="stat-box">
@@ -54,7 +54,7 @@
       </div>
       <div class="stat-box">
         <div class="stat-number" id="total-files">0</div>
-        <div class="stat-label">Archivos JS leídos</div>
+        <div class="stat-label">Archivos leídos</div>
       </div>
     </div>
 
@@ -75,93 +75,138 @@
 <script>
   let batchBuffer = [];
 
-  // Captura el array de preguntas del script que se esté procesando en ese momento
+  // Receptor de datos
   window.registrarPreguntas = function(preguntas) {
     if (Array.isArray(preguntas)) {
       batchBuffer = preguntas;
     }
   };
 
-  function cargarScript(ruta) {
+  // Carga con tiempo límite de 3.5 segundos por archivo para evitar bloqueos
+  function cargarScriptConTimeout(ruta) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = ruta.replace(/^\//, '');
+      
+      const timeoutId = setTimeout(() => {
+        script.remove();
+        reject(new Error(`Tiempo agotado al cargar ${ruta}`));
+      }, 3500);
+
+      // Limpia slash inicial y añade parámetro para evitar caché estancada
+      const cleanPath = ruta.replace(/^\//, '');
+      script.src = `${cleanPath}?t=${Date.now()}`;
+
       script.onload = () => {
+        clearTimeout(timeoutId);
         script.remove();
         resolve();
       };
-      script.onerror = () => reject(new Error(`No se pudo cargar ${ruta}`));
+
+      script.onerror = () => {
+        clearTimeout(timeoutId);
+        script.remove();
+        reject(new Error(`Error 404 o red al cargar ${ruta}`));
+      };
+
       document.body.appendChild(script);
     });
   }
 
   async function analizarBancoPreguntas() {
-    const config = window.CONFIG_TESTS;
-    if (!config) {
-      document.getElementById('status-text').textContent = "Error: No se encontró CONFIG_TESTS en config.js.";
-      return;
-    }
+    const statusEl = document.getElementById('status-text');
 
-    const categories = Object.keys(config);
-    let totalGlobal = 0;
-    let totalArchivos = 0;
-    const desglose = [];
-
-    // Recorrido secuencial para aislar cada archivo y contar con exactitud
-    for (const cat of categories) {
-      const archivos = config[cat] || [];
-      let totalCategoria = 0;
-      const archivosDetalle = [];
-
-      for (const ruta of archivos) {
-        batchBuffer = [];
-        try {
-          await cargarScript(ruta);
-          const cantidad = batchBuffer.length;
-          totalCategoria += cantidad;
-          totalGlobal += cantidad;
-          totalArchivos++;
-          archivosDetalle.push({ ruta, cantidad });
-        } catch (e) {
-          archivosDetalle.push({ ruta, cantidad: 0, error: true });
-        }
+    try {
+      const config = window.CONFIG_TESTS;
+      if (!config || typeof config !== 'object') {
+        statusEl.innerHTML = `<span style="color:#b91c1c;">Error: No se encontró la variable CONFIG_TESTS en config.js.</span>`;
+        return;
       }
 
-      desglose.push({
-        categoria: cat,
-        total: totalCategoria,
-        archivos: archivosDetalle
+      const categories = Object.keys(config);
+      if (categories.length === 0) {
+        statusEl.textContent = "El archivo config.js está vacío.";
+        return;
+      }
+
+      let totalGlobal = 0;
+      let totalArchivos = 0;
+      const desglose = [];
+
+      for (const cat of categories) {
+        const archivos = config[cat] || [];
+        let totalCategoria = 0;
+        const archivosDetalle = [];
+
+        for (const ruta of archivos) {
+          statusEl.textContent = `Analizando [${cat}]: ${ruta}...`;
+          batchBuffer = [];
+
+          try {
+            await cargarScriptConTimeout(ruta);
+            const cantidad = batchBuffer.length;
+            totalCategoria += cantidad;
+            totalGlobal += cantidad;
+            totalArchivos++;
+            archivosDetalle.push({ ruta, cantidad, error: false });
+          } catch (err) {
+            console.warn(err.message);
+            archivosDetalle.push({ ruta, cantidad: 0, error: true });
+          }
+        }
+
+        desglose.push({
+          categoria: cat,
+          total: totalCategoria,
+          archivos: archivosDetalle
+        });
+      }
+
+      // Renderizar panel de resultados
+      statusEl.style.display = 'none';
+      document.getElementById('stats-summary').style.display = 'grid';
+      document.getElementById('details-table').style.display = 'table';
+
+      document.getElementById('total-questions').textContent = totalGlobal;
+      document.getElementById('total-categories').textContent = categories.length;
+      document.getElementById('total-files').textContent = totalArchivos;
+
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      desglose.forEach(item => {
+        const catRow = document.createElement('tr');
+        catRow.className = 'category-row';
+        catRow.innerHTML = `
+          <td>${item.categoria}</td>
+          <td style="text-align: right;"><span class="badge">${item.total}</span></td>
+        `;
+        tbody.appendChild(catRow);
+
+        item.archivos.forEach(arch => {
+          const fileRow = document.createElement('tr');
+          const nombreArchivo = arch.ruta.split('/').pop();
+          fileRow.innerHTML = `
+            <td style="padding-left: 28px; color: #475569;">
+              ${nombreArchivo} ${arch.error ? '<span style="color:#b91c1c; font-weight:600;">(No encontrado / Error)</span>' : ''}
+            </td>
+            <td style="text-align: right; color: #64748b;">${arch.cantidad}</td>
+          `;
+          tbody.appendChild(fileRow);
+        });
       });
+
+    } catch (globalErr) {
+      statusEl.innerHTML = `<span style="color:#b91c1c;">Error inesperado: ${globalErr.message}</span>`;
+      console.error(globalErr);
     }
+  }
 
-    // Renderizar resultados
-    document.getElementById('status-text').style.display = 'none';
-    document.getElementById('stats-summary').style.display = 'grid';
-    document.getElementById('details-table').style.display = 'table';
-
-    document.getElementById('total-questions').textContent = totalGlobal;
-    document.getElementById('total-categories').textContent = categories.length;
-    document.getElementById('total-files').textContent = totalArchivos;
-
-    const tbody = document.getElementById('table-body');
-    tbody.innerHTML = '';
-
-    desglose.forEach(item => {
-      // Fila de encabezado por materia
-      const catRow = document.createElement('tr');
-      catRow.className = 'category-row';
-      catRow.innerHTML = `
-        <td>${item.categoria}</td>
-        <td style="text-align: right;"><span class="badge">${item.total}</span></td>
-      `;
-      tbody.appendChild(catRow);
-
-      // Filas para cada archivo perteneciente a la materia
-      item.archivos.forEach(arch => {
-        const fileRow = document.createElement('tr');
-        const nombreArchivo = arch.ruta.split('/').pop();
-        fileRow.innerHTML = `
-          <td style="padding-left: 28px; color: #475569;">
-            ${nombreArchivo}${arch.error ? '<span style="color:#b91c1c;">(Error al cargar)</span>' : ''}
-          </td>
-          <td style="text-align: right; color: #64748
+  // Arranque seguro comprobando si el documento ya terminó de cargar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', analizarBancoPreguntas);
+  } else {
+    analizarBancoPreguntas();
+  }
+</script>
+</body>
+</html>
