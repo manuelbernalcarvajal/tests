@@ -3,69 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulador de Exámenes</title>
+  <title>Simulador Test - Acceso a la Abogacía</title>
   <style>
     :root {
-      --primary: #2563eb;
+      --primary: #1e3a8a;
+      --accent: #2563eb;
       --bg: #f8fafc;
       --card: #ffffff;
-      --text: #1e293b;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --border: #e2e8f0;
+      --text: #0f172a;
+      --success: #15803d;
+      --danger: #b91c1c;
+      --neutral: #64748b;
+      --border: #cbd5e1;
     }
-    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-    .container { width: 100%; max-width: 720px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 24px 16px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 740px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     h1, h2, h3 { margin-top: 0; }
-    .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-    .btn:hover { opacity: 0.9; }
+    
+    .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.15s; font-size: 0.95rem; }
+    .btn:hover { opacity: 0.92; }
+    .btn-todo { background: #047857; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
-    .option-btn { width: 100%; text-align: left; background: var(--bg); border: 2px solid var(--border); padding: 14px 18px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: border-color 0.15s; }
-    .option-btn:hover { border-color: var(--primary); }
-    .option-btn.selected { border-color: var(--primary); background: #eff6ff; font-weight: 600; }
+    
+    .option-btn { width: 100%; text-align: left; background: #fff; border: 2px solid var(--border); padding: 14px 16px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: all 0.15s; }
+    .option-btn:hover { border-color: var(--accent); background: #f0f7ff; }
+    .option-btn.selected { border-color: var(--accent); background: #eff6ff; font-weight: 600; }
+    
     .progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
-    .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease; }
-    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
-    .review-item { border-left: 4px solid var(--danger); padding: 12px 16px; background: #fff5f5; margin-bottom: 16px; border-radius: 0 8px 8px 0; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s ease; }
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; gap: 10px; }
+    
+    .review-item { padding: 14px 18px; background: #fef2f2; margin-bottom: 14px; border-radius: 8px; border-left: 5px solid var(--danger); }
     .review-item.ok { border-left-color: var(--success); background: #f0fdf4; }
+    .review-item.blank { border-left-color: var(--neutral); background: #f1f5f9; }
+    
+    .score-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; }
+    .badge-pass { background: #dcfce7; color: #166534; }
+    .badge-fail { background: #fee2e2; color: #991b1b; }
     .hide { display: none; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- Pantalla 1: Selección de Tema -->
+  <!-- 1. Pantalla de Selección Dinámica -->
   <div id="view-menu" class="card">
-    <h1>Selecciona un examen</h1>
-    <p>Elige una categoría para generar un test aleatorio de 35 preguntas:</p>
+    <h1>Simulador de Examen</h1>
+    <p>Selecciona una materia o realiza un simulacro global con preguntas de todas las carpetas.</p>
     <div id="category-buttons" class="btn-group"></div>
   </div>
 
-  <!-- Pantalla 2: Test en curso -->
+  <!-- 2. Pantalla de Test -->
   <div id="view-test" class="card hide">
     <div class="progress"><div id="progress-bar" class="progress-fill"></div></div>
-    <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 0.9rem; margin-bottom: 12px;">
-      <span id="label-category">Categoría</span>
-      <span id="label-counter">Pregunta 1 de 35</span>
+    
+    <div style="display: flex; justify-content: space-between; color: var(--neutral); font-size: 0.9rem; margin-bottom: 12px;">
+      <span id="label-category" style="font-weight: 600;"></span>
+      <span id="label-counter"></span>
     </div>
-    <h3 id="question-text">Texto de la pregunta</h3>
+
+    <h3 id="question-text" style="line-height: 1.45; margin-bottom: 18px;"></h3>
     <div id="options-container"></div>
+    <p style="font-size: 0.8rem; color: var(--neutral); margin-top: 6px;">
+      * Pulsa sobre una opción ya seleccionada para desmarcarla y dejarla en blanco.
+    </p>
+
     <div class="nav-bar">
-      <button id="btn-prev" class="btn" style="background:#64748b;">Anterior</button>
+      <button id="btn-prev" class="btn" style="background: var(--neutral);">Anterior</button>
       <button id="btn-next" class="btn">Siguiente</button>
     </div>
   </div>
 
-  <!-- Pantalla 3: Resultados -->
+  <!-- 3. Pantalla de Resultados -->
   <div id="view-results" class="card hide">
-    <h2>Resultados del Examen</h2>
-    <h3 id="score-text" style="font-size: 1.8rem; margin: 16px 0;"></h3>
-    <p id="score-details" style="color: #64748b;"></p>
-    <button class="btn" onclick="location.reload()" style="margin-bottom: 24px;">Volver al inicio</button>
+    <h2>Informe de Calificación</h2>
+    <div id="status-badge"></div>
+    <h3 id="score-text" style="font-size: 2rem; margin: 10px 0;"></h3>
     
-    <h3>Revisión de respuestas</h3>
+    <div id="stats-summary" style="background: #f8fafc; border: 1px solid var(--border); padding: 16px; border-radius: 8px; margin-bottom: 20px; line-height: 1.6;"></div>
+
+    <button class="btn" onclick="location.reload()" style="margin-bottom: 28px;">Volver a temas</button>
+    
+    <h3>Revisión detallada</h3>
     <div id="review-list"></div>
   </div>
 </div>
@@ -76,55 +97,66 @@
   let currentIndex = 0;
   let userAnswers = [];
 
-  // Función para barajar arrays (Algoritmo Fisher-Yates)
-  function shuffle(array) {
-    const arr = [...array];
-    for (let i = arr.length - 1; i > 0; i--) {
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+      [a[i], a[j]] = [a[j], a[i]];
     }
-    return arr;
+    return a;
   }
 
-  // 1. Cargar config.json al inicio
+  // Carga config.json y genera dinámicamente los botones
   async function init() {
     try {
       const res = await fetch('config.json');
       config = await res.json();
       const container = document.getElementById('category-buttons');
-      
-      Object.keys(config).forEach(cat => {
+      container.innerHTML = '';
+
+      const categories = Object.keys(config);
+
+      // Botón "Todo" (agrega todas las rutas de todos los JSON declarados)
+      const btnAll = document.createElement('button');
+      btnAll.className = 'btn btn-todo';
+      btnAll.textContent = '📚 Todo (Simulacro Global)';
+      const allFiles = Object.values(config).flat();
+      btnAll.onclick = () => startExam('Simulacro Global (Todo)', allFiles);
+      container.appendChild(btnAll);
+
+      // Botón por cada categoría leída de config.json
+      categories.forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'btn';
         btn.textContent = cat;
-        btn.onclick = () => startExam(cat);
+        btn.onclick = () => startExam(cat, config[cat]);
         container.appendChild(btn);
       });
     } catch (e) {
-      alert("Error cargando config.json. Revisa la consola o las rutas.");
+      alert("No se pudo cargar el archivo config.json. Comprueba que existe en la raíz.");
       console.error(e);
     }
   }
 
-  // 2. Descargar todos los JSON de la categoría y preparar el examen
-  async function startExam(category) {
-    const files = config[category] || [];
-    if (files.length === 0) return alert("No hay archivos configurados para " + category);
+  // Descarga los JSON necesarios, los unifica y arma el examen
+  async function startExam(categoryTitle, files) {
+    if (!files || files.length === 0) return alert("No hay archivos asignados a este tema.");
 
     try {
-      // Descarga todos los JSON en paralelo
-      const fetches = files.map(url => fetch(url).then(r => r.json()));
+      const fetches = files.map(url => fetch(url).then(r => {
+        if (!r.ok) throw new Error(`Error ${r.status} al leer ${url}`);
+        return r.json();
+      }));
+
       const results = await Promise.all(fetches);
+      const allQuestions = results.flat();
 
-      // Unir todos los arrays en uno solo
-      let allQuestions = results.flat();
+      if (allQuestions.length === 0) return alert("Los JSON cargados no contienen preguntas.");
 
-      if (allQuestions.length === 0) return alert("No se encontraron preguntas.");
-
-      // Seleccionar hasta 35 preguntas aleatorias
+      // Extraer máximo 35 preguntas aleatorias
       const pool = shuffle(allQuestions).slice(0, 35);
 
-      // Barajar opciones de cada pregunta manteniendo identificada la correcta
+      // Barajar opciones guardando internamente cuál es la correcta
       examQuestions = pool.map(q => {
         const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
           text,
@@ -140,25 +172,23 @@
       userAnswers = new Array(examQuestions.length).fill(null);
       currentIndex = 0;
 
-      // Cambiar de vista
       document.getElementById('view-menu').classList.add('hide');
       document.getElementById('view-test').classList.remove('hide');
-      document.getElementById('label-category').textContent = category;
+      document.getElementById('label-category').textContent = categoryTitle;
       renderQuestion();
     } catch (err) {
-      alert("Error cargando las preguntas de los archivos JSON.");
+      alert("Error leyendo los archivos JSON. Comprueba las rutas en config.json.");
       console.error(err);
     }
   }
 
-  // 3. Renderizar la pregunta actual
   function renderQuestion() {
     const q = examQuestions[currentIndex];
     const total = examQuestions.length;
 
     document.getElementById('label-counter').textContent = `Pregunta ${currentIndex + 1} de ${total}`;
     document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / total) * 100}%`;
-    document.getElementById('question-text').textContent = q.pregunta;
+    document.getElementById('question-text').textContent = `${currentIndex + 1}. ${q.pregunta}`;
 
     const optsContainer = document.getElementById('options-container');
     optsContainer.innerHTML = '';
@@ -167,8 +197,10 @@
       const btn = document.createElement('button');
       btn.className = `option-btn ${userAnswers[currentIndex] === idx ? 'selected' : ''}`;
       btn.textContent = opt.text;
+
+      // Clic para marcar o desmarcar (dejar en blanco)
       btn.onclick = () => {
-        userAnswers[currentIndex] = idx;
+        userAnswers[currentIndex] = (userAnswers[currentIndex] === idx) ? null : idx;
         renderQuestion();
       };
       optsContainer.appendChild(btn);
@@ -176,10 +208,9 @@
 
     document.getElementById('btn-prev').disabled = currentIndex === 0;
     const btnNext = document.getElementById('btn-next');
-    btnNext.textContent = currentIndex === total - 1 ? "Finalizar Examen" : "Siguiente";
+    btnNext.textContent = currentIndex === total - 1 ? "Finalizar y Corregir" : "Siguiente";
   }
 
-  // 4. Navegación
   document.getElementById('btn-prev').onclick = () => {
     if (currentIndex > 0) { currentIndex--; renderQuestion(); }
   };
@@ -193,38 +224,73 @@
     }
   };
 
-  // 5. Corregir y mostrar resultados
+  // Corrección con el baremo oficial de Acceso a la Abogacía
   function finishExam() {
     document.getElementById('view-test').classList.add('hide');
     document.getElementById('view-results').classList.remove('hide');
 
-    let correctCount = 0;
+    let aciertos = 0;
+    let fallos = 0;
+    let enBlanco = 0;
+
     const reviewList = document.getElementById('review-list');
     reviewList.innerHTML = '';
 
     examQuestions.forEach((q, idx) => {
       const chosenIdx = userAnswers[idx];
-      const isCorrect = chosenIdx !== null && q.opciones[chosenIdx].isCorrect;
-      if (isCorrect) correctCount++;
-
       const correctOption = q.opciones.find(o => o.isCorrect);
-      const chosenText = chosenIdx !== null ? q.opciones[chosenIdx].text : "Sin responder";
+
+      let estado = 'blank';
+      let respuestaTexto = 'No contestada (En blanco)';
+
+      if (chosenIdx !== null) {
+        if (q.opciones[chosenIdx].isCorrect) {
+          estado = 'ok';
+          aciertos++;
+          respuestaTexto = q.opciones[chosenIdx].text;
+        } else {
+          estado = 'fail';
+          fallos++;
+          respuestaTexto = q.opciones[chosenIdx].text;
+        }
+      } else {
+        enBlanco++;
+      }
 
       const item = document.createElement('div');
-      item.className = `review-item ${isCorrect ? 'ok' : ''}`;
+      item.className = `review-item ${estado === 'ok' ? 'ok' : (estado === 'blank' ? 'blank' : '')}`;
       item.innerHTML = `
         <p><strong>${idx + 1}. ${q.pregunta}</strong></p>
-        <p>Tu respuesta: <span style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}">${chosenText}</span></p>
-        ${!isCorrect ? `<p>Respuesta correcta: <strong>${correctOption ? correctOption.text : 'N/A'}</strong></p>` : ''}
-        <p style="font-size: 0.9rem; color: #475569;"><em>${q.explicacion || ''}</em></p>
+        <p>Tu respuesta: <strong>${respuestaTexto}</strong> 
+          <span style="font-size: 0.85rem; margin-left: 8px;">
+            ${estado === 'ok' ? '✅ (+1.00)' : (estado === 'fail' ? '❌ (-0.33)' : '⚪ (0.00)')}
+          </span>
+        </p>
+        ${estado !== 'ok' ? `<p style="color: var(--success);">Solución: <strong>${correctOption ? correctOption.text : ''}</strong></p>` : ''}
+        ${q.explicacion ? `<p style="font-size: 0.9rem; color: #475569; margin-top: 8px;"><em>${q.explicacion}</em></p>` : ''}
       `;
       reviewList.appendChild(item);
     });
 
     const total = examQuestions.length;
-    const grade = ((correctCount / total) * 10).toFixed(2);
-    document.getElementById('score-text').textContent = `Nota: ${grade} / 10`;
-    document.getElementById('score-details').textContent = `Aciertos: ${correctCount} | Fallos/En blanco: ${total - correctCount} de ${total} preguntas.`;
+    const penalizacion = fallos * (1 / 3);
+    const puntosNetos = Math.max(0, aciertos - penalizacion);
+    const notaSobre10 = ((puntosNetos / total) * 10).toFixed(2);
+    const esApto = parseFloat(notaSobre10) >= 5.00;
+
+    const badge = document.getElementById('status-badge');
+    badge.className = `score-badge ${esApto ? 'badge-pass' : 'badge-fail'}`;
+    badge.textContent = esApto ? 'RESULTADO: APTO' : 'RESULTADO: NO APTO';
+
+    document.getElementById('score-text').textContent = `${notaSobre10} / 10`;
+    document.getElementById('stats-summary').innerHTML = `
+      <strong>Preguntas totales:</strong> ${total}<br>
+      <strong>Aciertos:</strong> ${aciertos} (+${aciertos.toFixed(2)} pts)<br>
+      <strong>Fallos:</strong> ${fallos} (-${penalizacion.toFixed(2)} pts por penalización)<br>
+      <strong>En blanco:</strong> ${enBlanco} (0.00 pts)<br>
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 8px 0;">
+      <strong>Puntuación neta obtenida:</strong> ${puntosNetos.toFixed(2)} sobre ${total} puntos posibles.
+    `;
   }
 
   init();
