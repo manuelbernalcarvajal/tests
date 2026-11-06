@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Exámenes</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 720px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    h1, h2, h3 { margin-top: 0; }
+    .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+    .option-btn { width: 100%; text-align: left; background: var(--bg); border: 2px solid var(--border); padding: 14px 18px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: border-color 0.15s; }
+    .option-btn:hover { border-color: var(--primary); }
+    .option-btn.selected { border-color: var(--primary); background: #eff6ff; font-weight: 600; }
+    .progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+    .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease; }
+    .nav-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+    .review-item { border-left: 4px solid var(--danger); padding: 12px 16px; background: #fff5f5; margin-bottom: 16px; border-radius: 0 8px 8px 0; }
+    .review-item.ok { border-left-color: var(--success); background: #f0fdf4; }
+    .hide { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Pantalla 1: Selección de Tema -->
+  <div id="view-menu" class="card">
+    <h1>Selecciona un examen</h1>
+    <p>Elige una categoría para generar un test aleatorio de 35 preguntas:</p>
+    <div id="category-buttons" class="btn-group"></div>
+  </div>
+
+  <!-- Pantalla 2: Test en curso -->
+  <div id="view-test" class="card hide">
+    <div class="progress"><div id="progress-bar" class="progress-fill"></div></div>
+    <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 0.9rem; margin-bottom: 12px;">
+      <span id="label-category">Categoría</span>
+      <span id="label-counter">Pregunta 1 de 35</span>
+    </div>
+    <h3 id="question-text">Texto de la pregunta</h3>
+    <div id="options-container"></div>
+    <div class="nav-bar">
+      <button id="btn-prev" class="btn" style="background:#64748b;">Anterior</button>
+      <button id="btn-next" class="btn">Siguiente</button>
+    </div>
+  </div>
+
+  <!-- Pantalla 3: Resultados -->
+  <div id="view-results" class="card hide">
+    <h2>Resultados del Examen</h2>
+    <h3 id="score-text" style="font-size: 1.8rem; margin: 16px 0;"></h3>
+    <p id="score-details" style="color: #64748b;"></p>
+    <button class="btn" onclick="location.reload()" style="margin-bottom: 24px;">Volver al inicio</button>
+    
+    <h3>Revisión de respuestas</h3>
+    <div id="review-list"></div>
+  </div>
+</div>
+
+<script>
+  let config = {};
+  let examQuestions = [];
+  let currentIndex = 0;
+  let userAnswers = [];
+
+  // Función para barajar arrays (Algoritmo Fisher-Yates)
+  function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // 1. Cargar config.json al inicio
+  async function init() {
+    try {
+      const res = await fetch('config.json');
+      config = await res.json();
+      const container = document.getElementById('category-buttons');
+      
+      Object.keys(config).forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = cat;
+        btn.onclick = () => startExam(cat);
+        container.appendChild(btn);
+      });
+    } catch (e) {
+      alert("Error cargando config.json. Revisa la consola o las rutas.");
+      console.error(e);
+    }
+  }
+
+  // 2. Descargar todos los JSON de la categoría y preparar el examen
+  async function startExam(category) {
+    const files = config[category] || [];
+    if (files.length === 0) return alert("No hay archivos configurados para " + category);
+
+    try {
+      // Descarga todos los JSON en paralelo
+      const fetches = files.map(url => fetch(url).then(r => r.json()));
+      const results = await Promise.all(fetches);
+
+      // Unir todos los arrays en uno solo
+      let allQuestions = results.flat();
+
+      if (allQuestions.length === 0) return alert("No se encontraron preguntas.");
+
+      // Seleccionar hasta 35 preguntas aleatorias
+      const pool = shuffle(allQuestions).slice(0, 35);
+
+      // Barajar opciones de cada pregunta manteniendo identificada la correcta
+      examQuestions = pool.map(q => {
+        const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
+          text,
+          isCorrect: idx === q.correcta
+        })));
+        return {
+          pregunta: q.pregunta,
+          explicacion: q.explicacion,
+          opciones: shuffledOpts
+        };
+      });
+
+      userAnswers = new Array(examQuestions.length).fill(null);
+      currentIndex = 0;
+
+      // Cambiar de vista
+      document.getElementById('view-menu').classList.add('hide');
+      document.getElementById('view-test').classList.remove('hide');
+      document.getElementById('label-category').textContent = category;
+      renderQuestion();
+    } catch (err) {
+      alert("Error cargando las preguntas de los archivos JSON.");
+      console.error(err);
+    }
+  }
+
+  // 3. Renderizar la pregunta actual
+  function renderQuestion() {
+    const q = examQuestions[currentIndex];
+    const total = examQuestions.length;
+
+    document.getElementById('label-counter').textContent = `Pregunta ${currentIndex + 1} de ${total}`;
+    document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / total) * 100}%`;
+    document.getElementById('question-text').textContent = q.pregunta;
+
+    const optsContainer = document.getElementById('options-container');
+    optsContainer.innerHTML = '';
+
+    q.opciones.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `option-btn ${userAnswers[currentIndex] === idx ? 'selected' : ''}`;
+      btn.textContent = opt.text;
+      btn.onclick = () => {
+        userAnswers[currentIndex] = idx;
+        renderQuestion();
+      };
+      optsContainer.appendChild(btn);
+    });
+
+    document.getElementById('btn-prev').disabled = currentIndex === 0;
+    const btnNext = document.getElementById('btn-next');
+    btnNext.textContent = currentIndex === total - 1 ? "Finalizar Examen" : "Siguiente";
+  }
+
+  // 4. Navegación
+  document.getElementById('btn-prev').onclick = () => {
+    if (currentIndex > 0) { currentIndex--; renderQuestion(); }
+  };
+
+  document.getElementById('btn-next').onclick = () => {
+    if (currentIndex < examQuestions.length - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      finishExam();
+    }
+  };
+
+  // 5. Corregir y mostrar resultados
+  function finishExam() {
+    document.getElementById('view-test').classList.add('hide');
+    document.getElementById('view-results').classList.remove('hide');
+
+    let correctCount = 0;
+    const reviewList = document.getElementById('review-list');
+    reviewList.innerHTML = '';
+
+    examQuestions.forEach((q, idx) => {
+      const chosenIdx = userAnswers[idx];
+      const isCorrect = chosenIdx !== null && q.opciones[chosenIdx].isCorrect;
+      if (isCorrect) correctCount++;
+
+      const correctOption = q.opciones.find(o => o.isCorrect);
+      const chosenText = chosenIdx !== null ? q.opciones[chosenIdx].text : "Sin responder";
+
+      const item = document.createElement('div');
+      item.className = `review-item ${isCorrect ? 'ok' : ''}`;
+      item.innerHTML = `
+        <p><strong>${idx + 1}. ${q.pregunta}</strong></p>
+        <p>Tu respuesta: <span style="color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}">${chosenText}</span></p>
+        ${!isCorrect ? `<p>Respuesta correcta: <strong>${correctOption ? correctOption.text : 'N/A'}</strong></p>` : ''}
+        <p style="font-size: 0.9rem; color: #475569;"><em>${q.explicacion || ''}</em></p>
+      `;
+      reviewList.appendChild(item);
+    });
+
+    const total = examQuestions.length;
+    const grade = ((correctCount / total) * 10).toFixed(2);
+    document.getElementById('score-text').textContent = `Nota: ${grade} / 10`;
+    document.getElementById('score-details').textContent = `Aciertos: ${correctCount} | Fallos/En blanco: ${total - correctCount} de ${total} preguntas.`;
+  }
+
+  init();
+</script>
+</body>
+</html>
