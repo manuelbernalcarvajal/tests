@@ -10,4 +10,7 @@ window.CONFIG_TESTS = {
     "test/civil/008.js",
     "test/civil/009.js"
   ],
+  "Procesal Civil 1": [
+    "test/procesalcivil1/001.js"
+  ],
 };
