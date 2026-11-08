@@ -6,6 +6,7 @@ window.CONFIG_TESTS = {
     "test/civil/004.js",
     "test/civil/005.js",
     "test/civil/006.js",
-    "test/civil/007.js"
+    "test/civil/007.js",
+    "test/civil/008.js"
   ],
 };
