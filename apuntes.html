@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor de Apuntes</title>
+  <!-- Parser de Markdown ligero -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text: #212529;
+      --accent: #0d6efd;
+      --border: #dee2e6;
+      --sidebar-width: 280px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Barra superior */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-shrink: 0;
+    }
+    header select, header a {
+      padding: 6px 12px;
+      font-size: 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #fff;
+    }
+    header a {
+      text-decoration: none;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Contenedor principal de 2 columnas */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Barra lateral: Índice pinchable */
+    aside {
+      width: var(--sidebar-width);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 18px 14px;
+      flex-shrink: 0;
+    }
+    aside h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6c757d;
+      margin-bottom: 10px;
+    }
+    aside ul { list-style: none; }
+    aside li { margin-bottom: 6px; }
+    aside a {
+      text-decoration: none;
+      color: #495057;
+      font-size: 14px;
+      display: block;
+      padding: 4px 6px;
+      border-radius: 4px;
+      line-height: 1.3;
+    }
+    aside a:hover {
+      background: #e9ecef;
+      color: var(--accent);
+    }
+    aside .toc-h2 { padding-left: 12px; font-size: 13px; }
+    aside .toc-h3 { padding-left: 22px; font-size: 12px; color: #6c757d; }
+
+    /* Área central de lectura */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 20px;
+      scroll-behavior: smooth;
+    }
+    .markdown-body {
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--surface);
+      padding: 40px;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+      margin-top: 1.4em;
+      margin-bottom: 0.6em;
+      color: #111;
+      scroll-margin-top: 20px;
+    }
+    .markdown-body h1 { border-bottom: 2px solid var(--border); padding-bottom: 6px; }
+    .markdown-body p { margin-bottom: 1em; }
+    .markdown-body ul, .markdown-body ol { margin-left: 24px; margin-bottom: 1em; }
+    .markdown-body blockquote {
+      border-left: 4px solid var(--accent);
+      padding-left: 15px;
+      color: #555;
+      margin: 1em 0;
+    }
+
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; }
+      aside { width: 100%; max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
+      .markdown-body { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html">← Volver a los Test</a>
+    <select id="select-asignatura">
+      <option value="">Selecciona Asignatura...</option>
+    </select>
+    <select id="select-tema" disabled>
+      <option value="">Selecciona Tema...</option>
+    </select>
+  </header>
+
+  <div class="layout">
+    <aside id="toc-container">
+      <h3>Índice del Documento</h3>
+      <ul id="toc-list">
+        <li style="color: #888; font-size: 13px;">Carga un tema para ver su índice.</li>
+      </ul>
+    </aside>
+
+    <main>
+      <article id="doc-content" class="markdown-body">
+        <h1>Bienvenido al Visor de Apuntes</h1>
+        <p>Selecciona una asignatura y un tema en la barra superior para comenzar a leer.</p>
+      </article>
+    </main>
+  </div>
+
+  <script src="apuntes_config.js"></script>
+  <script>
+    const selAsig = document.getElementById("select-asignatura");
+    const selTema = document.getElementById("select-tema");
+    const docContent = document.getElementById("doc-content");
+    const tocList = document.getElementById("toc-list");
+
+    // 1. Cargar asignaturas desde apuntes_config.js
+    if (typeof APUNTES_CONFIG !== "undefined") {
+      APUNTES_CONFIG.forEach((item, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = item.asignatura;
+        selAsig.appendChild(opt);
+      });
+    }
+
+    // 2. Al cambiar asignatura, actualizar selector de temas
+    selAsig.addEventListener("change", () => {
+      selTema.innerHTML = '<option value="">Selecciona Tema...</option>';
+      tocList.innerHTML = '<li style="color: #888; font-size: 13px;">Carga un tema para ver su índice.</li>';
+
+      const asigIdx = selAsig.value;
+      if (asigIdx === "") {
+        selTema.disabled = true;
+        return;
+      }
+
+      const temas = APUNTES_CONFIG[asigIdx].temas;
+      temas.forEach((tema, idx) => {
+        const opt = document.createElement("option");
+        opt.value = tema.archivo;
+        opt.textContent = tema.titulo;
+        selTema.appendChild(opt);
+      });
+      selTema.disabled = false;
+    });
+
+    // 3. Al seleccionar un tema, descargar Markdown y procesar
+    selTema.addEventListener("change", () => {
+      const filePath = selTema.value;
+      if (!filePath) return;
+
+      docContent.innerHTML = "<p>Cargando documento...</p>";
+
+      fetch(filePath)
+        .then(res => {
+          if (!res.ok) throw new Error("No se pudo cargar el archivo");
+          return res.text();
+        })
+        .then(markdown => {
+          // Renderizar HTML con Marked
+          docContent.innerHTML = marked.parse(markdown);
+          generarIndiceLateral();
+        })
+        .catch(err => {
+          docContent.innerHTML = `<p style="color:red;">Error al cargar el archivo: ${err.message}</p>`;
+          tocList.innerHTML = "";
+        });
+    });
+
+    // 4. Extracción automática de títulos (h1, h2, h3) para el TOC pinchable
+    function generarIndiceLateral() {
+      tocList.innerHTML = "";
+      const headings = docContent.querySelectorAll("h1, h2, h3");
+
+      if (headings.length === 0) {
+        tocList.innerHTML = '<li style="color:#888; font-size:13px;">Sin encabezados disponibles.</li>';
+        return;
+      }
+
+      headings.forEach((heading, i) => {
+        const id = "sec-" + i;
+        heading.id = id;
+
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = "#" + id;
+        a.textContent = heading.textContent;
+
+        if (heading.tagName.toLowerCase() === "h2") a.classList.add("toc-h2");
+        if (heading.tagName.toLowerCase() === "h3") a.classList.add("toc-h3");
+
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
