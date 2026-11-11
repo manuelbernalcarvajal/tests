@@ -37,17 +37,29 @@
       gap: 15px;
       flex-shrink: 0;
     }
-    header select, header a {
+    header select, header a, header button {
       padding: 6px 12px;
       font-size: 14px;
       border: 1px solid var(--border);
       border-radius: 4px;
       background: #fff;
+      color: inherit;
+      cursor: pointer;
     }
     header a {
       text-decoration: none;
       color: var(--accent);
       font-weight: 500;
+    }
+    #btn-print {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8f9fa;
+    }
+    #btn-print:hover {
+      background: #e9ecef;
     }
 
     /* Contenedor principal de 2 columnas */
@@ -113,9 +125,20 @@
       margin-bottom: 0.6em;
       color: #111;
       scroll-margin-top: 20px;
+      text-align: left; /* Títulos siempre a la izquierda */
     }
     .markdown-body h1 { border-bottom: 2px solid var(--border); padding-bottom: 6px; }
-    .markdown-body p { margin-bottom: 1em; }
+
+    /* Justificación exclusiva del contenido de lectura */
+    .markdown-body p,
+    .markdown-body li {
+      margin-bottom: 1em;
+      text-align: justify;
+      text-justify: inter-word;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+    }
+
     .markdown-body ul, .markdown-body ol { margin-left: 24px; margin-bottom: 1em; }
     .markdown-body blockquote {
       border-left: 4px solid var(--accent);
@@ -124,10 +147,63 @@
       margin: 1em 0;
     }
 
+    /* Encabezado visible únicamente en impresión */
+    .print-header {
+      display: none;
+    }
+
     @media (max-width: 768px) {
       .layout { flex-direction: column; }
       aside { width: 100%; max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
       .markdown-body { padding: 20px; }
+    }
+
+    /* Reglas de impresión limpias */
+    @media print {
+      @page {
+        margin: 1.5cm;
+      }
+      body, .layout, main {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      header, aside {
+        display: none !important;
+      }
+      .markdown-body {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        font-size: 12pt;
+        line-height: 1.5;
+      }
+      .print-header {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #999;
+        padding-bottom: 6px;
+        margin-bottom: 24px;
+        font-size: 9pt;
+        color: #555;
+      }
+      .print-header a {
+        color: #555;
+        text-decoration: none;
+      }
+      h1, h2, h3 {
+        page-break-after: avoid;
+      }
+      p, li, blockquote {
+        orphans: 3;
+        widows: 3;
+      }
     }
   </style>
 </head>
@@ -141,6 +217,7 @@
     <select id="select-tema" disabled>
       <option value="">Selecciona Tema...</option>
     </select>
+    <button type="button" id="btn-print" onclick="window.print()">🖨️ Imprimir</button>
   </header>
 
   <div class="layout">
@@ -152,9 +229,17 @@
     </aside>
 
     <main>
-      <article id="doc-content" class="markdown-body">
-        <h1>Bienvenido al Visor de Apuntes</h1>
-        <p>Selecciona una asignatura y un tema en la barra superior para comenzar a leer.</p>
+      <article class="markdown-body">
+        <!-- Encabezado impreso -->
+        <div class="print-header">
+          <span id="print-title">Visor de Apuntes</span>
+          <span id="print-url"></span>
+        </div>
+
+        <div id="doc-content">
+          <h1>Bienvenido al Visor de Apuntes</h1>
+          <p>Selecciona una asignatura y un tema en la barra superior para comenzar a leer.</p>
+        </div>
       </article>
     </main>
   </div>
@@ -165,6 +250,11 @@
     const selTema = document.getElementById("select-tema");
     const docContent = document.getElementById("doc-content");
     const tocList = document.getElementById("toc-list");
+    const printTitle = document.getElementById("print-title");
+    const printUrl = document.getElementById("print-url");
+
+    // Inicializar URL en el encabezado de impresión
+    printUrl.textContent = window.location.href;
 
     // 1. Cargar asignaturas desde apuntes_config.js
     if (typeof APUNTES_CONFIG !== "undefined") {
@@ -188,7 +278,7 @@
       }
 
       const temas = APUNTES_CONFIG[asigIdx].temas;
-      temas.forEach((tema, idx) => {
+      temas.forEach((tema) => {
         const opt = document.createElement("option");
         opt.value = tema.archivo;
         opt.textContent = tema.titulo;
@@ -202,6 +292,13 @@
       const filePath = selTema.value;
       if (!filePath) return;
 
+      const asigText = selAsig.options[selAsig.selectedIndex].text;
+      const temaText = selTema.options[selTema.selectedIndex].text;
+
+      // Actualizar encabezado para cuando se imprima
+      printTitle.textContent = `${asigText} — ${temaText}`;
+      printUrl.textContent = window.location.href;
+
       docContent.innerHTML = "<p>Cargando documento...</p>";
 
       fetch(filePath)
@@ -210,7 +307,6 @@
           return res.text();
         })
         .then(markdown => {
-          // Renderizar HTML con Marked
           docContent.innerHTML = marked.parse(markdown);
           generarIndiceLateral();
         })
