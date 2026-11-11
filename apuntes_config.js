@@ -43,5 +43,12 @@ const APUNTES_CONFIG = [
       { id: "023", titulo: "T23: Los actos procesales. Actos de comunicación", archivo: "apuntes/procesalcivil1/023.md" },
       { id: "024", titulo: "T24: La intervención del procurador en el proceso declarativo y de ejecución", archivo: "apuntes/procesalcivil1/024.md" }
     ]
+  },
+  {
+    asignatura: "Derecho Procesal Penal",
+    id: "procesalpenal",
+    temas: [
+      { id: "001", titulo: "T01: En proceso", archivo: "apuntes/enproceso.md" },
+    ]
   }
 ];
