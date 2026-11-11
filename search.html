@@ -23,7 +23,7 @@
       background-color: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      padding: 30px 15px;
+      padding: 30px 15px 60px 15px; /* 60px abajo para no tapar los últimos resultados */
     }
 
     .container {
@@ -226,6 +226,21 @@
       background: var(--surface);
       border-radius: 6px;
     }
+
+    /* Pie de página anclado al fondo */
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      z-index: 100;
+    }
   </style>
 </head>
 <body>
@@ -259,6 +274,10 @@
 
     <div id="results" class="results-list"></div>
   </div>
+
+  <footer>
+    © 2026 Manuel Bernal Carvajal. Todos los derechos reservados. Prohibida su reutilización con fines de lucro sin autorización previa.
+  </footer>
 
   <script src="apuntes_config.js"></script>
   <script>
