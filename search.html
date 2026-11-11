@@ -12,6 +12,8 @@
       --accent: #0d6efd;
       --border: #dee2e6;
       --muted: #6c757d;
+      --badge-bg: #e7f1ff;
+      --badge-text: #0d6efd;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,7 +26,7 @@
     }
 
     .container {
-      max-width: 820px;
+      max-width: 860px;
       margin: 0 auto;
     }
 
@@ -40,45 +42,65 @@
       font-weight: 500;
     }
 
-    .search-box {
+    .search-card {
       background: var(--surface);
       padding: 24px;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       margin-bottom: 20px;
     }
-    .search-box h1 {
+    .search-card h1 {
       font-size: 22px;
       margin-bottom: 12px;
     }
+
     .search-input-wrapper {
       position: relative;
     }
     input[type="search"] {
       width: 100%;
-      padding: 12px 16px;
+      padding: 14px 18px;
       font-size: 16px;
       border: 1px solid var(--border);
       border-radius: 6px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     input[type="search"]:focus {
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+
+    .search-tips {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .search-tips code {
+      background: #e9ecef;
+      padding: 2px 5px;
+      border-radius: 3px;
+      color: #333;
     }
 
     .status-bar {
-      margin-top: 10px;
+      margin-top: 12px;
       font-size: 13px;
       color: var(--muted);
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 8px;
     }
 
     .results-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
 
     .result-card {
@@ -94,28 +116,35 @@
     }
     .result-card:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
 
     .result-header {
       display: flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 6px;
     }
     .result-asig {
-      font-size: 12px;
-      font-weight: bold;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      background: #e7f1ff;
-      color: var(--accent);
+      background: var(--badge-bg);
+      color: var(--badge-text);
       padding: 2px 8px;
       border-radius: 4px;
+      white-space: nowrap;
     }
     .result-title {
       font-size: 16px;
       font-weight: 600;
       color: #111;
+      flex: 1;
+    }
+    .result-score {
+      font-size: 12px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
     }
 
     .result-snippet {
@@ -126,40 +155,42 @@
     .result-snippet mark {
       background-color: #fff3cd;
       color: #664d03;
-      padding: 0 2px;
+      padding: 1px 3px;
       border-radius: 2px;
       font-weight: 600;
     }
 
     .empty-msg {
       text-align: center;
-      padding: 40px 0;
+      padding: 50px 0;
       color: var(--muted);
       font-size: 15px;
+      background: var(--surface);
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W2NNJXD7"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-  </script>
+
   <div class="container">
     <nav class="top-nav">
       <a href="index.html">← Test</a>
       <a href="apuntes.html">📖 Visor de Apuntes</a>
     </nav>
 
-    <div class="search-box">
-      <h1>Buscar en Apuntes</h1>
+    <div class="search-card">
+      <h1>Buscador de Apuntes</h1>
       <div class="search-input-wrapper">
-        <input type="search" id="search-input" placeholder="Escribe un término (ej. reivindicatoria, posesión, costas)..." disabled>
+        <input type="search" id="search-input" placeholder="Buscar conceptos, artículos, jurisprudencia..." disabled autocomplete="off">
+      </div>
+      <div class="search-tips">
+        <span>Tips: <code>"frase exacta"</code></span>
+        <span><code>-descartar</code></span>
+        <span><code>asig:civil</code></span>
       </div>
       <div class="status-bar">
-        <span id="index-status">Descargando e indexando documentos...</span>
-        <span id="count-matches"></span>
+        <span id="index-status">Indexando documentos...</span>
+        <span id="metrics-status"></span>
       </div>
     </div>
 
@@ -170,18 +201,56 @@
   <script>
     const searchInput = document.getElementById("search-input");
     const indexStatus = document.getElementById("index-status");
-    const countMatches = document.getElementById("count-matches");
+    const metricsStatus = document.getElementById("metrics-status");
     const resultsContainer = document.getElementById("results");
 
     let documentsStore = [];
+    let vocabulary = new Set();
 
-    function normalizar(texto) {
-      return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    // Normalizador de texto (elimina tildes y caracteres diacríticos)
+    function normalizar(str) {
+      return (str || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
     }
 
-    async function indexarApuntes() {
+    // Tokenizador limpio (palabras de >= 2 caracteres alfanuméricos)
+    function tokenizar(str) {
+      const norm = normalizar(str);
+      const matches = norm.match(/[a-z0-9áéíóúñü]+/gi);
+      return matches ? matches.filter(t => t.length >= 2) : [];
+    }
+
+    // Distancia de Levenshtein para corrección de erratas leves (fuzzy fallback)
+    function distanciaLevenshtein(a, b) {
+      if (a.length === 0) return b.length;
+      if (b.length === 0) return a.length;
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    // 1. Descarga e indexación en memoria con estructura ponderada
+    async function indexarBaseConocimiento() {
+      const t0 = performance.now();
       if (typeof APUNTES_CONFIG === "undefined" || !APUNTES_CONFIG.length) {
-        indexStatus.textContent = "No se encontró configuración en apuntes_config.js";
+        indexStatus.textContent = "No se detectó configuración en apuntes_config.js";
         return;
       }
 
@@ -192,14 +261,36 @@
           descargas.push(
             fetch(tema.archivo)
               .then(res => res.ok ? res.text() : "")
-              .then(contenido => ({
-                asigId: asig.id,
-                asigNombre: asig.asignatura,
-                temaId: tema.id,
-                temaTitulo: tema.titulo,
-                rawText: contenido,
-                normText: normalizar(contenido)
-              }))
+              .then(rawContent => {
+                // Separar encabezados markdown para mayor ponderación
+                const lineas = rawContent.split("\n");
+                const encabezados = [];
+                lineas.forEach(l => {
+                  if (l.startsWith("#")) encabezados.push(l.replace(/^#+\s*/, ""));
+                });
+
+                const rawHeadings = encabezados.join(" ");
+                const normContent = normalizar(rawContent);
+                const normTitle = normalizar(tema.titulo);
+                const normHeadings = normalizar(rawHeadings);
+
+                // Tokenizar y almacenar en vocabulario global
+                const tokensContent = tokenizar(rawContent);
+                tokensContent.forEach(t => vocabulary.add(t));
+                tokenizar(tema.titulo).forEach(t => vocabulary.add(t));
+
+                return {
+                  asigId: asig.id,
+                  asigNombre: asig.asignatura,
+                  temaId: tema.id,
+                  temaTitulo: tema.titulo,
+                  rawText: rawContent,
+                  normText: normContent,
+                  normTitle: normTitle,
+                  normHeadings: normHeadings,
+                  tokensSet: new Set(tokensContent)
+                };
+              })
               .catch(() => null)
           );
         });
@@ -208,68 +299,214 @@
       const docs = await Promise.all(descargas);
       documentsStore = docs.filter(d => d && d.rawText.trim().length > 0);
 
-      indexStatus.textContent = `${documentsStore.length} temas indexados y listos.`;
+      const t1 = performance.now();
+      indexStatus.textContent = `${documentsStore.length} temas indexados (${vocabulary.size} palabras clave)`;
+      metricsStatus.textContent = `Listo en ${(t1 - t0).toFixed(0)} ms`;
       searchInput.disabled = false;
       searchInput.focus();
     }
 
-    function generarSnippet(rawText, normText, queryNorm, rawQuery) {
-      const idx = normText.indexOf(queryNorm);
-      if (idx === -1) return "";
+    // 2. Parser de consulta: extrae frases exactas, exclusiones, filtros y palabras sueltas
+    function parsearQuery(input) {
+      let q = input;
+      let filterAsig = null;
 
-      const start = Math.max(0, idx - 65);
-      const end = Math.min(rawText.length, idx + queryNorm.length + 80);
+      // Filtro asig:xxx
+      const asigMatch = q.match(/\basig:([a-z0-9_-]+)/i);
+      if (asigMatch) {
+        filterAsig = normalizar(asigMatch[1]);
+        q = q.replace(asigMatch[0], " ");
+      }
 
-      let snippet = (start > 0 ? "... " : "") + rawText.substring(start, end).replace(/\n+/g, " ") + (end < rawText.length ? " ..." : "");
+      // Frases exactas entre comillas: "tutela sumaria"
+      const exactPhrases = [];
+      const quoteRegex = /"([^"]+)"/g;
+      let m;
+      while ((m = quoteRegex.exec(q)) !== null) {
+        if (m[1].trim()) exactPhrases.push(normalizar(m[1].trim()));
+      }
+      q = q.replace(quoteRegex, " ");
 
-      const regex = new RegExp(`(${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
-      return snippet.replace(regex, "<mark>$1</mark>");
+      // Exclusiones: -penal
+      const negativeTerms = [];
+      const notRegex = /(?:^|\s)-([a-z0-9áéíóúñü]+)/gi;
+      while ((m = notRegex.exec(q)) !== null) {
+        if (m[1].trim()) negativeTerms.push(normalizar(m[1].trim()));
+      }
+      q = q.replace(notRegex, " ");
+
+      // Términos positivos restantes
+      const positiveTerms = tokenizar(q);
+
+      return { filterAsig, exactPhrases, negativeTerms, positiveTerms };
     }
 
-    function ejecutarBusqueda() {
-      const query = searchInput.value.trim();
-      const queryNorm = normalizar(query);
+    // 3. Generación de snippet de alta densidad (fragmento con más coincidencias agrupadas)
+    function generarSnippetOptimo(rawText, normText, queryTerms, queryPhrases) {
+      const allSearchTerms = [...queryTerms, ...queryPhrases];
+      if (allSearchTerms.length === 0) return "";
 
-      resultsContainer.innerHTML = "";
-      countMatches.textContent = "";
+      // Dividir el documento en párrafos
+      const parrafos = rawText.split(/\n\s*\n/);
+      let mejorParrafo = "";
+      let maxScore = -1;
 
-      if (queryNorm.length < 2) return;
-
-      const matches = [];
-
-      documentsStore.forEach(doc => {
-        const matchContenido = doc.normText.indexOf(queryNorm) !== -1;
-        const matchTitulo = normalizar(doc.temaTitulo).indexOf(queryNorm) !== -1;
-
-        if (matchContenido || matchTitulo) {
-          const snippet = matchContenido 
-            ? generarSnippet(doc.rawText, doc.normText, queryNorm, query)
-            : "Coincidencia encontrada en el título del tema.";
-
-          matches.push({
-            ...doc,
-            snippet
-          });
+      parrafos.forEach(p => {
+        const pNorm = normalizar(p);
+        let score = 0;
+        allSearchTerms.forEach(term => {
+          if (pNorm.includes(term)) {
+            // Frecuencia del término en este párrafo
+            const count = (pNorm.match(new RegExp(term, "g")) || []).length;
+            score += count;
+          }
+        });
+        if (score > maxScore) {
+          maxScore = score;
+          mejorParrafo = p;
         }
       });
 
-      countMatches.textContent = `${matches.length} tema(s) encontrado(s)`;
+      // Si no encuentra párrafo con coincidencias, fallback a los primeros 200 caracteres
+      let snippet = (mejorParrafo || rawText).replace(/\n+/g, " ").trim();
+      if (snippet.length > 280) {
+        // Centrar recorte alrededor del primer término
+        const firstTerm = allSearchTerms[0];
+        const idx = normalizar(snippet).indexOf(firstTerm);
+        if (idx !== -1) {
+          const start = Math.max(0, idx - 80);
+          const end = Math.min(snippet.length, idx + firstTerm.length + 140);
+          snippet = (start > 0 ? "... " : "") + snippet.substring(start, end) + (end < snippet.length ? " ..." : "");
+        } else {
+          snippet = snippet.substring(0, 240) + " ...";
+        }
+      }
 
-      if (matches.length === 0) {
-        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron coincidencias para "<strong>${query}</strong>".</div>`;
+      // Resaltar con <mark> todos los términos encontrados
+      allSearchTerms.forEach(term => {
+        const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`(${safe})`, "gi");
+        snippet = snippet.replace(regex, "<mark>$1</mark>");
+      });
+
+      return snippet;
+    }
+
+    // 4. Búsqueda y ponderación
+    function ejecutarBusqueda() {
+      const rawInput = searchInput.value.trim();
+      if (rawInput.length < 2) {
+        resultsContainer.innerHTML = "";
+        metricsStatus.textContent = "";
         return;
       }
 
+      const t0 = performance.now();
+      const parsed = parsearQuery(rawInput);
+      const matches = [];
+
+      documentsStore.forEach(doc => {
+        // Filtro estricto por asignatura si se usó asig:id
+        if (parsed.filterAsig && !normalizar(doc.asigId).includes(parsed.filterAsig)) {
+          return;
+        }
+
+        // Descarte por términos excluidos (-termino)
+        const contieneExcluido = parsed.negativeTerms.some(neg => 
+          doc.normText.includes(neg) || doc.normTitle.includes(neg)
+        );
+        if (contieneExcluido) return;
+
+        // Validación de frases exactas entre comillas ("...")
+        const cumpleFrases = parsed.exactPhrases.every(phrase => 
+          doc.normText.includes(phrase) || doc.normTitle.includes(phrase)
+        );
+        if (!cumpleFrases) return;
+
+        // Validación de términos AND (exacto o fuzzy tolerante)
+        let cumpleTerminos = true;
+        const matchingTerms = [];
+
+        for (const term of parsed.positiveTerms) {
+          let found = doc.normText.includes(term) || doc.normTitle.includes(term);
+
+          // Si no se encuentra exacto y la palabra tiene >= 5 letras, intentar fuzzy
+          if (!found && term.length >= 5) {
+            for (const docToken of doc.tokensSet) {
+              if (Math.abs(docToken.length - term.length) <= 1 && distanciaLevenshtein(term, docToken) <= 1) {
+                found = true;
+                matchingTerms.push(docToken);
+                break;
+              }
+            }
+          } else if (found) {
+            matchingTerms.push(term);
+          }
+
+          if (!found) {
+            cumpleTerminos = false;
+            break;
+          }
+        }
+
+        if (!cumpleTerminos) return;
+
+        // PONDERACIÓN (Scoring inteligente)
+        let score = 0;
+
+        // Coincidencia de frases exactas (+30 puntos)
+        parsed.exactPhrases.forEach(p => {
+          if (doc.normTitle.includes(p)) score += 50;
+          if (doc.normHeadings.includes(p)) score += 25;
+          const count = (doc.normText.match(new RegExp(p, "g")) || []).length;
+          score += count * 5;
+        });
+
+        // Coincidencia de términos individuales
+        matchingTerms.forEach(t => {
+          if (doc.normTitle.includes(t)) score += 20;
+          if (doc.normHeadings.includes(t)) score += 8;
+          const count = (doc.normText.match(new RegExp(t, "g")) || []).length;
+          score += Math.min(count, 15); // saturación para no desvirtuar por repetición excesiva
+        });
+
+        const snippet = generarSnippetOptimo(
+          doc.rawText, 
+          doc.normText, 
+          matchingTerms, 
+          parsed.exactPhrases
+        );
+
+        matches.push({
+          ...doc,
+          score,
+          snippet
+        });
+      });
+
+      // Ordenar resultados de mayor a menor relevancia
+      matches.sort((a, b) => b.score - a.score);
+
+      const t1 = performance.now();
+      metricsStatus.textContent = `${matches.length} tema(s) en ${(t1 - t0).toFixed(1)} ms`;
+
+      // Renderizado
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron resultados para "<strong>${rawInput}</strong>".</div>`;
+        return;
+      }
+
+      resultsContainer.innerHTML = "";
       matches.forEach(item => {
         const link = document.createElement("a");
         link.className = "result-card";
-        // Enlace 100% basado en IDs
         link.href = `apuntes.html?asig=${encodeURIComponent(item.asigId)}&tema=${encodeURIComponent(item.temaId)}`;
 
         link.innerHTML = `
           <div class="result-header">
             <span class="result-asig">${item.asigNombre}</span>
             <span class="result-title">${item.temaTitulo}</span>
+            <span class="result-score">${item.score} pts</span>
           </div>
           <div class="result-snippet">${item.snippet}</div>
         `;
@@ -278,7 +515,7 @@
     }
 
     searchInput.addEventListener("input", ejecutarBusqueda);
-    indexarApuntes();
+    indexarBaseConocimiento();
   </script>
 </body>
 </html>
