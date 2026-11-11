@@ -15,7 +15,8 @@ const APUNTES_CONFIG = [
       { id: "010", titulo: "Testamento, legítimas y sucesión intestada. Partición de la herencia", archivo: "apuntes/civil/010.md" },
       { id: "011", titulo: "Reclamaciones relacionadas con la responsabilidad extracontractual", archivo: "apuntes/civil/011.md" },
       { id: "013", titulo: "Los derechos civiles forales y especiales. El derecho interregional en España", archivo: "apuntes/civil/013.md" },
-      { id: "014", titulo: "Cooperación judicial civil internacional. Las relaciones jurídicoprivadas internacionales", archivo: "apuntes/civil/014.md" }
+      { id: "014", titulo: "Cooperación judicial civil internacional. Las relaciones jurídicoprivadas internacionales", archivo: "apuntes/civil/014.md" },
+      { id: "015", titulo: "Extra guia orientativa casos practicos", archivo: "apuntes/civil/ext001" }
     ]
   },
   {
