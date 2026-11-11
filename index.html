@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Master Acceso Abogacía by MBC</title>
+  <title>Portal by MBC</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
   <style>
     :root {
@@ -24,7 +24,7 @@
       background-color: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      padding: 30px 15px 70px 15px; /* Margen inferior para no solapar el footer */
+      padding: 40px 15px 70px 15px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -33,14 +33,14 @@
 
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 860px;
       margin: 0 auto;
     }
 
-    /* Cabecera / Banner principal */
+    /* Tarjeta principal / Buscador */
     .hero-card {
       background: var(--surface);
-      padding: 32px 28px;
+      padding: 36px 30px;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
       margin-bottom: 24px;
@@ -51,53 +51,79 @@
       font-size: 26px;
       color: var(--primary);
       margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
     }
     .hero-card p {
       color: var(--muted);
-      font-size: 15px;
-      max-width: 600px;
-      margin: 0 auto 20px auto;
+      font-size: 14.5px;
+      margin-bottom: 24px;
     }
 
-    /* Barra de métricas */
+    /* Formulario de búsqueda en el Hub */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      max-width: 650px;
+      margin: 0 auto 20px auto;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 13px 18px;
+      font-size: 15px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-bar input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+    .search-bar button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .search-bar button:hover {
+      opacity: 0.92;
+    }
+
+    /* Badges con resumen */
     .metrics-row {
       display: flex;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
+      padding-top: 14px;
       border-top: 1px solid #f0f0f0;
-      padding-top: 18px;
     }
     .metric-badge {
       background: var(--badge-bg);
       color: var(--badge-text);
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
     }
 
-    /* Grid de módulos principales */
+    /* Módulos de navegación */
     .grid-tools {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 18px;
-      margin-bottom: 25px;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
     }
 
     .tool-card {
       background: var(--surface);
-      padding: 24px;
+      padding: 22px 20px;
       border-radius: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      border-left: 5px solid var(--accent);
+      border-left: 4px solid var(--accent);
       text-decoration: none;
       color: inherit;
       display: flex;
@@ -106,21 +132,21 @@
       transition: box-shadow 0.15s ease, transform 0.15s ease;
     }
     .tool-card:hover {
-      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
       transform: translateY(-2px);
     }
     .tool-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 8px;
     }
     .tool-icon {
-      font-size: 28px;
+      font-size: 24px;
       line-height: 1;
     }
     .tool-title {
-      font-size: 18px;
+      font-size: 16.5px;
       font-weight: 600;
       color: #111;
     }
@@ -128,37 +154,18 @@
       color: var(--accent);
     }
     .tool-desc {
-      font-size: 14px;
+      font-size: 13.5px;
       color: var(--muted);
-      line-height: 1.5;
-      margin-bottom: 18px;
+      line-height: 1.45;
+      margin-bottom: 14px;
       flex: 1;
     }
     .tool-link-action {
       font-size: 13px;
       font-weight: 600;
       color: var(--accent);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
     }
 
-    /* Enlace sutil al contador de preguntas */
-    .stats-link-wrapper {
-      text-align: right;
-      margin-top: -10px;
-      margin-bottom: 20px;
-    }
-    .stats-link {
-      font-size: 12px;
-      color: var(--muted);
-      text-decoration: none;
-    }
-    .stats-link:hover {
-      text-decoration: underline;
-    }
-
-    /* Pie de página anclado al fondo */
     footer {
       position: fixed;
       bottom: 0;
@@ -174,9 +181,9 @@
     }
 
     @media (max-width: 600px) {
-      .hero-card { padding: 22px 16px; }
-      .hero-card h1 { font-size: 22px; }
-      .grid-tools { grid-template-columns: 1fr; }
+      .hero-card { padding: 24px 16px; }
+      .search-bar { flex-direction: column; }
+      .search-bar button { padding: 12px; }
     }
   </style>
 </head>
@@ -190,56 +197,49 @@
 
   <div class="container">
     <div class="hero-card">
-      <h1>⚖️ Simulador & Portal de Apuntes</h1>
-      <p>Entorno de estudio para el Máster de Acceso a la Abogacía. Práctica de preguntas de examen oficial, consulta de resúmenes y búsqueda temática.</p>
-      
-      <div class="metrics-row">
-        <span class="metric-badge">📝 1.416 Preguntas cargadas</span>
-        <span class="metric-badge">📖 43 Temas indexados</span>
-        <span class="metric-badge">🔍 +10.700 Términos clave</span>
-      </div>
+      <h1>⚖️ Master Acceso Abogacía</h1>
+      <p>Buscador de conceptos, repositorio de apuntes y simulador oficial de examen.</p>
+
+      <!-- Formulario GET que viaja limpio a search.html?q=... -->
+      <form class="search-bar" action="search.html" method="GET">
+        <input type="search" name="q" placeholder="Buscar artículo, plazo, concepto o caso práctico..." required autocomplete="off">
+        <button type="submit">🔍 Buscar</button>
+      </form>
     </div>
 
     <div class="grid-tools">
-      <!-- Módulo 1: Simulador Test -->
       <a href="test.html" class="tool-card">
         <div>
           <div class="tool-header">
             <span class="tool-icon">📝</span>
             <span class="tool-title">Simulador Test</span>
           </div>
-          <p class="tool-desc">Exámenes por asignatura o simulacro global aleatorio con corrección oficial (+1.00 / -0.33).</p>
+          <p class="tool-desc">Preguntas por asignatura o simulacro global aleatorio con corrección oficial (+1.00 / -0.33).</p>
         </div>
         <div class="tool-link-action">Iniciar test →</div>
       </a>
 
-      <!-- Módulo 2: Visor de Apuntes -->
       <a href="apuntes.html" class="tool-card">
         <div>
           <div class="tool-header">
             <span class="tool-icon">📖</span>
             <span class="tool-title">Visor de Apuntes</span>
           </div>
-          <p class="tool-desc">Temario desglosado con índice navegable dinámico, justificación de texto y modo de impresión en PDF.</p>
+          <p class="tool-desc">Temario ordenado por materias con índice interactivo, artículos destacados y opción de imprimir.</p>
         </div>
         <div class="tool-link-action">Abrir apuntes →</div>
       </a>
 
-      <!-- Módulo 3: Buscador Global -->
       <a href="search.html" class="tool-card">
         <div>
           <div class="tool-header">
             <span class="tool-icon">🔍</span>
-            <span class="tool-title">Buscador y Casos</span>
+            <span class="tool-title">Buscador Avanzado</span>
           </div>
-          <p class="tool-desc">Búsqueda rápida de artículos, conceptos, plazos y soluciones a supuestos prácticos con copia de citas.</p>
+          <p class="tool-desc">Filtros por materia (ej. <code>asig:civil</code>), frases exactas entrecomilladas y copia de extractos.</p>
         </div>
-        <div class="tool-link-action">Buscar términos →</div>
+        <div class="tool-link-action">Ir al buscador →</div>
       </a>
-    </div>
-
-    <div class="stats-link-wrapper">
-      <a href="count.html" class="stats-link">📊 Ver recuento detallado de preguntas y materias</a>
     </div>
   </div>
 
