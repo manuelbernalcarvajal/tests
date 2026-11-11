@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buscador de Apuntes</title>
+  <title>Buscador de Apuntes - Casos Prácticos</title>
   <style>
     :root {
       --bg: #f8f9fa;
@@ -14,6 +14,7 @@
       --muted: #6c757d;
       --badge-bg: #e7f1ff;
       --badge-text: #0d6efd;
+      --section-tag: #f1f3f5;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,7 +27,7 @@
     }
 
     .container {
-      max-width: 860px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
@@ -100,30 +101,29 @@
     .results-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 18px;
     }
 
     .result-card {
       background: var(--surface);
-      padding: 18px 22px;
-      border-radius: 6px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      border-left: 4px solid var(--accent);
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      padding: 22px 24px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border-left: 5px solid var(--accent);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: box-shadow 0.15s ease;
     }
     .result-card:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
 
     .result-header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 10px;
-      margin-bottom: 6px;
+      flex-wrap: wrap;
     }
     .result-asig {
       font-size: 11px;
@@ -131,15 +131,19 @@
       text-transform: uppercase;
       background: var(--badge-bg);
       color: var(--badge-text);
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 4px;
-      white-space: nowrap;
     }
     .result-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 600;
       color: #111;
+      text-decoration: none;
       flex: 1;
+    }
+    .result-title:hover {
+      color: var(--accent);
+      text-decoration: underline;
     }
     .result-score {
       font-size: 12px;
@@ -147,17 +151,71 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .result-snippet {
-      font-size: 14px;
+    .result-section-crumb {
+      font-size: 12.5px;
       color: #495057;
-      line-height: 1.6;
+      background: var(--section-tag);
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+      font-weight: 500;
+    }
+
+    /* Extracto amplio y justificado */
+    .result-snippet {
+      font-size: 14.5px;
+      color: #2b3035;
+      line-height: 1.65;
+      text-align: justify;
+      text-justify: inter-word;
+      hyphens: auto;
+      white-space: pre-line;
+      background: #fafbfc;
+      padding: 14px 16px;
+      border-radius: 6px;
+      border: 1px solid #edf0f2;
     }
     .result-snippet mark {
       background-color: #fff3cd;
       color: #664d03;
-      padding: 1px 3px;
-      border-radius: 2px;
+      padding: 1px 4px;
+      border-radius: 3px;
       font-weight: 600;
+    }
+
+    /* Barra de acciones de cada resultado */
+    .result-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+    .btn-action {
+      background: #f8f9fa;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-size: 12.5px;
+      cursor: pointer;
+      color: #495057;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+    .btn-action:hover {
+      background: #e9ecef;
+      color: #111;
+    }
+    .link-viewer {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .link-viewer:hover {
+      text-decoration: underline;
     }
 
     .empty-msg {
@@ -179,13 +237,13 @@
     </nav>
 
     <div class="search-card">
-      <h1>Buscador de Apuntes</h1>
+      <h1>Buscador de Apuntes y Casos Prácticos</h1>
       <div class="search-input-wrapper">
-        <input type="search" id="search-input" placeholder="Buscar conceptos, artículos, jurisprudencia..." disabled autocomplete="off">
+        <input type="search" id="search-input" placeholder="Buscar requisitos, plazos, artículos (ej. prescripción posesión, 1594)..." disabled autocomplete="off">
       </div>
       <div class="search-tips">
-        <span>Tips: <code>"frase exacta"</code></span>
-        <span><code>-descartar</code></span>
+        <span><code>"frase exacta"</code></span>
+        <span><code>-excluir</code></span>
         <span><code>asig:civil</code></span>
       </div>
       <div class="status-bar">
@@ -207,7 +265,6 @@
     let documentsStore = [];
     let vocabulary = new Set();
 
-    // Normalizador de texto (elimina tildes y caracteres diacríticos)
     function normalizar(str) {
       return (str || "")
         .normalize("NFD")
@@ -215,14 +272,12 @@
         .toLowerCase();
     }
 
-    // Tokenizador limpio (palabras de >= 2 caracteres alfanuméricos)
     function tokenizar(str) {
       const norm = normalizar(str);
       const matches = norm.match(/[a-z0-9áéíóúñü]+/gi);
       return matches ? matches.filter(t => t.length >= 2) : [];
     }
 
-    // Distancia de Levenshtein para corrección de erratas leves (fuzzy fallback)
     function distanciaLevenshtein(a, b) {
       if (a.length === 0) return b.length;
       if (b.length === 0) return a.length;
@@ -246,7 +301,7 @@
       return matrix[b.length][a.length];
     }
 
-    // 1. Descarga e indexación en memoria con estructura ponderada
+    // 1. Indexar descomponiendo cada documento en secciones lógicas (#, ##, ###)
     async function indexarBaseConocimiento() {
       const t0 = performance.now();
       if (typeof APUNTES_CONFIG === "undefined" || !APUNTES_CONFIG.length) {
@@ -262,19 +317,34 @@
             fetch(tema.archivo)
               .then(res => res.ok ? res.text() : "")
               .then(rawContent => {
-                // Separar encabezados markdown para mayor ponderación
+                // Parsear secciones basadas en encabezados Markdown
                 const lineas = rawContent.split("\n");
-                const encabezados = [];
+                const secciones = [];
+                let currentHeading = "Introducción general";
+                let currentBlock = [];
+
                 lineas.forEach(l => {
-                  if (l.startsWith("#")) encabezados.push(l.replace(/^#+\s*/, ""));
+                  if (l.match(/^#{1,3}\s+/)) {
+                    if (currentBlock.length > 0) {
+                      secciones.push({
+                        heading: currentHeading,
+                        text: currentBlock.join("\n").trim()
+                      });
+                      currentBlock = [];
+                    }
+                    currentHeading = l.replace(/^#{1,3}\s+/, "").trim();
+                  } else {
+                    currentBlock.push(l);
+                  }
                 });
+                if (currentBlock.length > 0) {
+                  secciones.push({
+                    heading: currentHeading,
+                    text: currentBlock.join("\n").trim()
+                  });
+                }
 
-                const rawHeadings = encabezados.join(" ");
                 const normContent = normalizar(rawContent);
-                const normTitle = normalizar(tema.titulo);
-                const normHeadings = normalizar(rawHeadings);
-
-                // Tokenizar y almacenar en vocabulario global
                 const tokensContent = tokenizar(rawContent);
                 tokensContent.forEach(t => vocabulary.add(t));
                 tokenizar(tema.titulo).forEach(t => vocabulary.add(t));
@@ -286,8 +356,8 @@
                   temaTitulo: tema.titulo,
                   rawText: rawContent,
                   normText: normContent,
-                  normTitle: normTitle,
-                  normHeadings: normHeadings,
+                  normTitle: normalizar(tema.titulo),
+                  secciones: secciones,
                   tokensSet: new Set(tokensContent)
                 };
               })
@@ -300,25 +370,22 @@
       documentsStore = docs.filter(d => d && d.rawText.trim().length > 0);
 
       const t1 = performance.now();
-      indexStatus.textContent = `${documentsStore.length} temas indexados (${vocabulary.size} palabras clave)`;
+      indexStatus.textContent = `${documentsStore.length} temas indexados (${vocabulary.size} términos clave)`;
       metricsStatus.textContent = `Listo en ${(t1 - t0).toFixed(0)} ms`;
       searchInput.disabled = false;
       searchInput.focus();
     }
 
-    // 2. Parser de consulta: extrae frases exactas, exclusiones, filtros y palabras sueltas
     function parsearQuery(input) {
       let q = input;
       let filterAsig = null;
 
-      // Filtro asig:xxx
       const asigMatch = q.match(/\basig:([a-z0-9_-]+)/i);
       if (asigMatch) {
         filterAsig = normalizar(asigMatch[1]);
         q = q.replace(asigMatch[0], " ");
       }
 
-      // Frases exactas entre comillas: "tutela sumaria"
       const exactPhrases = [];
       const quoteRegex = /"([^"]+)"/g;
       let m;
@@ -327,7 +394,6 @@
       }
       q = q.replace(quoteRegex, " ");
 
-      // Exclusiones: -penal
       const negativeTerms = [];
       const notRegex = /(?:^|\s)-([a-z0-9áéíóúñü]+)/gi;
       while ((m = notRegex.exec(q)) !== null) {
@@ -335,64 +401,72 @@
       }
       q = q.replace(notRegex, " ");
 
-      // Términos positivos restantes
       const positiveTerms = tokenizar(q);
 
       return { filterAsig, exactPhrases, negativeTerms, positiveTerms };
     }
 
-    // 3. Generación de snippet de alta densidad (fragmento con más coincidencias agrupadas)
-    function generarSnippetOptimo(rawText, normText, queryTerms, queryPhrases) {
-      const allSearchTerms = [...queryTerms, ...queryPhrases];
-      if (allSearchTerms.length === 0) return "";
+    // 2. Extraer el bloque más completo de la sección que responde al caso
+    function extraerContextoExtendido(doc, allSearchTerms) {
+      let mejorSeccion = null;
+      let maxCoincidencias = -1;
 
-      // Dividir el documento en párrafos
-      const parrafos = rawText.split(/\n\s*\n/);
-      let mejorParrafo = "";
-      let maxScore = -1;
-
-      parrafos.forEach(p => {
-        const pNorm = normalizar(p);
+      // Localizar qué sección del documento concentra la mayor densidad
+      doc.secciones.forEach(sec => {
+        const secNorm = normalizar(sec.heading + " " + sec.text);
         let score = 0;
-        allSearchTerms.forEach(term => {
-          if (pNorm.includes(term)) {
-            // Frecuencia del término en este párrafo
-            const count = (pNorm.match(new RegExp(term, "g")) || []).length;
-            score += count;
-          }
+        allSearchTerms.forEach(t => {
+          const count = (secNorm.match(new RegExp(t, "g")) || []).length;
+          score += count;
         });
-        if (score > maxScore) {
-          maxScore = score;
-          mejorParrafo = p;
+        if (score > maxCoincidencias) {
+          maxCoincidencias = score;
+          mejorSeccion = sec;
         }
       });
 
-      // Si no encuentra párrafo con coincidencias, fallback a los primeros 200 caracteres
-      let snippet = (mejorParrafo || rawText).replace(/\n+/g, " ").trim();
-      if (snippet.length > 280) {
-        // Centrar recorte alrededor del primer término
-        const firstTerm = allSearchTerms[0];
-        const idx = normalizar(snippet).indexOf(firstTerm);
-        if (idx !== -1) {
-          const start = Math.max(0, idx - 80);
-          const end = Math.min(snippet.length, idx + firstTerm.length + 140);
-          snippet = (start > 0 ? "... " : "") + snippet.substring(start, end) + (end < snippet.length ? " ..." : "");
-        } else {
-          snippet = snippet.substring(0, 240) + " ...";
-        }
+      if (!mejorSeccion || !mejorSeccion.text) {
+        mejorSeccion = {
+          heading: doc.temaTitulo,
+          text: doc.rawText.substring(0, 700)
+        };
       }
 
-      // Resaltar con <mark> todos los términos encontrados
+      // Tomar una ventana de hasta ~800 caracteres completos sin cortar arbitrariamente
+      let textoLimpio = mejorSeccion.text.trim();
+      if (textoLimpio.length > 850) {
+        // Buscar el primer término dentro de la sección para centrar el bloque
+        const firstTerm = allSearchTerms[0];
+        const idx = normalizar(textoLimpio).indexOf(firstTerm);
+        let start = 0;
+        if (idx > 150) {
+          // Retroceder al inicio de párrafo o punto más cercano
+          const prevDot = textoLimpio.lastIndexOf("\n", idx - 30);
+          start = prevDot !== -1 ? prevDot + 1 : Math.max(0, idx - 100);
+        }
+        let end = Math.min(textoLimpio.length, start + 800);
+        const nextBreak = textoLimpio.indexOf("\n", end - 40);
+        if (nextBreak !== -1 && nextBreak < end + 80) end = nextBreak;
+
+        textoLimpio = (start > 0 ? "[...] " : "") + textoLimpio.substring(start, end).trim() + (end < mejorSeccion.text.length ? " [...]" : "");
+      }
+
+      // Resaltado de términos
+      let snippetHtml = textoLimpio;
       allSearchTerms.forEach(term => {
         const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const regex = new RegExp(`(${safe})`, "gi");
-        snippet = snippet.replace(regex, "<mark>$1</mark>");
+        snippetHtml = snippetHtml.replace(regex, "<mark>$1</mark>");
       });
 
-      return snippet;
+      return {
+        heading: mejorSeccion.heading,
+        snippetHtml: snippetHtml,
+        rawSnippet: textoLimpio
+      };
     }
 
-    // 4. Búsqueda y ponderación
+    // 3. Ejecutar búsqueda ponderada
     function ejecutarBusqueda() {
       const rawInput = searchInput.value.trim();
       if (rawInput.length < 2) {
@@ -406,31 +480,24 @@
       const matches = [];
 
       documentsStore.forEach(doc => {
-        // Filtro estricto por asignatura si se usó asig:id
-        if (parsed.filterAsig && !normalizar(doc.asigId).includes(parsed.filterAsig)) {
-          return;
-        }
+        if (parsed.filterAsig && !normalizar(doc.asigId).includes(parsed.filterAsig)) return;
 
-        // Descarte por términos excluidos (-termino)
         const contieneExcluido = parsed.negativeTerms.some(neg => 
           doc.normText.includes(neg) || doc.normTitle.includes(neg)
         );
         if (contieneExcluido) return;
 
-        // Validación de frases exactas entre comillas ("...")
         const cumpleFrases = parsed.exactPhrases.every(phrase => 
           doc.normText.includes(phrase) || doc.normTitle.includes(phrase)
         );
         if (!cumpleFrases) return;
 
-        // Validación de términos AND (exacto o fuzzy tolerante)
         let cumpleTerminos = true;
         const matchingTerms = [];
 
         for (const term of parsed.positiveTerms) {
           let found = doc.normText.includes(term) || doc.normTitle.includes(term);
 
-          // Si no se encuentra exacto y la palabra tiene >= 5 letras, intentar fuzzy
           if (!found && term.length >= 5) {
             for (const docToken of doc.tokensSet) {
               if (Math.abs(docToken.length - term.length) <= 1 && distanciaLevenshtein(term, docToken) <= 1) {
@@ -451,68 +518,80 @@
 
         if (!cumpleTerminos) return;
 
-        // PONDERACIÓN (Scoring inteligente)
         let score = 0;
-
-        // Coincidencia de frases exactas (+30 puntos)
         parsed.exactPhrases.forEach(p => {
           if (doc.normTitle.includes(p)) score += 50;
-          if (doc.normHeadings.includes(p)) score += 25;
-          const count = (doc.normText.match(new RegExp(p, "g")) || []).length;
-          score += count * 5;
+          score += ((doc.normText.match(new RegExp(p, "g")) || []).length) * 6;
         });
 
-        // Coincidencia de términos individuales
         matchingTerms.forEach(t => {
           if (doc.normTitle.includes(t)) score += 20;
-          if (doc.normHeadings.includes(t)) score += 8;
           const count = (doc.normText.match(new RegExp(t, "g")) || []).length;
-          score += Math.min(count, 15); // saturación para no desvirtuar por repetición excesiva
+          score += Math.min(count, 20);
         });
 
-        const snippet = generarSnippetOptimo(
-          doc.rawText, 
-          doc.normText, 
-          matchingTerms, 
-          parsed.exactPhrases
-        );
+        const allTerms = [...matchingTerms, ...parsed.exactPhrases];
+        const context = extraerContextoExtendido(doc, allTerms);
 
         matches.push({
           ...doc,
           score,
-          snippet
+          headingMatched: context.heading,
+          snippetHtml: context.snippetHtml,
+          rawSnippet: context.rawSnippet
         });
       });
 
-      // Ordenar resultados de mayor a menor relevancia
       matches.sort((a, b) => b.score - a.score);
 
       const t1 = performance.now();
       metricsStatus.textContent = `${matches.length} tema(s) en ${(t1 - t0).toFixed(1)} ms`;
 
-      // Renderizado
       if (matches.length === 0) {
-        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron resultados para "<strong>${rawInput}</strong>".</div>`;
+        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron fundamentos para "<strong>${rawInput}</strong>".</div>`;
         return;
       }
 
       resultsContainer.innerHTML = "";
-      matches.forEach(item => {
-        const link = document.createElement("a");
-        link.className = "result-card";
-        link.href = `apuntes.html?asig=${encodeURIComponent(item.asigId)}&tema=${encodeURIComponent(item.temaId)}`;
+      matches.forEach((item, index) => {
+        const card = document.createElement("article");
+        card.className = "result-card";
 
-        link.innerHTML = `
+        const cleanLink = `apuntes.html?asig=${encodeURIComponent(item.asigId)}&tema=${encodeURIComponent(item.temaId)}`;
+
+        card.innerHTML = `
           <div class="result-header">
             <span class="result-asig">${item.asigNombre}</span>
-            <span class="result-title">${item.temaTitulo}</span>
+            <a href="${cleanLink}" class="result-title">${item.temaTitulo}</a>
             <span class="result-score">${item.score} pts</span>
           </div>
-          <div class="result-snippet">${item.snippet}</div>
+          <div class="result-section-crumb">📍 Sección: ${item.headingMatched}</div>
+          <div class="result-snippet" id="snippet-${index}">${item.snippetHtml}</div>
+          <div class="result-actions">
+            <button type="button" class="btn-action" onclick="copiarAlPortapapeles(${index})">
+              📋 Copiar extracto
+            </button>
+            <a href="${cleanLink}" class="link-viewer">Abrir tema completo →</a>
+          </div>
         `;
-        resultsContainer.appendChild(link);
+        resultsContainer.appendChild(card);
       });
     }
+
+    // Copiar el texto limpio (sin tags <mark>) al portapapeles para citarlo
+    window.copiarAlPortapapeles = function(index) {
+      const doc = document.getElementById(`snippet-${index}`);
+      if (!doc) return;
+      const textToCopy = doc.innerText || doc.textContent;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅ ¡Copiado!";
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 1500);
+      });
+    };
 
     searchInput.addEventListener("input", ejecutarBusqueda);
     indexarBaseConocimiento();
