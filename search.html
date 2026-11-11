@@ -140,12 +140,7 @@
   </style>
 </head>
 <body>
-<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W2NNJXD7"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-</script>
+
   <div class="container">
     <nav class="top-nav">
       <a href="index.html">← Test</a>
@@ -173,15 +168,12 @@
     const countMatches = document.getElementById("count-matches");
     const resultsContainer = document.getElementById("results");
 
-    // Almacén en memoria de todos los temas
     let documentsStore = [];
 
-    // Limpia tildes y diacríticos para búsqueda permisiva
     function normalizar(texto) {
       return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     }
 
-    // 1. Descargar todos los .md en paralelo usando apuntes_config.js
     async function indexarApuntes() {
       if (typeof APUNTES_CONFIG === "undefined" || !APUNTES_CONFIG.length) {
         indexStatus.textContent = "No se encontró configuración en apuntes_config.js";
@@ -190,17 +182,16 @@
 
       const descargas = [];
 
-      APUNTES_CONFIG.forEach((asig, asigIdx) => {
+      APUNTES_CONFIG.forEach(asig => {
         asig.temas.forEach(tema => {
           descargas.push(
             fetch(tema.archivo)
               .then(res => res.ok ? res.text() : "")
               .then(contenido => ({
+                asigId: asig.id,
                 asigNombre: asig.asignatura,
-                asigIdx: asigIdx,
                 temaId: tema.id,
                 temaTitulo: tema.titulo,
-                archivo: tema.archivo,
                 rawText: contenido,
                 normText: normalizar(contenido)
               }))
@@ -217,7 +208,6 @@
       searchInput.focus();
     }
 
-    // 2. Extraer un fragmento con el término y marcarlo con <mark>
     function generarSnippet(rawText, normText, queryNorm, rawQuery) {
       const idx = normText.indexOf(queryNorm);
       if (idx === -1) return "";
@@ -227,12 +217,10 @@
 
       let snippet = (start > 0 ? "... " : "") + rawText.substring(start, end).replace(/\n+/g, " ") + (end < rawText.length ? " ..." : "");
 
-      // Resaltado conservando mayúsculas/minúsculas originales
       const regex = new RegExp(`(${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
       return snippet.replace(regex, "<mark>$1</mark>");
     }
 
-    // 3. Ejecutar búsqueda
     function ejecutarBusqueda() {
       const query = searchInput.value.trim();
       const queryNorm = normalizar(query);
@@ -240,9 +228,7 @@
       resultsContainer.innerHTML = "";
       countMatches.textContent = "";
 
-      if (queryNorm.length < 2) {
-        return;
-      }
+      if (queryNorm.length < 2) return;
 
       const matches = [];
 
@@ -272,8 +258,8 @@
       matches.forEach(item => {
         const link = document.createElement("a");
         link.className = "result-card";
-        // Enlace con parámetros para que apuntes.html abra directo este tema
-        link.href = `apuntes.html?asig=${item.asigIdx}&archivo=${encodeURIComponent(item.archivo)}`;
+        // Enlace 100% basado en IDs
+        link.href = `apuntes.html?asig=${encodeURIComponent(item.asigId)}&tema=${encodeURIComponent(item.temaId)}`;
 
         link.innerHTML = `
           <div class="result-header">
