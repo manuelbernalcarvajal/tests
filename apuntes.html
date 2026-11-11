@@ -125,11 +125,11 @@
       margin-bottom: 0.6em;
       color: #111;
       scroll-margin-top: 20px;
-      text-align: left; /* Títulos siempre a la izquierda */
+      text-align: left;
     }
     .markdown-body h1 { border-bottom: 2px solid var(--border); padding-bottom: 6px; }
 
-    /* Justificación exclusiva del contenido de lectura */
+    /* Justificación de texto */
     .markdown-body p,
     .markdown-body li {
       margin-bottom: 1em;
@@ -158,7 +158,7 @@
       .markdown-body { padding: 20px; }
     }
 
-    /* Reglas de impresión limpias */
+    /* Reglas de impresión */
     @media print {
       @page {
         margin: 1.5cm;
@@ -193,10 +193,6 @@
         font-size: 9pt;
         color: #555;
       }
-      .print-header a {
-        color: #555;
-        text-decoration: none;
-      }
       h1, h2, h3 {
         page-break-after: avoid;
       }
@@ -208,14 +204,9 @@
   </style>
 </head>
 <body>
-<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W2NNJXD7"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-</script>
   <header>
     <a href="index.html">← Volver a los Test</a>
+    <a href="search.html">🔍 Buscar</a>
     <select id="select-asignatura">
       <option value="">Selecciona Asignatura...</option>
     </select>
@@ -258,55 +249,60 @@
     const printTitle = document.getElementById("print-title");
     const printUrl = document.getElementById("print-url");
 
-    // Inicializar URL en el encabezado de impresión
-    printUrl.textContent = window.location.href;
-
-    // 1. Cargar asignaturas desde apuntes_config.js
+    // 1. Cargar asignaturas usando asig.id
     if (typeof APUNTES_CONFIG !== "undefined") {
-      APUNTES_CONFIG.forEach((item, idx) => {
+      APUNTES_CONFIG.forEach((item) => {
         const opt = document.createElement("option");
-        opt.value = idx;
+        opt.value = item.id;
         opt.textContent = item.asignatura;
         selAsig.appendChild(opt);
       });
     }
 
-    // 2. Al cambiar asignatura, actualizar selector de temas
+    // 2. Al cambiar asignatura, poblar temas con tema.id
     selAsig.addEventListener("change", () => {
       selTema.innerHTML = '<option value="">Selecciona Tema...</option>';
       tocList.innerHTML = '<li style="color: #888; font-size: 13px;">Carga un tema para ver su índice.</li>';
 
-      const asigIdx = selAsig.value;
-      if (asigIdx === "") {
+      const asigId = selAsig.value;
+      if (!asigId) {
         selTema.disabled = true;
         return;
       }
 
-      const temas = APUNTES_CONFIG[asigIdx].temas;
-      temas.forEach((tema) => {
+      const currentAsig = APUNTES_CONFIG.find(a => a.id === asigId);
+      if (!currentAsig) return;
+
+      currentAsig.temas.forEach((tema) => {
         const opt = document.createElement("option");
-        opt.value = tema.archivo;
+        opt.value = tema.id;
         opt.textContent = tema.titulo;
         selTema.appendChild(opt);
       });
       selTema.disabled = false;
     });
 
-    // 3. Al seleccionar un tema, descargar Markdown y procesar
+    // 3. Al seleccionar un tema, buscar su archivo mediante los dos IDs
     selTema.addEventListener("change", () => {
-      const filePath = selTema.value;
-      if (!filePath) return;
+      const asigId = selAsig.value;
+      const temaId = selTema.value;
+      if (!asigId || !temaId) return;
 
-      const asigText = selAsig.options[selAsig.selectedIndex].text;
-      const temaText = selTema.options[selTema.selectedIndex].text;
+      const currentAsig = APUNTES_CONFIG.find(a => a.id === asigId);
+      const currentTema = currentAsig ? currentAsig.temas.find(t => t.id === temaId) : null;
+      if (!currentTema) return;
 
-      // Actualizar encabezado para cuando se imprima
-      printTitle.textContent = `${asigText} — ${temaText}`;
-      printUrl.textContent = window.location.href;
+      // Actualizar URL del navegador de forma limpia sin recargar
+      const cleanUrl = `${window.location.origin}${window.location.pathname}?asig=${encodeURIComponent(asigId)}&tema=${encodeURIComponent(temaId)}`;
+      window.history.replaceState({}, "", cleanUrl);
+
+      // Encabezado para impresión con la URL limpia basada en IDs
+      printTitle.textContent = `${currentAsig.asignatura} — ${currentTema.titulo}`;
+      printUrl.textContent = cleanUrl;
 
       docContent.innerHTML = "<p>Cargando documento...</p>";
 
-      fetch(filePath)
+      fetch(currentTema.archivo)
         .then(res => {
           if (!res.ok) throw new Error("No se pudo cargar el archivo");
           return res.text();
@@ -321,7 +317,7 @@
         });
     });
 
-    // 4. Extracción automática de títulos (h1, h2, h3) para el TOC pinchable
+    // 4. Extracción automática de títulos para el TOC
     function generarIndiceLateral() {
       tocList.innerHTML = "";
       const headings = docContent.querySelectorAll("h1, h2, h3");
@@ -347,6 +343,21 @@
         tocList.appendChild(li);
       });
     }
+
+    // 5. Carga directa si viene con parámetros ?asig=...&tema=...
+    window.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const asigParam = params.get("asig");
+      const temaParam = params.get("tema");
+
+      if (asigParam && temaParam) {
+        selAsig.value = asigParam;
+        selAsig.dispatchEvent(new Event("change"));
+
+        selTema.value = temaParam;
+        selTema.dispatchEvent(new Event("change"));
+      }
+    });
   </script>
 </body>
 </html>
