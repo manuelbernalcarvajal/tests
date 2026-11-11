@@ -48,7 +48,17 @@ const APUNTES_CONFIG = [
     asignatura: "Derecho Procesal Penal",
     id: "procesalpenal",
     temas: [
-      { id: "001", titulo: "T01: En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "001", titulo: "T01: La incoación del procedimiento /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "002", titulo: "T02: Jurisdicción y competencia en el orden jurisdiccional penal /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "003", titulo: "T03: Las partes en el procedimiento penal. Capacidad, legitimación, representación y defensa /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "004", titulo: "T04: El sumario	 /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "005", titulo: "T05: El procedimiento abreviado. El procedimiento por delitos leves. El procedimiento para el enjuiciamiento rápido de determinados delitos. El procedimiento ante el tribunal del jurado /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "006", titulo: "T06: Los procesos penales especiales	/En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "007", titulo: "T07: La intervención del profesional de la Abogacía en centros policiales y oficinas judiciales /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "008", titulo: "T08: La actuación del profesional de la Abogacía en las distintas fases del proceso penal y en el juzgado de guardia /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "009", titulo: "T09: La prisión y la libertad provisional /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "010", titulo: "T010: El juicio oral en los distintos procesos penales /En proceso", archivo: "apuntes/enproceso.md" },
     ]
   }
 ];
+
