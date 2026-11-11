@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador de Apuntes</title>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --text: #212529;
+      --accent: #0d6efd;
+      --border: #dee2e6;
+      --muted: #6c757d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .top-nav {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .top-nav a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .search-box {
+      background: var(--surface);
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .search-box h1 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    .search-input-wrapper {
+      position: relative;
+    }
+    input[type="search"] {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="search"]:focus {
+      border-color: var(--accent);
+    }
+
+    .status-bar {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .results-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .result-card {
+      background: var(--surface);
+      padding: 18px 22px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border-left: 4px solid var(--accent);
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .result-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .result-asig {
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      background: #e7f1ff;
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .result-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .result-snippet {
+      font-size: 14px;
+      color: #495057;
+      line-height: 1.6;
+    }
+    .result-snippet mark {
+      background-color: #fff3cd;
+      color: #664d03;
+      padding: 0 2px;
+      border-radius: 2px;
+      font-weight: 600;
+    }
+
+    .empty-msg {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-W2NNJXD7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+</script>
+  <div class="container">
+    <nav class="top-nav">
+      <a href="index.html">← Test</a>
+      <a href="apuntes.html">📖 Visor de Apuntes</a>
+    </nav>
+
+    <div class="search-box">
+      <h1>Buscar en Apuntes</h1>
+      <div class="search-input-wrapper">
+        <input type="search" id="search-input" placeholder="Escribe un término (ej. reivindicatoria, posesión, costas)..." disabled>
+      </div>
+      <div class="status-bar">
+        <span id="index-status">Descargando e indexando documentos...</span>
+        <span id="count-matches"></span>
+      </div>
+    </div>
+
+    <div id="results" class="results-list"></div>
+  </div>
+
+  <script src="apuntes_config.js"></script>
+  <script>
+    const searchInput = document.getElementById("search-input");
+    const indexStatus = document.getElementById("index-status");
+    const countMatches = document.getElementById("count-matches");
+    const resultsContainer = document.getElementById("results");
+
+    // Almacén en memoria de todos los temas
+    let documentsStore = [];
+
+    // Limpia tildes y diacríticos para búsqueda permisiva
+    function normalizar(texto) {
+      return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    }
+
+    // 1. Descargar todos los .md en paralelo usando apuntes_config.js
+    async function indexarApuntes() {
+      if (typeof APUNTES_CONFIG === "undefined" || !APUNTES_CONFIG.length) {
+        indexStatus.textContent = "No se encontró configuración en apuntes_config.js";
+        return;
+      }
+
+      const descargas = [];
+
+      APUNTES_CONFIG.forEach((asig, asigIdx) => {
+        asig.temas.forEach(tema => {
+          descargas.push(
+            fetch(tema.archivo)
+              .then(res => res.ok ? res.text() : "")
+              .then(contenido => ({
+                asigNombre: asig.asignatura,
+                asigIdx: asigIdx,
+                temaId: tema.id,
+                temaTitulo: tema.titulo,
+                archivo: tema.archivo,
+                rawText: contenido,
+                normText: normalizar(contenido)
+              }))
+              .catch(() => null)
+          );
+        });
+      });
+
+      const docs = await Promise.all(descargas);
+      documentsStore = docs.filter(d => d && d.rawText.trim().length > 0);
+
+      indexStatus.textContent = `${documentsStore.length} temas indexados y listos.`;
+      searchInput.disabled = false;
+      searchInput.focus();
+    }
+
+    // 2. Extraer un fragmento con el término y marcarlo con <mark>
+    function generarSnippet(rawText, normText, queryNorm, rawQuery) {
+      const idx = normText.indexOf(queryNorm);
+      if (idx === -1) return "";
+
+      const start = Math.max(0, idx - 65);
+      const end = Math.min(rawText.length, idx + queryNorm.length + 80);
+
+      let snippet = (start > 0 ? "... " : "") + rawText.substring(start, end).replace(/\n+/g, " ") + (end < rawText.length ? " ..." : "");
+
+      // Resaltado conservando mayúsculas/minúsculas originales
+      const regex = new RegExp(`(${rawQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+      return snippet.replace(regex, "<mark>$1</mark>");
+    }
+
+    // 3. Ejecutar búsqueda
+    function ejecutarBusqueda() {
+      const query = searchInput.value.trim();
+      const queryNorm = normalizar(query);
+
+      resultsContainer.innerHTML = "";
+      countMatches.textContent = "";
+
+      if (queryNorm.length < 2) {
+        return;
+      }
+
+      const matches = [];
+
+      documentsStore.forEach(doc => {
+        const matchContenido = doc.normText.indexOf(queryNorm) !== -1;
+        const matchTitulo = normalizar(doc.temaTitulo).indexOf(queryNorm) !== -1;
+
+        if (matchContenido || matchTitulo) {
+          const snippet = matchContenido 
+            ? generarSnippet(doc.rawText, doc.normText, queryNorm, query)
+            : "Coincidencia encontrada en el título del tema.";
+
+          matches.push({
+            ...doc,
+            snippet
+          });
+        }
+      });
+
+      countMatches.textContent = `${matches.length} tema(s) encontrado(s)`;
+
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron coincidencias para "<strong>${query}</strong>".</div>`;
+        return;
+      }
+
+      matches.forEach(item => {
+        const link = document.createElement("a");
+        link.className = "result-card";
+        // Enlace con parámetros para que apuntes.html abra directo este tema
+        link.href = `apuntes.html?asig=${item.asigIdx}&archivo=${encodeURIComponent(item.archivo)}`;
+
+        link.innerHTML = `
+          <div class="result-header">
+            <span class="result-asig">${item.asigNombre}</span>
+            <span class="result-title">${item.temaTitulo}</span>
+          </div>
+          <div class="result-snippet">${item.snippet}</div>
+        `;
+        resultsContainer.appendChild(link);
+      });
+    }
+
+    searchInput.addEventListener("input", ejecutarBusqueda);
+    indexarApuntes();
+  </script>
+</body>
+</html>
