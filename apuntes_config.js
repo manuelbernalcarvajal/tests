@@ -61,4 +61,3 @@ const APUNTES_CONFIG = [
     ]
   }
 ];
-
