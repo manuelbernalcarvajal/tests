@@ -49,7 +49,7 @@ const APUNTES_CONFIG = [
     id: "procesalpenal",
     temas: [
       { id: "001", titulo: "T01: La incoación del procedimiento /En proceso", archivo: "apuntes/enproceso.md" },
-      { id: "002", titulo: "T02: Jurisdicción y competencia en el orden jurisdiccional penal /En proceso", archivo: "apuntes/enproceso.md" },
+      { id: "002", titulo: "T02: Jurisdicción y competencia en el orden jurisdiccional penal /iniciado", archivo: "apuntes/procesalpenal/002.md" },
       { id: "003", titulo: "T03: Las partes en el procedimiento penal. Capacidad, legitimación, representación y defensa /En proceso", archivo: "apuntes/enproceso.md" },
       { id: "004", titulo: "T04: El sumario	 /En proceso", archivo: "apuntes/enproceso.md" },
       { id: "005", titulo: "T05: El procedimiento abreviado. El procedimiento por delitos leves. El procedimiento para el enjuiciamiento rápido de determinados delitos. El procedimiento ante el tribunal del jurado /En proceso", archivo: "apuntes/enproceso.md" },
