@@ -1,0 +1,244 @@
+# GUÍA METODOLÓGICA PARA LA RESOLUCIÓN DE CASOS PRÁCTICOS DE DERECHO CIVIL (MÁSTER EN ABOGACÍA Y PROCURA)
+
+Esta guía está diseñada a partir del material docente y los criterios de corrección del área de Derecho Civil de la Universidad de Cádiz (UCA). Su objetivo es proporcionarte una hoja de ruta exacta, paso a paso, sobre cómo enfrentarte a cualquier supuesto práctico de los tres bloques temáticos del módulo, qué preceptos legales buscar inmediatamente y cómo estructurar e interpretar tu respuesta jurídica.
+
+---
+
+## METODOLOGÍA GENERAL: ¿CÓMO ESTRUCTURAR CUALQUIER RESPUESTA?
+
+En los casos prácticos del Máster no basta con responder «sí» o «no»; se evalúa la capacidad de argumentación y subsunción jurídica. Para obtener la máxima calificación, estructura siempre cada respuesta siguiendo este esquema en cuatro pasos:
+
+1. **Identificación de los hechos clave:** Extrae del enunciado las fechas (cruciales para plazos y transitoriedad normativa), la condición de los sujetos (profesional o consumidor, cónyuges) y los importes o cláusulas literales.
+2. **Normativa y jurisprudencia aplicable:** Cita el artículo exacto de la ley especial (TRLCU, LCGC) o general (CC, LEC) y acompáñalo del criterio del Tribunal Supremo (TS) o del Tribunal de Justicia de la Unión Europea (TJUE).
+3. **Subsunción e interpretación (el «porqué»):** Explica cómo encaja el hecho del enunciado en la norma citada (ej. «Dado que el préstamo se destinó en un 85 % a fines empresariales, no concurre el presupuesto subjetivo del art. 3 TRLCU...»).
+4. **Conclusión directa:** Responde de forma clara a la pregunta formulada (si la cláusula es nula, si la demanda será estimada total o parcialmente, o en qué partida del inventario se incluye el bien).
+
+---
+
+## BLOQUE I: CLÁUSULAS ABUSIVAS Y CONTROL DE TRANSPARENCIA
+
+Cuando te enfrentes a un caso sobre condiciones generales o cláusulas en contratos bancarios, de compraventa o de servicios, debes aplicar un filtro secuencial de 5 pasos. Si el caso falla en el Paso 1 o 2, no puedes aplicar la normativa de cláusulas abusivas del TRLCU.
+
+### PASO 1: Examen del Presupuesto Subjetivo (¿Hay un consumidor?)
+
+Antes de analizar la cláusula, mira quiénes contratan. El control de abusividad y de transparencia material en España está reservado exclusivamente a contratos entre un empresario y un consumidor.
+
+* **Artículos a consultar:** Arts. 3 y 4 del TRLCU (Texto Refundido de la Ley General para la Defensa de los Consumidores y Usuarios, RDLeg 1/2007) y art. 8.2 de la LCGC (Ley 7/1998, sobre Condiciones Generales de la Contratación).
+* **Cómo interpretar cada caso especial de examen:**
+  1. **Regla general (Art. 3.1 y 3.2 TRLCU):** Es consumidor la persona física que actúa con un propósito ajeno a su actividad comercial, empresarial, oficio o profesión, así como las personas jurídicas y entidades sin personalidad jurídica (ej. una comunidad de propietarios) que actúen sin ánimo de lucro y fuera de una actividad empresarial.
+  2. **Contratos con doble finalidad o «actos mixtos» (STS 224/2017, de 5 de abril):** Si el sujeto pide un préstamo hipotecario sobre su vivienda familiar pero usa el dinero también para un negocio (ej. construir habitaciones para alquilar), aplica el **criterio del propósito predominante**: solo es consumidor si el destino empresarial es marginal o no predomina en el contexto general del contrato. Si predomina el fin de negocio, es empresario y no se le protege frente a cláusulas abusivas (solo le ampara el control formal de incorporación de los arts. 5 y 7 LCGC y las reglas generales de los arts. 6.3 y 1255 CC).
+  3. **El consumidor con perfil cualificado (empleado o directivo de banca):**
+     * **¿Es consumidor?** Sí, si pide el préstamo para su vivienda habitual actúa fuera de su oficio (art. 3.1 TRLCU).
+     * **¿Afecta su profesión al control de transparencia?** Depende de su cargo concreto:
+       * Si es un simple empleado de otro banco en tareas administrativas ajenas a préstamos con suelo (STS 642/2017), no se presume que conozca la cláusula y esta se declara nula si no hubo información precontractual.
+       * Si es el director de la misma sucursal prestamista que comercializa esas hipotecas (STS 487/2022) o en la negociación interviene decisivamente su padre como fiador habiendo sido subdirector de esa misma entidad meses antes (STS 605/2019), el TS entiende que tenía conocimiento real y cabal de la carga económica: la cláusula supera el control de transparencia y es válida.
+  4. **El fiador o garante persona física de una deuda de empresa (ATJUE 19/11/2015, Caso Tarcău):** Aunque el préstamo principal sea a una sociedad mercantil, el fiador persona física sí es consumidor si reúne dos requisitos acumulativos:
+     * Actúa con un propósito ajeno a su actividad profesional.
+     * Carece de vínculos funcionales con la sociedad deudora (no es administrador/gerente ni tiene una participación significativa en el capital social).
+
+### PASO 2: Examen del Presupuesto Objetivo (¿Es una cláusula no negociada?)
+
+* **Artículos a consultar:** Art. 1.1 de la LCGC y art. 82.1 y 82.2 del TRLCU (y art. 3.2 Directiva 93/13/CEE).
+* **Cómo interpretar:** Comprueba que se trata de una cláusula redactada previamente e impuesta por el empresario sin que el consumidor haya podido influir en su contenido. Recuerda que la carga de probar que una cláusula se negoció individualmente recae siempre sobre el empresario (art. 82.2 *in fine* TRLCU).
+
+### PASO 3: Clasificación de la Cláusula (¿Elemento esencial o cláusula accesoria?)
+
+Esta distinción es la llave maestra del caso práctico porque determina qué control debes aplicar:
+
+* **Opción A: Cláusulas que definen el objeto principal del contrato o el precio/retribución.** Ejemplos en el temario: la cláusula suelo (interés remuneratorio mínimo), el índice IRPH, o el pacto de solidaridad / renuncia a los beneficios de orden, excusión y división en la fianza.
+  * **Regla (Art. 4.2 Directiva 93/13/CEE):** No se puede controlar judicialmente si el precio es caro o barato (equilibrio económico objetivo), salvo que la cláusula no sea transparente. Por tanto, aquí debes aplicar primero el **Control de Transparencia Material**.
+* **Opción B: Cláusulas accesorias o secundarias.** Ejemplos en el temario: redondeo al alza, intereses de demora, vencimiento anticipado, gastos hipotecarios, impuesto de plusvalía, sumisión expresa.
+  * **Regla:** Van directamente al **Control de Contenido o Abusividad** (arts. 82 y 85 a 90 TRLCU).
+
+### PASO 4: Aplicación de los Controles (Incorporación, Transparencia y Contenido)
+
+#### 1. Control de Incorporación o Inclusión (Transparencia formal)
+Se aplica a todo adherente (sea consumidor o empresario).
+* **Artículos:** Arts. 5 y 7 LCGC y art. 80.1.a) y b) TRLCU.
+* **Interpretación:** Verifica entrega previa, aceptación (firma) y legibilidad física y comprensibilidad gramatical (letra no inferior a 2.5 mm, interlineado no inferior a 1.15 mm).
+
+#### 2. Control de Transparencia Material (Solo para elementos esenciales con consumidores)
+Desarrollado a partir de la emblemática STS 241/2013, de 9 de mayo. Exige que el consumidor comprenda la carga económica y jurídica real de la cláusula en el desarrollo del contrato. ¡Atención a la diferencia crucial entre Cláusula Suelo e IRPH!
+
+* **Si el caso es de CLÁUSULA SUELO:**
+  * **¿Cómo supera la transparencia?** Mediante simulaciones de escenarios de evolución de tipos, información precontractual clara sobre el coste comparativo, ubicación destacada (sin enmascararla entre datos abrumadores) o advertencia notarial específica (SSTS 9/5/2013 y 9/3/2017).
+  * **¿Qué pasa si NO supera la transparencia?** En la cláusula suelo, la falta de transparencia conlleva directamente la abusividad y la nulidad de pleno derecho (arts. 83 TRLCU y 5.4 LCGC), porque introduce subrepticiamente un elemento engañoso que convierte un interés aparentemente variable en un mínimo fijo, alterando el equilibrio subjetivo entre precio y prestación.
+* **Si el caso es de ÍNDICE IRPH (STJUE 3/3/2020 y STS 595/2020, de 12 de noviembre):**
+  * **1.º Examen de transparencia:** La fórmula de cálculo siempre es comprensible porque se publica en el BOE, pero suele fallar el control de transparencia si el banco no informó de la evolución pasada del IRPH durante los 2 años anteriores.
+  * **2.º Examen de abusividad:** A diferencia de la cláusula suelo, en el IRPH la falta de transparencia **NO provoca la nulidad directa**, sino que simplemente abre la puerta a realizar el juicio de abusividad del art. 82.1 TRLCU. Y al hacer ese juicio, el TS concluye que **NO es abusiva (y por tanto es VÁLIDA)** porque: a) no es contraria a la buena fe ofrecer un índice oficial regulado por el Banco de España y usado por la Administración en viviendas protegidas (VPO); y b) no hay desequilibrio importante en el momento de contratar (la evolución futura respecto al Euríbor es irrelevante). *(Ojo: si la cláusula de IRPH lleva añadido un «redondeo por exceso», el IRPH es válido pero el redondeo es nulo por abusivo).*
+* **Si el caso es de NOVACIÓN de cláusula suelo y RENUNCIA DE ACCIONES (STJUE 9/7/2020 y SSTS 489/2018 y 589/2020):**
+  * La **novación** (bajar o eliminar el suelo o pasar a tipo fijo) es válida si fue negociada o si fue transparente (el cliente entendió el cambio económico).
+  * La **renuncia a reclamar** redactada de forma genérica y predispuesta («renuncia a reclamar por cualquier concepto...») es nula por falta de transparencia si el banco no informó al consumidor de la cuantía exacta de dinero a la que estaba renunciando. **Consecuencia:** Vale el nuevo interés pactado a partir de la novación, pero se anula el suelo original y el banco debe devolver todo lo cobrado desde el inicio hasta la fecha de la novación.
+
+#### 3. Control de Contenido o de Abusividad (Cláusula general y Listas de los arts. 85 a 90 TRLCU)
+* **Regla general (Art. 82.1 y 82.3 TRLCU):** Es abusiva toda estipulación no negociada que, en contra de las exigencias de la buena fe, cause en perjuicio del consumidor un desequilibrio importante de los derechos y obligaciones de las partes, valorado al momento de celebrar el contrato.
+* **Cómo resolver los supuestos específicos de la «Lista Negra / Gris» de tu documento:**
+
+| Supuesto práctico | Artículos a citar | Criterio de interpretación y solución |
+| :--- | :--- | :--- |
+| **Redondeo al alza** | Arts. 82.1 y 87.5 TRLCU | **Nula por abusiva** (STS 75/2011). Es cláusula accesoria que altera unilateralmente el precio sin reciprocidad en beneficio exclusivo del banco. |
+| **Sumisión expresa** | Art. 54.2 LEC y Art. 90.2 TRLCU | **Nula por abusiva (Lista negra).** En contratos negociados vale (art. 55 LEC), pero con consumidores es nula imponer un fuero distinto al domicilio del consumidor o lugar de cumplimiento. Apreciable de oficio (STJUE 27/6/2000). |
+| **Impuesto de Plusvalía (IIVTNU)** | Art. 1455 CC vs Art. 89.3.c) TRLCU | **Nula por abusiva (Lista negra**, SSTS 842/2011 y 22/10/2014). En ventas negociadas cabe pactarlo (art. 1455 CC), pero con consumidores es abusivo imponer al comprador un tributo cuyo sujeto pasivo legal es el vendedor/promotor. |
+| **Intereses de demora excesivos** | Art. 85.6 TRLCU | **Nula por abusiva** cuando el interés moratorio supere en más de **2 puntos** porcentuales el interés remuneratorio pactado (SSTS 22/4/2015 y 671/2018). |
+| **Vencimiento anticipado** | Art. 85.4 y 87 TRLCU vs Art. 1124 CC | **Lista gris (requiere ponderación):** **1. Como condición general abstracta:** Es nula por abusiva si permite resolver el préstamo por el impago de una sola cuota sin modular la gravedad en función de la duración y cuantía (STS 463/2019). **2. En juicio declarativo ordinario por impago real y grave:** Si el deudor deja de pagar muchas cuotas (ej. 18 cuotas), el banco sí gana la demanda ejercitando la acción resolutoria legal del art. 1124 CC (STS 1175/2025). |
+| **Gastos de constitución de hipoteca** | Art. 89.3 TRLCU y Art. 14 Ley 5/2019 | **Es nula por abusiva** la cláusula que impone todos los gastos al prestatario. Para devolver el dinero, mira la fecha de la escritura: **- Antes de la Ley 5/2019 (jurisprudencia TS):** Notaría (50 % banco / 50 % cliente); Registro (100 % banco); Gestoría (100 % banco); Tasación (100 % banco); IAJD (100 % cliente hasta la reforma de nov. 2018). **- Con la Ley 5/2019 (LCCI):** El banco paga Notaría, Registro, Gestoría e IAJD (art. 29 TRLITPAJD). El cliente solo paga la Tasación (y sus copias). |
+| **Fianza con renuncia a excusión, división y orden** | Arts. 1826, 1831 y 1853 CC | **Es VÁLIDA** si supera el control de transparencia (SSTS 56/2020 y 685/2022). No obliga a más que al deudor principal, sino que define la naturaleza de la fianza solidaria. |
+
+### PASO 5: Sanción, Efectos Restitutorios y Prescripción
+
+1. **Nulidad parcial y prohibición de integración (Art. 83 TRLCU y Art. 8.2 LCGC):** La cláusula abusiva o no transparente es nula de pleno derecho y se tiene por no puesta, subsistiendo el resto del contrato. El juez no puede moderar ni reducir la cláusula nula (por ejemplo, si el interés de demora del 25 % es nulo, no se reduce, sino que se elimina por completo el recargo moratorio y el préstamo sigue devengando únicamente el interés remuneratorio ordinario).
+2. **Restitución íntegra (*ex tunc*) e intereses (Art. 1303 CC y STJUE 21/12/2016):** La nulidad obliga al empresario a devolver todas las cantidades cobradas de más desde el inicio del contrato (retroactividad total, STS 123/2017), más los intereses legales devengados desde cada cobro.
+3. **Préstamos ya extinguidos e imprescriptibilidad:**
+   * Que el préstamo hipotecario ya esté totalmente pagado y cancelado no impide demandar la nulidad y restitución (STS 12/12/2019).
+   * **Prescripción (STJUE 25/4/2024 y STS Pleno 857/2024, de 14 de junio):** La acción para declarar la nulidad es imprescriptible. La acción para pedir la restitución de las cantidades prescribe a los **5 años** (art. 1964.2 CC), pero el plazo (*dies a quo*) no empieza a correr hasta que sea firme la sentencia que declare la nulidad de la cláusula (salvo que el banco pruebe que ese consumidor concreto ya conocía antes su abusividad).
+
+---
+
+## BLOQUE II: GARANTÍAS Y SERVICIOS POSVENTA EN LA CONTRATACIÓN CON CONSUMIDORES
+
+Todos los casos de este bloque giran en torno al Título IV del Libro II del TRLCU (arts. 114 a 127 bis). Para resolverlos sin equivocarte, sigue este orden de comprobación en 5 pasos:
+
+### PASO 1: ¿Entra el contrato en el Título IV del TRLCU? (Ámbitos y Exclusiones)
+
+Lo primero que buscan las preguntas trampa del examen es ver si sabes detectar cuándo **NO** se aplica el TRLCU:
+
+1. **Comprobación Subjetiva (Arts. 3, 4 y 59.1 TRLCU):**
+   * ¿Es un contrato entre un empresario y un consumidor (B2C)?
+   * **Trampa 1 (Compraventa entre particulares - C2C):** Si un particular vende un coche usado a otro particular en una plataforma web, **NO se aplica el TRLCU**. Debes aplicar el saneamiento por vicios ocultos del Código Civil (arts. 1484 a 1490 CC), cuya acción redhibitoria (resolver) o *quanti minoris* (rebajar precio) caduca a los **6 meses** desde la entrega (art. 1490 CC). Si ya pasaron los 6 meses (ej. avería al mes 8), la acción ha caducado y solo cabría invocar incumplimiento pleno (*aliud pro alio*, art. 1124 CC, prescripción de **5 años** *ex* art. 1964.2 CC) si el bien es totalmente inhábil para su fin.
+   * **Trampa 2 (Uso mixto profesional/personal):** Cita la STJUE de 20/1/2005 (Caso Gruber) y el art. 3 TRLCU. Si un abogado usa el portátil un 15 % en el despacho y un 85 % en casa para ocio, el uso profesional es claramente marginal, por lo que sí es consumidor y tiene 3 años de garantía.
+2. **Comprobación Objetiva (Arts. 59 bis, 59.4 y 114.1 TRLCU):**
+   * Se aplica a **bienes muebles corporales** (art. 335 CC), incluidos:
+     * **Bienes muebles que luego se instalan en un inmueble** (ej. comprar cajas de azulejos en un almacén y pegarlos en casa). ¡Ojo!: como se vendieron como muebles sueltos, sí rige el TRLCU (y la garantía cubre desinstalar los rotos e instalar los nuevos, STJUE Weber). Solo se excluiría si se compró la casa entera ya construida.
+     * **Bienes que hayan de producirse o fabricarse (contratos de obra sobre muebles, art. 114.1 TRLCU):** Ej. encargar una mesa a medida a un ebanista. Rige el TRLCU incluso aunque el consumidor aporte los materiales (ej. la madera).
+     * **Bienes con elementos digitales (art. 59 bis.1.a TRLCU):** Ej. un SmartWatch que necesita su app para funcionar.
+     * **Contenidos y servicios digitales (art. 59 bis.1.d y o TRLCU):** E-books, software, apps. ¡Muy importante! (Art. 59.4 y 114.1 TRLCU): Rige la garantía legal aunque la app sea «gratuita» en dinero, si a cambio el consumidor **cede sus datos personales** con fines comerciales o publicitarios.
+3. **Exclusiones expresas (Art. 114.2 TRLCU):** Memoriza estas tres porque salen directamente en las actividades:
+   * **Animales vivos (art. 114.2.a TRLCU):** Ej. compra de un perro en un criadero con displasia. Queda excluido del TRLCU; se rige por los arts. 1491 a 1499 CC (plazo de caducidad de solo **40 días** desde la entrega, art. 1496 CC).
+   * **Bienes de segunda mano adquiridos en subasta administrativa** a la que el consumidor pueda asistir personalmente (art. 114.2.b TRLCU): Ej. coche subastado por la Agencia Tributaria. Excluido del TRLCU.
+   * **Servicios no digitales prestados por medios electrónicos (art. 114.2.c/d TRLCU):** Ej. abogado que envía un dictamen por e-mail. Es un servicio profesional intelectual, no un servicio digital. Excluido.
+
+### PASO 2: Identificar la «Falta de Conformidad» (Arts. 115 a 115 quater y 117 TRLCU)
+
+Para que responda el empresario, el defecto debe existir en el momento de la entrega (defecto originario, no por mal uso posterior ni desgaste normal, art. 117 TRLCU) y vulnerar alguno de los requisitos legales:
+
+* **Requisitos subjetivos y objetivos (Arts. 115 bis y 115 ter TRLCU):** Adecuación a la descripción, calidad, funcionalidad habitual, o falta de un capítulo en un e-book.
+* **Falta de actualizaciones en bienes con elementos digitales (Arts. 115 bis.1.d y 115 ter.2 TRLCU):** Si el fabricante de un SmartWatch deja de enviar actualizaciones necesarias para que sincronice con el móvil dentro de los 3 años, hay falta de conformidad.
+* **Instalación incorrecta (Art. 115 quater TRLCU):** Es falta de conformidad tanto si la instala mal el vendedor (estando incluido en el contrato, letra a), como si la instala mal el consumidor por un error en las instrucciones del folleto (letra b).
+* **Carácter imperativo (Art. 10 TRLCU):** La garantía legal nace *ex lege* (no hace falta que figure en el contrato) y cualquier renuncia previa del consumidor es nula de pleno derecho.
+
+### PASO 3: El «Triple Reloj» de los Plazos Legales (¡Clave para los casos prácticos!)
+
+En todos los casos de averías con fechas, debes separar siempre estos tres plazos distintos:
+
+> **ECUACIÓN 1 (Plazos de Garantía y Presunción):**
+> **[Entrega del bien]** ─── *(1. Plazo de Presunción: Art. 121)* ───► **[Fin Presunción]** ─── *(2. Plazo de Manifestación: Art. 120)* ───► **[Fin Garantía]**
+>
+> **ECUACIÓN 2 (Plazo de Prescripción para demandar):**
+> **[Momento en que aparece la avería]** ─── *(3. Plazo de Prescripción de la Acción: 5 años, Art. 124)* ───► **[Límite para demandar]**
+
+| Tipo de Plazo | Bienes Muebles Nuevos | Bienes de 2.ª Mano | Contenidos o Servicios Digitales (acto único) | ¿Para qué sirve y cómo se interpreta? |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Plazo de Manifestación (Art. 120.1 TRLCU)** | **3 años** desde la entrega | **3 años**, pero admite pacto de reducción a mínimo **1 año** | **2 años** desde el suministro | Es el periodo de garantía dentro del cual tiene que aparecer la avería. Si aparece dentro de este plazo, está en garantía. (En suministro continuo de datos/servicios digitales, dura toda la vigencia del contrato, y si es bien con elementos digitales, mínimo **3 años**, art. 120.2). |
+| **2. Presunción de Preexistencia (Art. 121.1 TRLCU)** | **2 años** desde la entrega | **2 años** (cubre todo el año si se pactó 1 año de garantía) | **1 año** desde el suministro | Determina quién tiene que pagar el perito (carga de la prueba, art. 217 LEC): **- Si el fallo sale DENTRO de este plazo:** Se presume *iuris tantum* que venía de fábrica. El consumidor no tiene que probar el origen; es el vendedor quien debe probar que fue por mal uso o desgaste. **- Si el fallo sale DESPUÉS (ej. en el 3.er año en muebles o 2.º año en digitales):** Sigue en garantía (art. 120), pero cesa la presunción; ahora el consumidor debe probar (con perito) que el defecto era de origen. |
+| **3. Prescripción de la Acción (Art. 124 TRLCU)** | **5 años** desde que se manifestó la avería | **5 años** desde que se manifestó la avería | **5 años** desde que se manifestó la avería | Tiempo que tiene el consumidor para presentar la demanda judicial una vez que el defecto ya dio la cara dentro del plazo de garantía. |
+
+### PASO 4: Los Remedios del Consumidor y su Jerarquía (Arts. 117 a 119 ter TRLCU)
+
+Cuando hay falta de conformidad, aplica las reglas de los remedios en dos niveles:
+
+1. **Remedios de Primer Nivel: Puesta en conformidad mediante Reparación o Sustitución (Art. 118 TRLCU).**
+   * **¿Quién elige?** Elige el consumidor entre reparación o sustitución, salvo que la opción elegida sea imposible (ej. sustituir un coche de segunda mano, al ser un bien específico y no fungible) o suponga costes desproporcionados para el empresario frente a la otra opción (ej. pedir un coche nuevo de 35.000 € porque se ha fundido un fusible de 15 €: es desproporcionado y abuso de derecho *ex* art. 7.2 CC, por lo que solo procede reparar).
+   * **Regla de Gratuidad Absoluta (Art. 118.4.a TRLCU):** Es ilegal que el vendedor cobre nada por gastos de envío, portes, mano de obra, materiales o «diagnóstico pericial» estando en garantía.
+   * **Derecho a suspender el pago (Art. 117.1.2.º TRLCU):** El consumidor puede retener los plazos pendientes del precio hasta que le arreglen el bien.
+2. **Remedios de Segundo Nivel: Reducción del precio o Resolución del contrato (Arts. 119 a 119 ter TRLCU).**
+   * **¿Cuándo puede pasar el consumidor al segundo nivel? (Art. 119 TRLCU):** El vendedor no tiene derecho a infinitos intentos de reparación. El consumidor puede exigir directamente rebaja del precio o resolución (devolver el bien y recuperar el dinero) cuando:
+     * La reparación/sustitución sea imposible o desproporcionada.
+     * El vendedor no repare en un plazo razonable o sin mayores inconvenientes (ej. retener una bici 5 meses).
+     * Reaparezca cualquier falta de conformidad después de un intento de reparación (ej. coche usado o bicicleta que vuelve a fallar tras salir del taller).
+     * El defecto sea de tal gravedad que justifique resolver de inmediato.
+   * **Límite a la resolución (Art. 119 ter TRLCU):** No procede resolver si la falta de conformidad es de escasa importancia (corresponde al empresario probar que es leve), **SALVO** que el consumidor haya contratado a cambio de facilitar sus datos personales (en cuyo caso sí puede resolver aunque el fallo sea leve).
+   * **Indemnización de daños y perjuicios (Art. 117.1 TRLCU):** Es acumulable a cualquiera de los remedios si se acreditan daños adicionales.
+
+### PASO 5: Sujetos Responsables y Garantía Comercial (Arts. 125 a 127 bis TRLCU)
+
+* **¿Contra quién se reclama? (Art. 117 y 125 TRLCU):** Por regla general, responde el vendedor/empresario. Pero si al consumidor le resulta imposible o una carga excesiva dirigirse al vendedor (ej. la tienda de barrio ha cerrado y se ha extinguido), el art. 125.1 TRLCU le permite reclamar directamente al **productor/fabricante** la reparación o sustitución. Quien responda tiene **1 año** para repetir contra el culpable en la cadena (art. 125.2 TRLCU).
+* **Repuestos y servicio técnico (Art. 127 bis TRLCU):** El productor debe garantizar repuestos y servicio técnico durante **10 años** desde que el bien deje de fabricarse.
+* **Garantía comercial (Art. 127 TRLCU):** Es un compromiso voluntario y adicional (ej. los 7 años de KIA) que obliga al garante en los términos establecidos en la declaración de garantía y en la publicidad.
+
+---
+
+## BLOQUE III: LIQUIDACIÓN DE LA SOCIEDAD DE GANANCIALES
+
+Los casos prácticos de este bloque (como los de Pepa y Juan o Raquel y Luis) consisten en calificar una lista de bienes y gastos, elaborar el Inventario (Activo y Pasivo) y calcular la adjudicación de lotes al 50 %. Sigue rigurosamente estos 5 pasos:
+
+### PASO 1: Determinar el Régimen Aplicable y las Fechas Clave
+
+* Si el matrimonio se celebra en territorio de Derecho común (ej. Cádiz, Jerez) y no hay capitulaciones matrimoniales, rige el régimen legal supletorio de la **sociedad de gananciales** desde el día de la boda (arts. 1316 y 1345 CC) hasta su disolución (por divorcio, nulidad, separación legal o capítulos *ex* art. 1392 CC, o judicialmente *ex* art. 1393 CC).
+* **Fija la fecha exacta de la boda:** Todo lo comprado al contado antes de esa fecha es privativo (art. 1346.1.º CC) y queda fuera del inventario ganancial (ej. una casa de campo comprada al contado por los novios dos años antes de casarse es un pro indiviso ordinario extraganancial entre ellos, no entra en el inventario de gananciales).
+
+### PASO 2: Calificar cada Partida y Detectar los Reembolsos/Reintegros
+
+Debes leer cada punto del enunciado haciéndote siempre dos preguntas:
+1. **¿De quién es la titularidad del bien?** (¿Privativo, ganancial o mixto en pro indiviso?).
+2. **¿Con qué dinero se pagó?** Si un bien privativo se pagó con dinero ganancial (como el sueldo), o un bien/gasto ganancial se pagó con dinero privativo (como una herencia), nace automáticamente un **derecho de reembolso o reintegro actualizado** al momento de la liquidación (art. 1358 CC).
+
+Aquí tienes la tabla maestra de todos los supuestos que aparecen en tus casos prácticos:
+
+| 1. Supuesto de hecho en el enunciado | Artículos del CC a citar | Calificación del Bien | 2. ¿Qué entra en el ACTIVO o PASIVO del Inventario Ganancial? |
+| :--- | :--- | :--- | :--- |
+| **Vivienda familiar comprada a plazos (hipoteca) ANTES de casarse, pagando cuotas durante el matrimonio con el sueldo.** | Arts. 1357.2 y 1354 CC (y STS 465/2016) | **Pro indiviso (Mixto)** entre el cónyuge y la sociedad de gananciales según el % pagado por cada uno. | En el **ACTIVO** (art. 1397.1.º) entra el porcentaje del valor actual de la vivienda que se haya pagado con dinero ganancial constante matrimonio (ej. si pagó 1/3 o el 90 % durante el matrimonio, entra ese % del valor actual). |
+| **Otro bien (ej. casa en la playa, coche) comprado a plazos ANTES de casarse, pagando la hipoteca después de casado con el sueldo.** | Arts. 1357.1 y 1358 CC | **100 % Privativo** del cónyuge que lo compró antes de casarse (no es vivienda familiar). | El bien no entra, pero como se pagó con sueldo (ganancial *ex* art. 1347.1.º), entra en el **ACTIVO** (art. 1397.3.º) un crédito de la sociedad contra ese cónyuge por el importe actualizado de lo pagado constante matrimonio. |
+| **Bien comprado durante el matrimonio mitad con dinero de herencia y mitad con el sueldo (o a plazos constante matrimonio).** | Art. 1354 CC (al contado) / Art. 1356 CC (a plazos) | En compra mixta (1354) es **pro indiviso**; si es local privativo pagado en parte con sueldo, genera reembolso. | Si se califica como bien privativo pagado parcialmente con sueldo, entra en el **ACTIVO** (art. 1397.3.º) un crédito de la sociedad contra el cónyuge por la parte pagada con su sueldo (actualizada). |
+| **Herencia, donación o regalo de los padres (piso heredado, coche regalado a uno de ellos, dinero por Reyes o ayuda mensual del padre).** | Art. 1346.2.º y 3.º CC | **100 % Privativo** del cónyuge que lo recibe (y también lo que compre con ese dinero por subrogación real, ej. una TV). | No entra nada en el inventario ganancial. (Excepción: si invierte ese dinero privativo en arreglar la vivienda familiar o pagar un viaje/crucero de ambos, es una carga familiar del art. 1362.1.ª CC y nace en el **PASIVO** [art. 1398.3.ª] una deuda de la sociedad a favor de ese cónyuge). |
+| **Sueldos, nóminas, honorarios profesionales e indemnización por despido (y cuentas donde se ingresan).** | Art. 1347.1.º CC | **100 % Ganancial** (aunque solo trabaje uno de los cónyuges, art. 1344 CC). | Entra el saldo íntegro o los fondos de inversión en el **ACTIVO** (art. 1397.1.º). |
+| **Préstamo que un cónyuge hizo antes de casarse y que le devuelven durante el matrimonio con intereses.** | Arts. 1346.1.º, 1348 y 1347.2.º CC | El capital principal devuelto es **Privativo** (art. 1348). Los intereses son **Gananciales** (art. 1347.2.º). | Solo entran en el **ACTIVO** (art. 1397.1.º) los intereses generados durante el matrimonio. |
+| **Indemnización por accidente de tráfico sufrida por un cónyuge.** | Art. 1346.6.º CC (y STS 26/12/2005) | **100 % Privativa** del accidentado (aunque la ingrese en cuenta común o ponga al otro como autorizado). | El capital de la indemnización no entra en el activo. Solo son gananciales los intereses que produzca el depósito (art. 1347.2.º) y, si gastó parte en un viaje familiar, entra esa parte en el **PASIVO** (art. 1398.3.ª) como crédito a su favor. |
+| **Construcción de una casa con dinero común sobre un solar heredado (privativo) por uno de los cónyuges.** | Art. 1359.1 CC | Tanto el solar como la casa construida son **Privativos** del dueño del solar (accesión). | Entra en el **ACTIVO** (art. 1397.3.º) un crédito de la sociedad contra el cónyuge dueño del solar por el aumento de valor (plusvalía) que experimente el inmueble (**[Valor solar con casa] − [Valor solar solo]**). |
+| **Bien comprado con dinero privativo pero escriturado conjuntamente a nombre de ambos para la sociedad.** | Arts. 1355 y 1361 CC | **100 % Ganancial** por atribución voluntaria de ganancialidad. | Entra el bien por su valor actual en el **ACTIVO** (art. 1397.1.º) (y derecho de reembolso salvo renuncia). |
+| **Derecho de tanteo o retracto ganancial (ej. finca rústica arrendada por ambos) comprado con dinero privativo de uno.** | Arts. 1347.4.º y 1358 CC | **100 % Ganancial** porque el derecho de tanteo/arrendamiento era ganancial. | Entra la finca por su valor actual en el **ACTIVO** (art. 1397.1.º), y entra en el **PASIVO** (art. 1398.3.ª) una deuda de la sociedad a favor del cónyuge por el dinero privativo que puso (actualizado). |
+| **Negocio común (ej. peluquería de ambos) e instrumental profesional.** | Arts. 1347.5.º y 1346.8.º CC | Si el negocio es común, todo (local, mobiliario e instrumental) es **Ganancial** (excepción del art. 1346.8.º). | Entra el valor total del mobiliario e instrumental en el **ACTIVO** (art. 1397.1.º). (Si el instrumental no pertenece a un negocio común, es privativo *ex* art. 1346.8.º pero debe reembolsar su valor en el activo). |
+| **Premio de lotería o juego ganado por cualquiera de los cónyuges antes del divorcio.** | Art. 1351 CC (STS 22/12/2000) | **100 % Ganancial.** | Entra el importe íntegro del premio en el **ACTIVO** (art. 1397.1.º). |
+| **Deudas pendientes frente a terceros por culpa extracontractual cuidando a los hijos (ej. romper valla del dentista) o gastos del trabajo (ej. estudio publicitario).** | Arts. 1366 y 1362.4.ª CC | **Cargas y deudas de la sociedad de gananciales** (salvo dolo o culpa grave). | Entran como deudas pendientes de la sociedad en el **PASIVO** (art. 1398.1.ª). |
+
+### PASO 3: Elaborar el Cuadro de Inventario (Arts. 1396, 1397 y 1398 CC)
+
+Una vez analizadas las partidas una a una, dibuja una tabla con dos columnas (recuerda que los bienes privativos nunca se meten en la tabla, solo los gananciales y los créditos/deudas de reembolso, valorados a la fecha de la liquidación según STS 23/12/1993):
+
+| Columna izquierda: ACTIVO GANANCIAL (Art. 1397 CC) | Columna derecha: PASIVO GANANCIAL (Art. 1398 CC) |
+| :--- | :--- |
+| **1.** Bienes y derechos gananciales existentes en el momento de la disolución (art. 1397.1.º CC). | **1.** Deudas pendientes a cargo de la sociedad frente a terceros (art. 1398.1.ª CC). |
+| **2.** Importe actualizado de bienes enajenados por gestión ilegal o fraudulenta (art. 1397.2.º CC). | **2.** Importe actualizado del valor de los bienes privativos gastados en interés de la sociedad (art. 1398.2.ª CC). |
+| **3.** Importe actualizado de las cantidades pagadas por la sociedad que fueran de cargo privativo de un cónyuge —créditos de la sociedad contra los cónyuges— (art. 1397.3.º CC). | **3.** Importe actualizado de las cantidades que, habiendo sido pagadas por uno solo de los cónyuges, fueran de cargo de la sociedad —deudas de la sociedad frente a los cónyuges— (art. 1398.3.ª CC). |
+
+### PASO 4: Calcular el Haber Líquido (Remanente) y la Cuota de cada Cónyuge
+
+Realiza dos operaciones matemáticas muy sencillas (art. 1404 CC):
+
+> **ECUACIÓN 3 (Cálculo del Haber Líquido):**
+> **Haber Líquido (Remanente) = Activo Total − Pasivo Total**
+>
+> **ECUACIÓN 4 (Cálculo de la Cuota):**
+> **Cuota de cada cónyuge = (Haber Líquido) / 2** *(50 % para cada uno)*
+
+### PASO 5: Compensación de Créditos Internos y Formación de Lotes (Arts. 1403, 1404 y 1406 CC)
+
+Para repartir los bienes tangibles y el dinero sin equivocarte en las sumas (tal como se hace en el caso de Pepa y Juan), aplica esta fórmula para cada cónyuge:
+
+1. **Calcula la posición neta de cada cónyuge frente a la sociedad:**
+
+   > **ECUACIÓN 5 (Saldo Neto del Cónyuge):**
+   > **Saldo Neto del Cónyuge = [Lo que debe a la sociedad (Activo 1397.3.º)] − [Lo que la sociedad le debe a él (Pasivo 1398.3.ª)]**
+
+2. **Resta ese saldo neto de su Cuota del 50 %:**
+   * Si el cónyuge tiene un saldo deudor neto con la sociedad (por ejemplo, Pepa debe a la sociedad 80.000 € y la sociedad le debe a ella 40.000 € ➔ debe netos 40.000 €), se extingue por confusión/compensación y solo tienes que entregarle en bienes tangibles:
+
+     > **ECUACIÓN 6 (Bienes netos a adjudicar):**
+     > **Bienes netos a adjudicar = [Cuota del 50 %] − [Saldo Deudor Neto]**
+
+   * Si un cónyuge asume el pago de las deudas frente a terceros (art. 1398.1.ª CC), súmale bienes por ese mismo importe para que su lote neto no se vea perjudicado.
+
+3. **Aplica las preferencias legales de adjudicación (Art. 1406 CC):** Al elegir qué bienes concretos metes en el lote de cada uno, respeta el derecho de cada cónyuge a que se incluyan con preferencia en su haber (hasta donde alcance, o abonando la diferencia en dinero):
+   * **1.º** Los bienes de uso personal no privativos.
+   * **2.º** La explotación económica que gestione efectivamente (ej. la peluquería para Pepa o la consulta médica para Luis).
+   * **3.º** El local donde hubiese venido ejerciendo su profesión.
+   * **4.º** En caso de muerte del otro cónyuge, la vivienda habitual.
