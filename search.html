@@ -253,7 +253,7 @@
   </script>
   <div class="container">
     <nav class="top-nav">
-      <a href="index.html">← Test</a>
+      <a href="index.html">🔙 Volver al menu general</a>
       <a href="apuntes.html">📖 Visor de Apuntes</a>
     </nav>
 
@@ -399,6 +399,14 @@
       metricsStatus.textContent = `Listo en ${(t1 - t0).toFixed(0)} ms`;
       searchInput.disabled = false;
       searchInput.focus();
+
+      // Detección automática del término inicial si se llega desde el Hub (?q=...)
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryInicial = urlParams.get("q");
+      if (queryInicial && queryInicial.trim()) {
+        searchInput.value = queryInicial.trim();
+        ejecutarBusqueda();
+      }
     }
 
     function parsearQuery(input) {
