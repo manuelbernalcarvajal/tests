@@ -61,9 +61,9 @@
     }
     #select-tema {
       flex: 1;
-      min-width: 0;           /* Clave para que flexbox no lo fuerce a ensanchar */
-      max-width: 460px;       /* Tope máximo en pantallas grandes */
-      text-overflow: ellipsis;/* Añade automáticamente '...' si el texto supera el ancho */
+      min-width: 0;
+      max-width: 460px;
+      text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
     }
@@ -115,7 +115,7 @@
       background: var(--surface);
       border-right: 1px solid var(--border);
       overflow-y: auto;
-      padding: 18px 14px 45px 14px; /* Margen inferior para no quedar tapado por el footer */
+      padding: 18px 14px 45px 14px;
       flex-shrink: 0;
     }
     aside h3 {
@@ -147,7 +147,7 @@
     main {
       flex: 1;
       overflow-y: auto;
-      padding: 40px 20px 60px 20px; /* Margen inferior para que el final del texto no quede tapado */
+      padding: 40px 20px 60px 20px;
       scroll-behavior: smooth;
     }
     .markdown-body {
@@ -527,7 +527,7 @@
     });
 
     /* ==========================================================================
-       6. MOTOR TTS ADAPTADO CON FONDO EN MÓVILES Y CONTROL OCULTO
+       6. MOTOR TTS ROBUSTO: WAKE LOCK + AUDIO KEEPALIVE + RECUPERACIÓN DE FOCO
        ========================================================================== */
     class LegalTTSReader {
       constructor(contentSelector) {
@@ -548,20 +548,23 @@
         this.rate = parseFloat(this.rateSelect.value) || 1.25;
         this.spanishVoice = null;
 
-        // Audio silencioso para mantener activo el navegador en segundo plano/pantalla apagada
-        this.silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
-        this.silentAudio.loop = true;
+        // Wake Lock para evitar que la pantalla se apague por inactividad
+        this.wakeLock = null;
+
+        // Web Audio Context para mantener vivo el hilo de audio nativo
+        this.audioCtx = null;
+        this.oscillator = null;
 
         this.initVoice();
         this.bindEvents();
         this.setupMediaSession();
+        this.handleVisibility();
       }
 
       initVoice() {
         const findSpanishVoice = () => {
           if (!this.synth) return;
           const voices = this.synth.getVoices();
-          // Prioriza voces naturales/Google en español y si no cualquiera con prefijo 'es'
           this.spanishVoice = voices.find(v => v.lang.startsWith("es") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Premium")))
                               || voices.find(v => v.lang.startsWith("es")) 
                               || null;
@@ -586,6 +589,78 @@
           navigator.mediaSession.setActionHandler('previoustrack', () => this.previous());
           navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
         }
+      }
+
+      // Previene la suspensión de pantalla en Android mientras lees
+      async requestWakeLock() {
+        if ('wakeLock' in navigator) {
+          try {
+            this.wakeLock = await navigator.wakeLock.request('screen');
+            this.wakeLock.addEventListener('release', () => {
+              this.wakeLock = null;
+            });
+          } catch (err) {
+            console.warn("Wake Lock no permitido:", err);
+          }
+        }
+      }
+
+      releaseWakeLock() {
+        if (this.wakeLock) {
+          this.wakeLock.release().catch(() => {});
+          this.wakeLock = null;
+        }
+      }
+
+      // Canal de audio continuo imperceptible para evitar cortes de Chrome
+      startAudioKeepAlive() {
+        try {
+          if (!this.audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioCtx = new AudioContext();
+          }
+          if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+          }
+          if (!this.oscillator) {
+            const gainNode = this.audioCtx.createGain();
+            gainNode.gain.value = 0.001; // Prácticamente inaudible
+            this.oscillator = this.audioCtx.createOscillator();
+            this.oscillator.frequency.value = 35; // Frecuencia subsónica
+            this.oscillator.connect(gainNode);
+            gainNode.connect(this.audioCtx.destination);
+            this.oscillator.start();
+          }
+        } catch (e) {
+          console.warn("AudioContext no disponible:", e);
+        }
+      }
+
+      stopAudioKeepAlive() {
+        if (this.oscillator) {
+          try {
+            this.oscillator.stop();
+            this.oscillator.disconnect();
+          } catch (e) {}
+          this.oscillator = null;
+        }
+        if (this.audioCtx && this.audioCtx.state === 'running') {
+          this.audioCtx.suspend().catch(() => {});
+        }
+      }
+
+      handleVisibility() {
+        document.addEventListener("visibilitychange", () => {
+          // Si el usuario vuelve a la pestaña y estaba reproduciendo, reanuda en el punto exacto
+          if (document.visibilityState === "visible" && this.isPlaying) {
+            this.requestWakeLock();
+            if (this.synth.paused) {
+              this.synth.resume();
+            } else if (!this.synth.speaking) {
+              this.speakBlock(this.currentIndex);
+            }
+          }
+        });
       }
 
       cleanTextForSpeech(text) {
@@ -659,8 +734,8 @@
         this.playBtn.innerText = "⏸";
         this.playBtn.title = "Pausar";
 
-        // Mantiene despierto el navegador en pantallas de bloqueo
-        this.silentAudio.play().catch(() => {});
+        this.requestWakeLock();
+        this.startAudioKeepAlive();
 
         if (this.synth.paused) {
           this.synth.resume();
@@ -673,7 +748,8 @@
         if (!this.synth) return;
         this.isPlaying = false;
         this.synth.pause();
-        this.silentAudio.pause();
+        this.releaseWakeLock();
+        this.stopAudioKeepAlive();
         this.playBtn.innerText = "▶";
         this.playBtn.title = "Reanudar";
       }
@@ -682,7 +758,8 @@
         if (!this.synth) return;
         this.isPlaying = false;
         this.synth.cancel();
-        this.silentAudio.pause();
+        this.releaseWakeLock();
+        this.stopAudioKeepAlive();
         this.currentIndex = 0;
         this.playBtn.innerText = "▶";
         this.playBtn.title = "Reproducir";
