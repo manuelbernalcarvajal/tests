@@ -68,14 +68,35 @@
       overflow: hidden;
     }
 
-    #btn-print {
+    /* Grupo de botones a la derecha */
+    .header-actions {
       margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    #btn-tts-toggle {
+      background: #f8f9fa;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      padding: 6px 10px;
+      transition: background 0.15s ease;
+    }
+    #btn-tts-toggle:hover, #btn-tts-toggle.active {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+    }
+
+    #btn-print {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       background: #f8f9fa;
       white-space: nowrap;
-      flex-shrink: 0;
     }
     #btn-print:hover {
       background: #e9ecef;
@@ -166,6 +187,76 @@
       margin: 1em 0;
     }
 
+    /* Subrayado interactivo de TTS */
+    .tts-active-block {
+      background-color: rgba(13, 110, 253, 0.12) !important;
+      border-left: 4px solid var(--accent) !important;
+      padding-left: 10px !important;
+      border-radius: 3px;
+      transition: background-color 0.2s ease, border-left 0.2s ease;
+    }
+
+    /* Panel Flotante de Controles TTS */
+    #tts-dock {
+      position: fixed;
+      bottom: 45px;
+      right: 20px;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      z-index: 200;
+      font-size: 13px;
+      animation: ttsFadeIn 0.2s ease-out;
+    }
+    @keyframes ttsFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #tts-dock button {
+      background: #334155;
+      border: none;
+      color: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #tts-dock button:hover {
+      background: #475569;
+    }
+    #tts-dock button#tts-play-btn {
+      background: var(--accent);
+      font-weight: 600;
+      min-width: 32px;
+    }
+    #tts-dock select {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    #tts-dock #tts-close-btn {
+      background: transparent;
+      color: #94a3b8;
+      font-size: 15px;
+      padding: 4px 6px;
+    }
+    #tts-dock #tts-close-btn:hover {
+      color: #f8fafc;
+      background: #334155;
+    }
+
     /* Encabezado visible únicamente en impresión */
     .print-header {
       display: none;
@@ -191,6 +282,12 @@
       aside { width: 100%; max-height: 180px; border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 18px; }
       .markdown-body { padding: 20px; }
       #select-tema { max-width: 100%; }
+      #tts-dock {
+        right: 10px;
+        left: 10px;
+        bottom: 40px;
+        justify-content: space-between;
+      }
     }
 
     /* Reglas de impresión */
@@ -206,7 +303,7 @@
         padding: 0 !important;
         margin: 0 !important;
       }
-      header, aside, footer {
+      header, aside, footer, #tts-dock {
         display: none !important;
       }
       .markdown-body {
@@ -254,7 +351,10 @@
     <select id="select-tema" disabled>
       <option value="">Selecciona Tema...</option>
     </select>
-    <button type="button" id="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+    <div class="header-actions">
+      <button type="button" id="btn-tts-toggle" title="Abrir reproductor de voz">🔊</button>
+      <button type="button" id="btn-print" onclick="window.print()">🖨️ Imprimir</button>
+    </div>
   </header>
 
   <div class="layout">
@@ -265,7 +365,7 @@
       </ul>
     </aside>
 
-    <main>
+    <main id="main-scroll">
       <article class="markdown-body">
         <!-- Encabezado impreso -->
         <div class="print-header">
@@ -279,6 +379,22 @@
         </div>
       </article>
     </main>
+  </div>
+
+  <!-- Dock Flotante de Audio TTS -->
+  <div id="tts-dock">
+    <button type="button" id="tts-prev-btn" title="Párrafo anterior">⏮</button>
+    <button type="button" id="tts-play-btn" title="Reproducir / Pausar">▶</button>
+    <button type="button" id="tts-stop-btn" title="Detener">⏹</button>
+    <button type="button" id="tts-next-btn" title="Párrafo siguiente">⏭</button>
+    <select id="tts-rate-select" title="Velocidad de reproducción">
+      <option value="1">1.0x</option>
+      <option value="1.25" selected>1.25x</option>
+      <option value="1.5">1.5x</option>
+      <option value="1.75">1.75x</option>
+      <option value="2">2.0x</option>
+    </select>
+    <button type="button" id="tts-close-btn" title="Cerrar panel">✖</button>
   </div>
 
   <footer>
@@ -309,6 +425,7 @@
       selTema.innerHTML = '<option value="">Selecciona Tema...</option>';
       selTema.title = "";
       tocList.innerHTML = '<li style="color: #888; font-size: 13px;">Carga un tema para ver su índice.</li>';
+      if (window.ttsReader) window.ttsReader.stop();
 
       const asigId = selAsig.value;
       if (!asigId) {
@@ -335,18 +452,17 @@
       const temaId = selTema.value;
       if (!asigId || !temaId) return;
 
+      if (window.ttsReader) window.ttsReader.stop();
+
       const currentAsig = APUNTES_CONFIG.find(a => a.id === asigId);
       const currentTema = currentAsig ? currentAsig.temas.find(t => t.id === temaId) : null;
       if (!currentTema) return;
 
-      // Tooltip con el título completo al posar el cursor
       selTema.title = currentTema.titulo;
 
-      // Actualizar URL del navegador de forma limpia sin recargar
       const cleanUrl = `${window.location.origin}${window.location.pathname}?asig=${encodeURIComponent(asigId)}&tema=${encodeURIComponent(temaId)}`;
       window.history.replaceState({}, "", cleanUrl);
 
-      // Encabezado para impresión
       printTitle.textContent = `${currentAsig.asignatura} — ${currentTema.titulo}`;
       printUrl.textContent = cleanUrl;
 
@@ -360,6 +476,7 @@
         .then(markdown => {
           docContent.innerHTML = marked.parse(markdown);
           generarIndiceLateral();
+          if (window.ttsReader) window.ttsReader.prepareBlocks();
         })
         .catch(err => {
           docContent.innerHTML = `<p style="color:red;">Error al cargar el archivo: ${err.message}</p>`;
@@ -407,6 +524,228 @@
         selTema.value = temaParam;
         selTema.dispatchEvent(new Event("change"));
       }
+    });
+
+    /* ==========================================================================
+       6. MOTOR TTS ADAPTADO CON FONDO EN MÓVILES Y CONTROL OCULTO
+       ========================================================================== */
+    class LegalTTSReader {
+      constructor(contentSelector) {
+        this.container = document.querySelector(contentSelector);
+        this.synth = window.speechSynthesis;
+        this.dock = document.getElementById("tts-dock");
+        this.toggleBtn = document.getElementById("btn-tts-toggle");
+        this.playBtn = document.getElementById("tts-play-btn");
+        this.stopBtn = document.getElementById("tts-stop-btn");
+        this.prevBtn = document.getElementById("tts-prev-btn");
+        this.nextBtn = document.getElementById("tts-next-btn");
+        this.rateSelect = document.getElementById("tts-rate-select");
+        this.closeBtn = document.getElementById("tts-close-btn");
+
+        this.queue = [];
+        this.currentIndex = 0;
+        this.isPlaying = false;
+        this.rate = parseFloat(this.rateSelect.value) || 1.25;
+        this.spanishVoice = null;
+
+        // Audio silencioso para mantener activo el navegador en segundo plano/pantalla apagada
+        this.silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+        this.silentAudio.loop = true;
+
+        this.initVoice();
+        this.bindEvents();
+        this.setupMediaSession();
+      }
+
+      initVoice() {
+        const findSpanishVoice = () => {
+          if (!this.synth) return;
+          const voices = this.synth.getVoices();
+          // Prioriza voces naturales/Google en español y si no cualquiera con prefijo 'es'
+          this.spanishVoice = voices.find(v => v.lang.startsWith("es") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Premium")))
+                              || voices.find(v => v.lang.startsWith("es")) 
+                              || null;
+        };
+
+        findSpanishVoice();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+          speechSynthesis.onvoiceschanged = findSpanishVoice;
+        }
+      }
+
+      setupMediaSession() {
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: 'Visor de Apuntes Jurídicos',
+            artist: 'Máster Abogacía UCA',
+            album: 'Estudio Activo'
+          });
+
+          navigator.mediaSession.setActionHandler('play', () => this.play());
+          navigator.mediaSession.setActionHandler('pause', () => this.pause());
+          navigator.mediaSession.setActionHandler('previoustrack', () => this.previous());
+          navigator.mediaSession.setActionHandler('nexttrack', () => this.next());
+        }
+      }
+
+      cleanTextForSpeech(text) {
+        return text
+          .replace(/ECLI:ES:TS:(\d+):(\d+)/gi, 'Sentencia del Tribunal Supremo de $1')
+          .replace(/ECLI:ES:AP[A-Z]+:(\d+):(\d+)/gi, 'Sentencia de Audiencia Provincial')
+          .replace(/artículo\s*(\d+)/gi, 'artículo $1')
+          .replace(/art\.\s*(\d+)/gi, 'artículo $1')
+          .replace(/(\*+|#+)/g, '')
+          .replace(/\((ECLI:[^\)]+)\)/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      prepareBlocks() {
+        const elements = this.container.querySelectorAll("h1, h2, h3, p, li");
+        this.queue = [];
+        this.currentIndex = 0;
+
+        elements.forEach((el) => {
+          const raw = el.innerText;
+          const clean = this.cleanTextForSpeech(raw);
+          if (clean.length > 0) {
+            this.queue.push({ element: el, text: clean });
+          }
+        });
+      }
+
+      speakBlock(index) {
+        if (!this.synth) return;
+        this.synth.cancel();
+
+        if (index < 0 || index >= this.queue.length || !this.isPlaying) {
+          this.stop();
+          return;
+        }
+
+        this.currentIndex = index;
+        const currentItem = this.queue[this.currentIndex];
+
+        // Resaltado visual en el documento
+        document.querySelectorAll(".tts-active-block").forEach(el => el.classList.remove("tts-active-block"));
+        currentItem.element.classList.add("tts-active-block");
+        currentItem.element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        const utterance = new SpeechSynthesisUtterance(currentItem.text);
+        utterance.rate = this.rate;
+        utterance.lang = "es-ES";
+        if (this.spanishVoice) utterance.voice = this.spanishVoice;
+
+        utterance.onend = () => {
+          if (this.isPlaying) {
+            this.speakBlock(this.currentIndex + 1);
+          }
+        };
+
+        utterance.onerror = (e) => {
+          if (e.error !== "canceled" && e.error !== "interrupted") {
+            console.error("Error TTS:", e);
+          }
+        };
+
+        this.synth.speak(utterance);
+      }
+
+      play() {
+        if (this.queue.length === 0) this.prepareBlocks();
+        if (this.queue.length === 0) return;
+
+        this.isPlaying = true;
+        this.playBtn.innerText = "⏸";
+        this.playBtn.title = "Pausar";
+
+        // Mantiene despierto el navegador en pantallas de bloqueo
+        this.silentAudio.play().catch(() => {});
+
+        if (this.synth.paused) {
+          this.synth.resume();
+        } else {
+          this.speakBlock(this.currentIndex);
+        }
+      }
+
+      pause() {
+        if (!this.synth) return;
+        this.isPlaying = false;
+        this.synth.pause();
+        this.silentAudio.pause();
+        this.playBtn.innerText = "▶";
+        this.playBtn.title = "Reanudar";
+      }
+
+      stop() {
+        if (!this.synth) return;
+        this.isPlaying = false;
+        this.synth.cancel();
+        this.silentAudio.pause();
+        this.currentIndex = 0;
+        this.playBtn.innerText = "▶";
+        this.playBtn.title = "Reproducir";
+        document.querySelectorAll(".tts-active-block").forEach(el => el.classList.remove("tts-active-block"));
+      }
+
+      next() {
+        if (this.currentIndex + 1 < this.queue.length) {
+          this.speakBlock(this.currentIndex + 1);
+        } else {
+          this.stop();
+        }
+      }
+
+      previous() {
+        if (this.currentIndex > 0) {
+          this.speakBlock(this.currentIndex - 1);
+        }
+      }
+
+      toggleDock() {
+        const isHidden = getComputedStyle(this.dock).display === "none";
+        if (isHidden) {
+          this.dock.style.display = "flex";
+          this.toggleBtn.classList.add("active");
+        } else {
+          this.dock.style.display = "none";
+          this.toggleBtn.classList.remove("active");
+        }
+      }
+
+      bindEvents() {
+        this.toggleBtn.addEventListener("click", () => this.toggleDock());
+
+        this.closeBtn.addEventListener("click", () => {
+          this.dock.style.display = "none";
+          this.toggleBtn.classList.remove("active");
+        });
+
+        this.playBtn.addEventListener("click", () => {
+          if (this.isPlaying) {
+            this.pause();
+          } else {
+            this.play();
+          }
+        });
+
+        this.stopBtn.addEventListener("click", () => this.stop());
+        this.nextBtn.addEventListener("click", () => this.next());
+        this.prevBtn.addEventListener("click", () => this.previous());
+
+        this.rateSelect.addEventListener("change", (e) => {
+          this.rate = parseFloat(e.target.value) || 1.25;
+          if (this.isPlaying) {
+            this.speakBlock(this.currentIndex);
+          }
+        });
+      }
+    }
+
+    // Inicializar el lector sobre el contenedor de texto
+    window.addEventListener("DOMContentLoaded", () => {
+      window.ttsReader = new LegalTTSReader("#doc-content");
     });
   </script>
 </body>
