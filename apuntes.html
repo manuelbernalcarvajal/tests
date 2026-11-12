@@ -564,6 +564,7 @@
         // Elemento de audio nativo para segundo plano
         this.audio = new Audio();
         this.cues = [];
+        this.lastActiveDomIndex = 0;
 
         // Variables modo Synth
         this.queue = [];
@@ -688,19 +689,26 @@
         }
       }
 
+      // Sincronización DOM progresiva: busca desde el párrafo actual hacia adelante
       syncCueWithDOM(cueText) {
         if (!cueText) return;
         const cleanSnippet = cueText.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim().slice(0, 28).toLowerCase();
         if (!cleanSnippet) return;
 
-        const elements = this.container.querySelectorAll("h1, h2, h3, p, li");
-        for (let el of elements) {
+        const elements = Array.from(this.container.querySelectorAll("h1, h2, h3, p, li"));
+        if (!elements.length) return;
+
+        const startIdx = this.lastActiveDomIndex || 0;
+        const orderedElements = elements.slice(startIdx).concat(elements.slice(0, startIdx));
+
+        for (let el of orderedElements) {
           const elText = el.textContent.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').toLowerCase();
           if (elText.includes(cleanSnippet)) {
             if (!el.classList.contains("tts-active-block")) {
               document.querySelectorAll(".tts-active-block").forEach(e => e.classList.remove("tts-active-block"));
               el.classList.add("tts-active-block");
               el.scrollIntoView({ behavior: "smooth", block: "center" });
+              this.lastActiveDomIndex = elements.indexOf(el);
             }
             break;
           }
@@ -711,11 +719,13 @@
       async loadThemeMedia(asigId, temaId, currentTema) {
         this.stop();
         this.cues = [];
+        this.lastActiveDomIndex = 0;
 
-        // Rutas candidatas para el MP3 y VTT
-        const basePath = currentTema.archivo ? currentTema.archivo.replace(/\.md$/i, '') : `apuntes/${asigId}/${temaId}`;
-        const audioPath = basePath.replace(/^apuntes\//i, 'audios/') + '.mp3';
-        const vttPath = basePath.replace(/^apuntes\//i, 'audios/') + '.vtt';
+        // Soporta formatos 'apuntes/...', './apuntes/...' o '/apuntes/...'
+        const rawPath = currentTema.archivo ? currentTema.archivo.replace(/\.md$/i, '') : `apuntes/${asigId}/${temaId}`;
+        const basePath = rawPath.replace(/^\.?\/?apuntes\//i, 'audios/');
+        const audioPath = basePath + '.mp3';
+        const vttPath = basePath + '.vtt';
 
         try {
           const resAudio = await fetch(audioPath, { method: 'HEAD' });
