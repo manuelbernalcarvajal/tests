@@ -5,6 +5,12 @@ on:
     paths:
       - 'apuntes/**/*.md'
   workflow_dispatch:
+    inputs:
+      forzar_todos:
+        description: 'Regenerar TODOS los audios aunque ya existan'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -16,30 +22,56 @@ jobs:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
-      - name: Configurar Python y FFmpeg
+      - name: Detectar archivos Markdown modificados o nuevos
+        id: changed-files
+        if: github.event_name == 'push'
+        uses: tj-actions/changed-files@v45
+        with:
+          files: apuntes/**/*.md
+          files_ignore_deleted: true
+          escape_paths: false
+
+      - name: Configurar Python
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Instalar dependencias
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           pip install edge-tts
           sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Procesar archivos Markdown a MP3 y VTT
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          FORCE_ALL: ${{ github.event.inputs.forzar_todos }}
         run: |
-          python scripts/generar_audios.py
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "Archivos modificados detectados: $CHANGED_FILES"
+            # Pasamos cada archivo separado por espacios respetando posibles espacios en nombres
+            echo "$CHANGED_FILES" | xargs -d ' ' python scripts/generar_audios.py --force
+          elif [ "$FORCE_ALL" == "true" ]; then
+            echo "Forzando regeneración completa..."
+            python scripts/generar_audios.py --force
+          else
+            echo "Generando solo los audios faltantes..."
+            python scripts/generar_audios.py
+          fi
 
       - name: Commit y Push de los audios generados
+        if: steps.changed-files.outputs.any_changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add audios/
           if git diff --staged --quiet; then
-            echo "No hay audios nuevos que subir."
+            echo "No hay audios nuevos o modificados que subir."
           else
-            git commit -m "chore(tts): regenerar audios comprimidos y pistas vtt"
+            git commit -m "chore(tts): actualizar audios comprimidos y pistas vtt"
             git push
           fi
