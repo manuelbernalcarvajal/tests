@@ -246,6 +246,15 @@
       font-size: 12px;
       cursor: pointer;
     }
+    #tts-dock #tts-badge {
+      font-size: 10px;
+      background: #0f172a;
+      color: #38bdf8;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
     #tts-dock #tts-close-btn {
       background: transparent;
       color: #94a3b8;
@@ -383,10 +392,11 @@
 
   <!-- Dock Flotante de Audio TTS -->
   <div id="tts-dock">
-    <button type="button" id="tts-prev-btn" title="Párrafo anterior">⏮</button>
+    <span id="tts-badge" title="Modo de reproducción">AUDIO</span>
+    <button type="button" id="tts-prev-btn" title="Párrafo anterior / Retroceder">⏮</button>
     <button type="button" id="tts-play-btn" title="Reproducir / Pausar">▶</button>
     <button type="button" id="tts-stop-btn" title="Detener">⏹</button>
-    <button type="button" id="tts-next-btn" title="Párrafo siguiente">⏭</button>
+    <button type="button" id="tts-next-btn" title="Párrafo siguiente / Avanzar">⏭</button>
     <select id="tts-rate-select" title="Velocidad de reproducción">
       <option value="1">1.0x</option>
       <option value="1.25" selected>1.25x</option>
@@ -476,7 +486,9 @@
         .then(markdown => {
           docContent.innerHTML = marked.parse(markdown);
           generarIndiceLateral();
-          if (window.ttsReader) window.ttsReader.prepareBlocks();
+          if (window.ttsReader) {
+            window.ttsReader.loadThemeMedia(asigId, temaId, currentTema);
+          }
         })
         .catch(err => {
           docContent.innerHTML = `<p style="color:red;">Error al cargar el archivo: ${err.message}</p>`;
@@ -527,13 +539,14 @@
     });
 
     /* ==========================================================================
-       6. MOTOR TTS ROBUSTO: WAKE LOCK + AUDIO KEEPALIVE + RECUPERACIÓN DE FOCO
+       6. MOTOR TTS HÍBRIDO: AUDIO MP3 + WEBVTT (BACKGROUND REAL) CON FALLBACK LOCAL
        ========================================================================== */
     class LegalTTSReader {
       constructor(contentSelector) {
         this.container = document.querySelector(contentSelector);
         this.synth = window.speechSynthesis;
         this.dock = document.getElementById("tts-dock");
+        this.badge = document.getElementById("tts-badge");
         this.toggleBtn = document.getElementById("btn-tts-toggle");
         this.playBtn = document.getElementById("tts-play-btn");
         this.stopBtn = document.getElementById("tts-stop-btn");
@@ -542,19 +555,23 @@
         this.rateSelect = document.getElementById("tts-rate-select");
         this.closeBtn = document.getElementById("tts-close-btn");
 
-        this.queue = [];
-        this.currentIndex = 0;
         this.isPlaying = false;
         this.rate = parseFloat(this.rateSelect.value) || 1.25;
-        this.spanishVoice = null;
 
-        // Wake Lock para evitar que la pantalla se apague por inactividad
+        // Modo 'audio' (MP3 pregenerado) o 'synth' (Web Speech API)
+        this.mode = 'synth';
+
+        // Elemento de audio nativo para segundo plano
+        this.audio = new Audio();
+        this.cues = [];
+
+        // Variables modo Synth
+        this.queue = [];
+        this.currentIndex = 0;
+        this.spanishVoice = null;
         this.wakeLock = null;
 
-        // Web Audio Context para mantener vivo el hilo de audio nativo
-        this.audioCtx = null;
-        this.oscillator = null;
-
+        this.initAudioListeners();
         this.initVoice();
         this.bindEvents();
         this.setupMediaSession();
@@ -569,19 +586,43 @@
                               || voices.find(v => v.lang.startsWith("es")) 
                               || null;
         };
-
         findSpanishVoice();
         if (speechSynthesis.onvoiceschanged !== undefined) {
           speechSynthesis.onvoiceschanged = findSpanishVoice;
         }
       }
 
+      initAudioListeners() {
+        this.audio.addEventListener("timeupdate", () => {
+          if (this.mode !== 'audio' || !this.cues.length) return;
+          const current = this.audio.currentTime;
+          const activeCue = this.cues.find(c => current >= c.start && current <= c.end);
+          if (activeCue) {
+            this.syncCueWithDOM(activeCue.text);
+          }
+        });
+
+        this.audio.addEventListener("ended", () => {
+          this.stop();
+        });
+
+        this.audio.addEventListener("error", () => {
+          // Si el MP3 falla o no existe, conmuta a síntesis local
+          if (this.mode === 'audio') {
+            console.warn("Audio MP3 no disponible, pasando a modo síntesis local.");
+            this.mode = 'synth';
+            this.badge.textContent = "SYNTH";
+            this.prepareBlocks();
+          }
+        });
+      }
+
       setupMediaSession() {
         if ('mediaSession' in navigator) {
           navigator.mediaSession.metadata = new MediaMetadata({
-            title: 'Visor de Apuntes Jurídicos',
-            artist: 'Máster Abogacía UCA',
-            album: 'Estudio Activo'
+            title: 'Visor de Apuntes',
+            artist: 'Estudio Jurídico Activo',
+            album: 'Máster Abogacía UCA'
           });
 
           navigator.mediaSession.setActionHandler('play', () => this.play());
@@ -591,17 +632,12 @@
         }
       }
 
-      // Previene la suspensión de pantalla en Android mientras lees
       async requestWakeLock() {
-        if ('wakeLock' in navigator) {
+        if ('wakeLock' in navigator && this.mode === 'synth') {
           try {
             this.wakeLock = await navigator.wakeLock.request('screen');
-            this.wakeLock.addEventListener('release', () => {
-              this.wakeLock = null;
-            });
-          } catch (err) {
-            console.warn("Wake Lock no permitido:", err);
-          }
+            this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
+          } catch (e) {}
         }
       }
 
@@ -612,55 +648,97 @@
         }
       }
 
-      // Canal de audio continuo imperceptible para evitar cortes de Chrome
-      startAudioKeepAlive() {
-        try {
-          if (!this.audioCtx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioCtx = new AudioContext();
-          }
-          if (this.audioCtx.state === 'suspended') {
-            this.audioCtx.resume();
-          }
-          if (!this.oscillator) {
-            const gainNode = this.audioCtx.createGain();
-            gainNode.gain.value = 0.001; // Prácticamente inaudible
-            this.oscillator = this.audioCtx.createOscillator();
-            this.oscillator.frequency.value = 35; // Frecuencia subsónica
-            this.oscillator.connect(gainNode);
-            gainNode.connect(this.audioCtx.destination);
-            this.oscillator.start();
-          }
-        } catch (e) {
-          console.warn("AudioContext no disponible:", e);
-        }
-      }
-
-      stopAudioKeepAlive() {
-        if (this.oscillator) {
-          try {
-            this.oscillator.stop();
-            this.oscillator.disconnect();
-          } catch (e) {}
-          this.oscillator = null;
-        }
-        if (this.audioCtx && this.audioCtx.state === 'running') {
-          this.audioCtx.suspend().catch(() => {});
-        }
-      }
-
       handleVisibility() {
         document.addEventListener("visibilitychange", () => {
-          // Si el usuario vuelve a la pestaña y estaba reproduciendo, reanuda en el punto exacto
-          if (document.visibilityState === "visible" && this.isPlaying) {
-            this.requestWakeLock();
-            if (this.synth.paused) {
-              this.synth.resume();
-            } else if (!this.synth.speaking) {
-              this.speakBlock(this.currentIndex);
+          if (document.visibilityState === "visible") {
+            if (this.mode === 'synth' && this.isPlaying) {
+              this.requestWakeLock();
+              if (this.synth.paused) {
+                this.synth.resume();
+              } else if (!this.synth.speaking) {
+                this.speakBlock(this.currentIndex);
+              }
             }
           }
         });
+      }
+
+      // Parsea el archivo WebVTT generado por edge-tts
+      parseVTT(vttText) {
+        this.cues = [];
+        if (!vttText) return;
+        const timeRegex = /(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d{2}):)?(\d{2}):(\d{2})[.,](\d{3})/;
+        const lines = vttText.split(/\r?\n/);
+        let currentCue = null;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          const match = line.match(timeRegex);
+          if (match) {
+            const parseSec = (h, m, s, ms) => (parseInt(h || 0, 10) * 3600) + (parseInt(m, 10) * 60) + parseInt(s, 10) + (parseInt(ms, 10) / 1000);
+            currentCue = {
+              start: parseSec(match[1], match[2], match[3], match[4]),
+              end: parseSec(match[5], match[6], match[7], match[8]),
+              text: ""
+            };
+            this.cues.push(currentCue);
+          } else if (currentCue && line && !line.startsWith("WEBVTT") && !line.startsWith("NOTE")) {
+            currentCue.text += (currentCue.text ? " " : "") + line;
+          }
+        }
+      }
+
+      syncCueWithDOM(cueText) {
+        if (!cueText) return;
+        const cleanSnippet = cueText.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim().slice(0, 28).toLowerCase();
+        if (!cleanSnippet) return;
+
+        const elements = this.container.querySelectorAll("h1, h2, h3, p, li");
+        for (let el of elements) {
+          const elText = el.textContent.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').toLowerCase();
+          if (elText.includes(cleanSnippet)) {
+            if (!el.classList.contains("tts-active-block")) {
+              document.querySelectorAll(".tts-active-block").forEach(e => e.classList.remove("tts-active-block"));
+              el.classList.add("tts-active-block");
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+            break;
+          }
+        }
+      }
+
+      // Determina si existe archivo pregrabado en audios/ o se activa el sintetizador local
+      async loadThemeMedia(asigId, temaId, currentTema) {
+        this.stop();
+        this.cues = [];
+
+        // Rutas candidatas para el MP3 y VTT
+        const basePath = currentTema.archivo ? currentTema.archivo.replace(/\.md$/i, '') : `apuntes/${asigId}/${temaId}`;
+        const audioPath = basePath.replace(/^apuntes\//i, 'audios/') + '.mp3';
+        const vttPath = basePath.replace(/^apuntes\//i, 'audios/') + '.vtt';
+
+        try {
+          const resAudio = await fetch(audioPath, { method: 'HEAD' });
+          if (resAudio.ok) {
+            this.mode = 'audio';
+            this.audio.src = audioPath;
+            this.badge.textContent = "MP3";
+            this.badge.title = "Audio pregrabado con soporte de fondo en pantalla apagada";
+
+            // Cargar subtítulos para sincronizar subrayado
+            fetch(vttPath)
+              .then(r => r.ok ? r.text() : "")
+              .then(vtt => this.parseVTT(vtt))
+              .catch(() => {});
+            return;
+          }
+        } catch (e) {}
+
+        // Si no existe MP3 en el servidor, usar síntesis local
+        this.mode = 'synth';
+        this.badge.textContent = "SYNTH";
+        this.badge.title = "Síntesis de voz en local del dispositivo";
+        this.prepareBlocks();
       }
 
       cleanTextForSpeech(text) {
@@ -701,7 +779,6 @@
         this.currentIndex = index;
         const currentItem = this.queue[this.currentIndex];
 
-        // Resaltado visual en el documento
         document.querySelectorAll(".tts-active-block").forEach(el => el.classList.remove("tts-active-block"));
         currentItem.element.classList.add("tts-active-block");
         currentItem.element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -712,71 +789,85 @@
         if (this.spanishVoice) utterance.voice = this.spanishVoice;
 
         utterance.onend = () => {
-          if (this.isPlaying) {
-            this.speakBlock(this.currentIndex + 1);
-          }
+          if (this.isPlaying) this.speakBlock(this.currentIndex + 1);
         };
-
         utterance.onerror = (e) => {
-          if (e.error !== "canceled" && e.error !== "interrupted") {
-            console.error("Error TTS:", e);
-          }
+          if (e.error !== "canceled" && e.error !== "interrupted") console.error("Error TTS:", e);
         };
 
         this.synth.speak(utterance);
       }
 
       play() {
-        if (this.queue.length === 0) this.prepareBlocks();
-        if (this.queue.length === 0) return;
-
         this.isPlaying = true;
         this.playBtn.innerText = "⏸";
         this.playBtn.title = "Pausar";
 
-        this.requestWakeLock();
-        this.startAudioKeepAlive();
-
-        if (this.synth.paused) {
-          this.synth.resume();
+        if (this.mode === 'audio') {
+          this.audio.playbackRate = this.rate;
+          this.audio.play().catch(e => console.warn("Error audio:", e));
         } else {
-          this.speakBlock(this.currentIndex);
+          if (this.queue.length === 0) this.prepareBlocks();
+          if (this.queue.length === 0) return;
+          this.requestWakeLock();
+          if (this.synth.paused) {
+            this.synth.resume();
+          } else {
+            this.speakBlock(this.currentIndex);
+          }
         }
       }
 
       pause() {
-        if (!this.synth) return;
         this.isPlaying = false;
-        this.synth.pause();
-        this.releaseWakeLock();
-        this.stopAudioKeepAlive();
         this.playBtn.innerText = "▶";
         this.playBtn.title = "Reanudar";
+
+        if (this.mode === 'audio') {
+          this.audio.pause();
+        } else {
+          if (!this.synth) return;
+          this.synth.pause();
+          this.releaseWakeLock();
+        }
       }
 
       stop() {
-        if (!this.synth) return;
         this.isPlaying = false;
-        this.synth.cancel();
-        this.releaseWakeLock();
-        this.stopAudioKeepAlive();
-        this.currentIndex = 0;
         this.playBtn.innerText = "▶";
         this.playBtn.title = "Reproducir";
         document.querySelectorAll(".tts-active-block").forEach(el => el.classList.remove("tts-active-block"));
+
+        if (this.mode === 'audio') {
+          this.audio.pause();
+          this.audio.currentTime = 0;
+        } else {
+          if (!this.synth) return;
+          this.synth.cancel();
+          this.releaseWakeLock();
+          this.currentIndex = 0;
+        }
       }
 
       next() {
-        if (this.currentIndex + 1 < this.queue.length) {
-          this.speakBlock(this.currentIndex + 1);
+        if (this.mode === 'audio') {
+          this.audio.currentTime = Math.min(this.audio.duration || 0, this.audio.currentTime + 15);
         } else {
-          this.stop();
+          if (this.currentIndex + 1 < this.queue.length) {
+            this.speakBlock(this.currentIndex + 1);
+          } else {
+            this.stop();
+          }
         }
       }
 
       previous() {
-        if (this.currentIndex > 0) {
-          this.speakBlock(this.currentIndex - 1);
+        if (this.mode === 'audio') {
+          this.audio.currentTime = Math.max(0, this.audio.currentTime - 15);
+        } else {
+          if (this.currentIndex > 0) {
+            this.speakBlock(this.currentIndex - 1);
+          }
         }
       }
 
@@ -800,11 +891,8 @@
         });
 
         this.playBtn.addEventListener("click", () => {
-          if (this.isPlaying) {
-            this.pause();
-          } else {
-            this.play();
-          }
+          if (this.isPlaying) this.pause();
+          else this.play();
         });
 
         this.stopBtn.addEventListener("click", () => this.stop());
@@ -813,7 +901,9 @@
 
         this.rateSelect.addEventListener("change", (e) => {
           this.rate = parseFloat(e.target.value) || 1.25;
-          if (this.isPlaying) {
+          if (this.mode === 'audio') {
+            this.audio.playbackRate = this.rate;
+          } else if (this.isPlaying) {
             this.speakBlock(this.currentIndex);
           }
         });
