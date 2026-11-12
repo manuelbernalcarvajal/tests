@@ -1,2 +1,5 @@
-Aun sin hacer, pincha en otra cosa
-<img width="506" height="605" alt="image" src="https://github.com/user-attachments/assets/520b08e1-44e4-46f6-97f2-539fae082f7d" />
+"Mmm... vacío este archivo parece. Escrito, su destino aún no está, joven Padawan.
+
+<img width="620" height="714" alt="image" src="https://github.com/user-attachments/assets/c05dfa18-1967-49c8-aecf-ba148224aa6b" />
+
+Ansioso por explorar te veo, pero listo este contenido todavía no es. Pinchar en otro enlace debes si sabiduría buscas hoy. Volver más tarde, podrás. ¡Hmph!"
