@@ -1,1 +1,1 @@
-Aun en proceso pincha en otra cosa
+Aun sin hacer, pincha en otra cosa
