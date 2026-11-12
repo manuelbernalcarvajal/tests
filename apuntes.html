@@ -5,8 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visor de Apuntes by MBC</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
-  <!-- Parser de Markdown ligero -->
+  
+  <!-- Parser de Markdown + Soporte LaTeX (KaTeX) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.2/lib/index.umd.js"></script>
+
   <style>
     :root {
       --bg: #f8f9fa;
@@ -187,6 +192,44 @@
       margin: 1em 0;
     }
 
+    /* Tablas Markdown y bloques de diagramas ASCII */
+    .markdown-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2em 0;
+      font-size: 14px;
+    }
+    .markdown-body th, .markdown-body td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .markdown-body th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+    }
+    .markdown-body pre {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 14px;
+      overflow-x: auto;
+      margin: 1.2em 0;
+      line-height: 1.3;
+    }
+    .markdown-body pre code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+      white-space: pre;
+    }
+    .katex-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 6px 0;
+      margin: 1em 0;
+    }
+
     /* Subrayado interactivo de TTS */
     .tts-active-block {
       background-color: rgba(13, 110, 253, 0.12) !important;
@@ -336,10 +379,28 @@
       }
       h1, h2, h3 {
         page-break-after: avoid;
+        break-after: avoid;
       }
       p, li, blockquote {
         orphans: 3;
         widows: 3;
+      }
+      pre, table, .katex-display {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      pre {
+        background: #fafafa !important;
+        border: 1px solid #ccc !important;
+        padding: 8px !important;
+        overflow: visible !important;
+      }
+      pre code {
+        font-size: 8.5pt !important;
+        line-height: 1.2 !important;
+      }
+      table {
+        font-size: 10pt !important;
       }
     }
   </style>
@@ -413,6 +474,14 @@
 
   <script src="apuntes_config.js"></script>
   <script>
+    // Registrar extensión KaTeX en Marked de forma segura
+    if (typeof marked !== "undefined" && typeof markedKatex !== "undefined") {
+      marked.use(markedKatex({
+        throwOnError: false,
+        nonStandard: true
+      }));
+    }
+
     const selAsig = document.getElementById("select-asignatura");
     const selTema = document.getElementById("select-tema");
     const docContent = document.getElementById("doc-content");
