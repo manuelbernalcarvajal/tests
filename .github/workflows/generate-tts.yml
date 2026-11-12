@@ -1,0 +1,45 @@
+name: Generar Audios TTS
+
+on:
+  push:
+    paths:
+      - 'apuntes/**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-tts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Configurar Python y FFmpeg
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: |
+          pip install edge-tts
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Procesar archivos Markdown a MP3 y VTT
+        run: |
+          python scripts/generar_audios.py
+
+      - name: Commit y Push de los audios generados
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add audios/
+          if git diff --staged --quiet; then
+            echo "No hay audios nuevos que subir."
+          else
+            git commit -m "chore(tts): regenerar audios comprimidos y pistas vtt"
+            git push
+          fi
