@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edición Imprimible — Visor de Apuntes MBC</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+  <title>Edición Jurídica Imprimible — Visor de Apuntes MBC</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
 
-  <!-- Tipografías editoriales para formato libro -->
+  <!-- Tipografía clásica de tratados de Derecho: EB Garamond + Inter para UI -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- Parser Markdown + KaTeX -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
@@ -17,7 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.2/lib/index.umd.js"></script>
 
-  <!-- Paged.js (se ejecutará manualmente tras cargar los apuntes) -->
+  <!-- Paged.js (ejecución controlada tras montar el libro) -->
   <script>
     window.PagedConfig = { auto: false };
   </script>
@@ -31,7 +31,7 @@
 
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background-color: #e2e8f0;
+      background-color: #cbd5e1;
       color: #1e293b;
     }
 
@@ -46,7 +46,7 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.22);
     }
 
     #control-bar a {
@@ -71,7 +71,7 @@
       background: #1e293b;
       color: #f8fafc;
       border: 1px solid #475569;
-      min-width: 250px;
+      min-width: 260px;
     }
 
     #btn-generar {
@@ -95,14 +95,14 @@
     }
     #btn-imprimir:hover { background: #059669; }
 
-    /* Panel de selección de temas antes de maquetar */
+    /* Panel de selección de temas */
     #setup-panel {
       max-width: 780px;
       margin: 40px auto;
       background: #fff;
       padding: 32px;
       border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     #setup-panel h2 {
       font-size: 20px;
@@ -113,6 +113,7 @@
       font-size: 14px;
       color: #64748b;
       margin-bottom: 20px;
+      line-height: 1.5;
     }
     .temas-checklist {
       border: 1px solid #e2e8f0;
@@ -158,17 +159,17 @@
       font-weight: 500;
     }
 
-    /* Vista previa de páginas A4 generadas por Paged.js en pantalla */
+    /* Vista previa de hojas A4 en pantalla */
     .pagedjs_pages {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px 0 60px 0;
-      gap: 28px;
+      padding: 32px 0 64px 0;
+      gap: 30px;
     }
     .pagedjs_page {
       background: #ffffff;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
     }
 
     @media print {
@@ -177,138 +178,188 @@
       .pagedjs_pages { padding: 0 !important; gap: 0 !important; display: block !important; }
       .pagedjs_page { box-shadow: none !important; margin: 0 !important; }
     }
+  </style>
 
-    /* ==========================================================================
-       2. MAQUETACIÓN EDITORIAL DEL LIBRO (CSS Paged Media para Paged.js)
-       ========================================================================== */
+  <!-- ==========================================================================
+       2. HOJA DE ESTILOS EDITORIAL (Procesada directamente por Paged.js)
+       ========================================================================== -->
+  <style id="book-editorial-css">
     @page {
       size: A4 portrait;
-      margin: 2.4cm 2.2cm 2.4cm 2.5cm;
+      /* Márgenes clásicos de tratado jurídico (2.5cm superior/inferior, 2.4cm laterales) */
+      margin: 2.5cm 2.4cm 2.4cm 2.4cm;
+    }
+
+    /* PÁGINAS PARES (Izquierda en libro abierto): Número a la izquierda + Nombre de la Asignatura */
+    @page :left {
+      margin-left: 2.2cm;
+      margin-right: 2.7cm; /* Margen interior de lomo más amplio */
 
       @top-left {
-        content: string(asignatura-title);
-        font-family: 'Inter', sans-serif;
-        font-size: 8pt;
-        color: #64748b;
-        letter-spacing: 0.4px;
-        text-transform: uppercase;
-        border-bottom: 0.5pt solid #cbd5e1;
-        padding-bottom: 4pt;
-        margin-bottom: 10pt;
+        content: counter(page);
+        font-family: 'EB Garamond', Georgia, serif;
+        font-size: 10pt;
+        font-weight: 600;
+        color: #1e293b;
+        border-bottom: 0.5pt solid #94a3b8;
+        padding-bottom: 5pt;
+        margin-bottom: 12pt;
+      }
+
+      @top-center {
+        content: "";
+        border-bottom: 0.5pt solid #94a3b8;
+        padding-bottom: 5pt;
+        margin-bottom: 12pt;
       }
 
       @top-right {
-        content: string(capitulo-title);
-        font-family: 'Crimson Pro', Georgia, serif;
+        content: string(asignatura-title);
+        font-family: 'EB Garamond', Georgia, serif;
+        font-variant: small-caps;
+        letter-spacing: 0.6pt;
+        font-size: 9.5pt;
+        color: #334155;
+        border-bottom: 0.5pt solid #94a3b8;
+        padding-bottom: 5pt;
+        margin-bottom: 12pt;
+      }
+    }
+
+    /* PÁGINAS IMPARES (Derecha en libro abierto): Nombre del Autor + Número a la derecha */
+    @page :right {
+      margin-left: 2.7cm; /* Margen interior de lomo más amplio */
+      margin-right: 2.2cm;
+
+      @top-left {
+        content: "Manuel Bernal Carvajal";
+        font-family: 'EB Garamond', Georgia, serif;
         font-style: italic;
-        font-size: 9pt;
-        color: #475569;
-        border-bottom: 0.5pt solid #cbd5e1;
-        padding-bottom: 4pt;
-        margin-bottom: 10pt;
+        font-size: 10pt;
+        color: #334155;
+        border-bottom: 0.5pt solid #94a3b8;
+        padding-bottom: 5pt;
+        margin-bottom: 12pt;
       }
 
-      @bottom-left {
-        content: "Manuel Bernal Carvajal — Compendio de Estudio";
-        font-family: 'Inter', sans-serif;
-        font-size: 8pt;
-        color: #94a3b8;
+      @top-center {
+        content: "";
+        border-bottom: 0.5pt solid #94a3b8;
+        padding-bottom: 5pt;
+        margin-bottom: 12pt;
       }
 
-      @bottom-right {
+      @top-right {
         content: counter(page);
-        font-family: 'Crimson Pro', Georgia, serif;
+        font-family: 'EB Garamond', Georgia, serif;
+        font-size: 10pt;
+        font-weight: 600;
+        color: #1e293b;
+        border-bottom: 0.5pt solid #94a3b8;
+        padding-bottom: 5pt;
+        margin-bottom: 12pt;
+      }
+    }
+
+    /* PORTADA: Totalmente limpia sin encabezados ni números */
+    @page portada {
+      margin: 2.6cm;
+      @top-left { content: none; border: none; }
+      @top-center { content: none; border: none; }
+      @top-right { content: none; border: none; }
+      @bottom-center { content: none; }
+    }
+
+    /* ÍNDICE GENERAL: Numeración romana en pie de página y encabezado limpio */
+    @page indice {
+      @top-left { content: none; border: none; }
+      @top-center { content: none; border: none; }
+      @top-right { content: none; border: none; }
+      @bottom-center {
+        content: "— " counter(page, lower-roman) " —";
+        font-family: 'EB Garamond', Georgia, serif;
+        font-size: 10pt;
+        font-style: italic;
+        color: #475569;
+      }
+    }
+
+    /* PÁGINA DE INICIO DE CAPÍTULO (H1): Sin encabezado superior, número abajo centrado */
+    @page capitulo_inicio {
+      @top-left { content: none; border: none; }
+      @top-center { content: none; border: none; }
+      @top-right { content: none; border: none; }
+      @bottom-center {
+        content: counter(page);
+        font-family: 'EB Garamond', Georgia, serif;
         font-size: 10.5pt;
         font-weight: 600;
         color: #1e293b;
       }
     }
 
-    /* Páginas limpias sin encabezados ni pies (Portada e Índice) */
-    @page portada {
-      margin: 2.5cm;
-      @top-left { content: none; border: none; }
-      @top-right { content: none; border: none; }
-      @bottom-left { content: none; }
-      @bottom-right { content: none; }
-    }
-
-    @page indice {
-      @top-left { content: none; border: none; }
-      @top-right { content: none; border: none; }
-      @bottom-left { content: none; }
-      @bottom-right {
-        content: counter(page, lower-roman);
-        font-family: 'Crimson Pro', Georgia, serif;
-        font-size: 9.5pt;
-        color: #64748b;
-      }
-    }
-
-    /* Contenedor fuente oculto hasta que Paged.js lo pagina */
-    #book-source {
-      display: none;
-    }
-
-    /* --- PORTADA --- */
+    /* --- PORTADA EDITORIAL --- */
     .book-cover {
       page: portada;
       break-after: page;
-      height: 24.5cm;
+      height: 24.2cm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      border-top: 4pt solid #0f172a;
-      border-bottom: 1.5pt solid #0f172a;
-      padding: 2.5cm 0 1.5cm 0;
+      border-top: 3pt solid #0f172a;
+      border-bottom: 1pt solid #0f172a;
+      padding: 2.2cm 0 1.4cm 0;
     }
 
     .cover-kicker {
-      font-family: 'Inter', sans-serif;
-      font-size: 10pt;
-      font-weight: 600;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: #475569;
-      margin-bottom: 14pt;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-variant: small-caps;
+      font-size: 11.5pt;
+      letter-spacing: 1.8pt;
+      color: #334155;
+      margin-bottom: 16pt;
     }
 
     .cover-title {
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 34pt;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 32pt;
       font-weight: 700;
       line-height: 1.15;
       color: #0f172a;
       string-set: asignatura-title content();
-      margin-bottom: 18pt;
+      margin-bottom: 16pt;
     }
 
-    .cover-divider {
-      width: 60pt;
-      height: 2.5pt;
-      background-color: #1d4ed8;
-      margin: 16pt 0 22pt 0;
+    .cover-rule {
+      width: 70pt;
+      height: 1.5pt;
+      background-color: #0f172a;
+      margin: 18pt 0 22pt 0;
     }
 
     .cover-subtitle {
-      font-family: 'Crimson Pro', Georgia, serif;
+      font-family: 'EB Garamond', Georgia, serif;
       font-style: italic;
-      font-size: 15pt;
+      font-size: 14.5pt;
       color: #334155;
-      line-height: 1.4;
+      line-height: 1.45;
+      max-width: 88%;
     }
 
     .cover-footer {
-      border-top: 0.75pt solid #cbd5e1;
+      border-top: 0.6pt solid #94a3b8;
       padding-top: 14pt;
-      font-family: 'Inter', sans-serif;
-      font-size: 9.5pt;
-      color: #475569;
-      line-height: 1.6;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 11pt;
+      color: #334155;
+      line-height: 1.5;
     }
-    .cover-footer strong {
+    .cover-footer .author-name {
+      font-variant: small-caps;
+      font-weight: 700;
+      font-size: 12.5pt;
+      letter-spacing: 0.8pt;
       color: #0f172a;
-      font-size: 10.5pt;
     }
 
     /* --- ÍNDICE GENERAL (SOLO H1) --- */
@@ -318,13 +369,16 @@
     }
 
     .book-toc-header {
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 22pt;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 20pt;
       font-weight: 700;
+      font-variant: small-caps;
+      letter-spacing: 1pt;
       color: #0f172a;
-      border-bottom: 1.5pt solid #0f172a;
-      padding-bottom: 8pt;
-      margin-bottom: 22pt;
+      text-align: center;
+      border-bottom: 1pt solid #0f172a;
+      padding-bottom: 10pt;
+      margin-bottom: 24pt;
     }
 
     .toc-entries {
@@ -335,80 +389,133 @@
 
     .toc-entries li {
       margin-bottom: 11pt;
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 12pt;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 11.5pt;
       line-height: 1.35;
+      break-inside: avoid;
     }
 
-    .toc-entries a {
+    .toc-link {
       text-decoration: none;
       color: #0f172a;
       display: flex;
       align-items: baseline;
+      width: 100%;
     }
 
-    /* Línea de puntos editorial + número de página automático */
-    .toc-entries a::after {
-      content: leader('.') " " target-counter(attr(href), page);
-      font-weight: 600;
+    .toc-title-text {
+      padding-right: 6pt;
+    }
+
+    .toc-dots {
+      flex: 1;
+      border-bottom: 1pt dotted #64748b;
+      margin: 0 4pt;
+      position: relative;
+      top: -3pt;
+    }
+
+    .toc-page-num {
       padding-left: 6pt;
-      color: #1e293b;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: #0f172a;
     }
 
-    /* --- CUERPO DE CAPÍTULOS --- */
+    /* --- CUERPO DE TRATADO JURÍDICO --- */
     .book-chapter {
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 11.5pt;
-      line-height: 1.58;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 11pt;
+      line-height: 1.48;
       color: #111827;
     }
 
-    /* Cada H1 inicia capítulo en página nueva y actualiza el encabezado superior */
-    .book-chapter h1 {
+    /* Cada sección de tema empieza en hoja nueva con estilo capitulo_inicio */
+    .chapter-unit {
+      page: capitulo_inicio;
       break-before: page;
+    }
+
+    /* Título de Capítulo (H1) */
+    .book-chapter h1 {
       break-after: avoid;
-      string-set: capitulo-title content();
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 21pt;
+      page-break-after: avoid;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 19pt;
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.22;
       color: #0f172a;
-      border-bottom: 1.5pt solid #0f172a;
-      padding-bottom: 8pt;
+      border-top: 1.5pt solid #0f172a;
+      border-bottom: 0.75pt solid #0f172a;
+      padding: 12pt 0 10pt 0;
       margin-top: 0;
-      margin-bottom: 18pt;
+      margin-bottom: 20pt;
       text-align: left;
     }
 
+    /* Epígrafes principales (H2) — nunca quedan huérfanos al final de página */
     .book-chapter h2 {
       break-after: avoid;
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 15pt;
+      page-break-after: avoid;
+      break-inside: avoid;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 13.5pt;
       font-weight: 700;
-      color: #1e293b;
+      font-variant: small-caps;
+      letter-spacing: 0.4pt;
+      color: #0f172a;
       margin-top: 18pt;
-      margin-bottom: 8pt;
+      margin-bottom: 7pt;
       text-align: left;
     }
 
+    /* Subepígrafes (H3) — nunca quedan huérfanos */
     .book-chapter h3 {
       break-after: avoid;
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 12.5pt;
+      page-break-after: avoid;
+      break-inside: avoid;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 11.8pt;
       font-weight: 700;
       font-style: italic;
-      color: #334155;
-      margin-top: 14pt;
-      margin-bottom: 6pt;
+      color: #1e293b;
+      margin-top: 13pt;
+      margin-bottom: 5pt;
       text-align: left;
     }
 
-    .book-chapter p,
+    .book-chapter h4 {
+      break-after: avoid;
+      page-break-after: avoid;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 11pt;
+      font-weight: 600;
+      text-decoration: underline;
+      margin-top: 10pt;
+      margin-bottom: 4pt;
+    }
+
+    /* Párrafos de doctrina jurídica: justificados, con partición silábica y sangría clásica */
+    .book-chapter p {
+      text-align: justify;
+      text-justify: inter-word;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      margin-bottom: 6pt;
+      orphans: 4;
+      widows: 4;
+    }
+
+    /* Sangría editorial de 1.4em cuando un párrafo sigue a otro párrafo */
+    .book-chapter p + p {
+      text-indent: 1.4em;
+    }
+
     .book-chapter li {
       text-align: justify;
       hyphens: auto;
       -webkit-hyphens: auto;
-      margin-bottom: 8pt;
+      margin-bottom: 4.5pt;
       orphans: 3;
       widows: 3;
     }
@@ -416,47 +523,61 @@
     .book-chapter ul,
     .book-chapter ol {
       margin-left: 18pt;
+      margin-top: 6pt;
       margin-bottom: 10pt;
     }
 
+    /* Citas jurisprudenciales y artículos legales */
     .book-chapter blockquote {
-      border-left: 2.5pt solid #1d4ed8;
-      background: #f8fafc;
-      padding: 8pt 12pt;
-      margin: 12pt 0;
-      font-style: italic;
-      color: #334155;
+      border-left: 2pt solid #334155;
+      padding: 4pt 0 4pt 12pt;
+      margin: 10pt 14pt;
+      font-size: 10.2pt;
+      line-height: 1.42;
+      color: #1e293b;
       break-inside: avoid;
     }
 
+    .book-chapter blockquote p + p {
+      text-indent: 0;
+    }
+
+    /* Tablas comparativas y esquemas procesales */
     .book-chapter table {
       width: 100%;
       border-collapse: collapse;
-      margin: 14pt 0;
-      font-family: 'Inter', sans-serif;
-      font-size: 8.8pt;
+      margin: 12pt 0;
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 9.8pt;
+      line-height: 1.35;
       break-inside: avoid;
     }
 
     .book-chapter th,
     .book-chapter td {
-      border: 0.6pt solid #94a3b8;
-      padding: 6pt 8pt;
+      border-top: 0.5pt solid #475569;
+      border-bottom: 0.5pt solid #475569;
+      border-left: none;
+      border-right: none;
+      padding: 5pt 6pt;
       text-align: left;
       vertical-align: top;
     }
 
     .book-chapter th {
-      background-color: #f1f5f9;
-      font-weight: 600;
+      border-top: 1pt solid #0f172a;
+      border-bottom: 1pt solid #0f172a;
+      font-weight: 700;
+      font-variant: small-caps;
       color: #0f172a;
+      background-color: #f8fafc;
     }
 
+    /* Esquemas ASCII o cuadros sinópticos */
     .book-chapter pre {
-      background: #f8fafc;
-      border: 0.6pt solid #cbd5e1;
-      border-radius: 3pt;
-      padding: 8pt;
+      background: #fafafa;
+      border: 0.5pt solid #94a3b8;
+      padding: 7pt 9pt;
       margin: 10pt 0;
       break-inside: avoid;
       white-space: pre-wrap;
@@ -471,7 +592,7 @@
 
     .katex-display {
       break-inside: avoid;
-      margin: 10pt 0;
+      margin: 9pt 0;
       font-size: 0.9em;
     }
   </style>
@@ -484,14 +605,14 @@
     <select id="select-asignatura">
       <option value="">Selecciona una asignatura...</option>
     </select>
-    <button type="button" id="btn-generar" disabled>📖 Maquetar Libro</button>
+    <button type="button" id="btn-generar" disabled>⚖️ Maquetar Tratado</button>
     <button type="button" id="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
   </div>
 
   <!-- Panel inicial de selección de temas -->
   <div id="setup-panel">
-    <h2>Generador de Libro Imprimible</h2>
-    <p class="desc">Selecciona una asignatura en la barra superior, elige los temas que deseas incluir en este volumen y pulsa <strong>Maquetar Libro</strong>. El sistema generará portada, índice general numerado automáticamente y capítulos paginados en A4.</p>
+    <h2>Edición Imprimible — Formato Tratado Jurídico</h2>
+    <p class="desc">Selecciona la asignatura y marca los temas que formarán parte del volumen. El maquetador generará la portada, el índice general con los números de página exactos, encabezados alternos (asignatura en páginas pares, autor en impares) y control tipográfico editorial.</p>
 
     <div id="temas-container" style="display:none;">
       <div class="checklist-actions">
@@ -503,9 +624,6 @@
 
     <div id="status-msg"></div>
   </div>
-
-  <!-- Contenedor fuente oculto donde se ensambla el libro antes de paginar -->
-  <div id="book-source"></div>
 
   <!-- Contenedor destino donde Paged.js renderiza las hojas A4 -->
   <div id="book-preview"></div>
@@ -523,7 +641,6 @@
     const temasContainer = document.getElementById("temas-container");
     const temasList = document.getElementById("temas-list");
     const statusMsg = document.getElementById("status-msg");
-    const bookSource = document.getElementById("book-source");
     const bookPreview = document.getElementById("book-preview");
 
     // 1. Cargar asignaturas desde apuntes_config.js
@@ -574,7 +691,7 @@
       temasList.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
     });
 
-    // 3. Descargar Markdown, construir Portada + Índice H1 + Capítulos y lanzar Paged.js
+    // 3. Descargar Markdown, ensamblar y paginar con Paged.js
     btnGenerar.addEventListener("click", async () => {
       const asigId = selAsig.value;
       const currentAsig = APUNTES_CONFIG.find(a => a.id === asigId);
@@ -596,7 +713,6 @@
       try {
         const selectedTemas = selectedIndices.map(i => currentAsig.temas[i]);
 
-        // Descargar todos los .md en paralelo manteniendo el orden
         const markdowns = await Promise.all(
           selectedTemas.map(async (tema) => {
             const res = await fetch(tema.archivo);
@@ -606,47 +722,54 @@
           })
         );
 
-        statusMsg.textContent = "⏳ Ensamblando capítulos e índice general...";
+        statusMsg.textContent = "⏳ Maquetando capítulos y calculando paginación editorial...";
 
-        // Contenedor temporal para parsear HTML y extraer los H1 reales
+        // Ensamblar capítulos
         const chaptersWrapper = document.createElement("div");
         chaptersWrapper.className = "book-chapter";
 
         markdowns.forEach(({ tema, md }) => {
           let html = marked.parse(md);
-          // Si un archivo .md no empezara con <h1>, le anteponemos el título del tema como H1
           if (!/^\s*<h1[\s>]/i.test(html)) {
             html = `<h1>${tema.titulo}</h1>\n` + html;
           }
-          const section = document.createElement("section");
-          section.innerHTML = html;
-          chaptersWrapper.appendChild(section);
+          const unit = document.createElement("div");
+          unit.className = "chapter-unit";
+          unit.innerHTML = html;
+          chaptersWrapper.appendChild(unit);
         });
 
-        // Extraer únicamente los títulos H1 para el Índice General
+        // Extraer solo los H1 para construir el Índice General
         const allH1 = chaptersWrapper.querySelectorAll("h1");
         let tocItemsHtml = "";
 
         allH1.forEach((h1, index) => {
           const capId = `capitulo-${index + 1}`;
           h1.id = capId;
-          tocItemsHtml += `<li><a href="#${capId}">${h1.textContent}</a></li>\n`;
+          tocItemsHtml += `
+            <li>
+              <a class="toc-link" href="#${capId}" data-target="${capId}">
+                <span class="toc-title-text">${h1.textContent}</span>
+                <span class="toc-dots"></span>
+                <span class="toc-page-num" id="pg-${capId}">—</span>
+              </a>
+            </li>
+          `;
         });
 
         const anioActual = new Date().getFullYear();
 
-        // Montar estructura editorial completa en bookSource
-        bookSource.innerHTML = `
+        const fullHtml = `
           <section class="book-cover">
             <div>
-              <div class="cover-kicker">Máster Universitario en Abogacía — Compendio de Estudio</div>
+              <div class="cover-kicker">Máster Universitario en Abogacía &bull; Compendio Doctrinal</div>
               <h1 class="cover-title">${currentAsig.asignatura}</h1>
-              <div class="cover-divider"></div>
-              <p class="cover-subtitle">Temario completo sistematizado y anotado para estudio y consulta profesional.</p>
+              <div class="cover-rule"></div>
+              <p class="cover-subtitle">Temario sistematizado, legislación aplicable y doctrina jurisprudencial para el estudio y ejercicio profesional.</p>
             </div>
             <div class="cover-footer">
-              <strong>Manuel Bernal Carvajal</strong><br>
-              Edición impresa &bull; ${selectedTemas.length} tema(s) incluidos &bull; ${anioActual}
+              <div class="author-name">Manuel Bernal Carvajal</div>
+              Edición impresa &bull; ${selectedTemas.length} temas &bull; ${anioActual}
             </div>
           </section>
 
@@ -656,16 +779,29 @@
               ${tocItemsHtml}
             </ul>
           </section>
+
+          ${chaptersWrapper.outerHTML}
         `;
-        bookSource.appendChild(chaptersWrapper);
 
-        statusMsg.textContent = "⏳ Paginando hojas A4 y calculando números de página...";
+        // Extraer el CSS editorial para pasárselo explícitamente a Paged.js
+        const editorialCssText = document.getElementById("book-editorial-css").textContent;
 
-        // Ejecutar Paged.js sobre el contenido ensamblado
         const paged = new Paged.Previewer();
-        await paged.preview(bookSource.innerHTML, [], bookPreview);
+        await paged.preview(fullHtml, [{ [window.location.href]: editorialCssText }], bookPreview);
 
-        // Ocultar el panel de configuración y mostrar el botón de impresión
+        // Post-procesado exacto: localizar la hoja real donde quedó cada H1 e inyectar su número en el índice
+        const renderedPages = Array.from(bookPreview.querySelectorAll(".pagedjs_page"));
+        renderedPages.forEach((pageEl, pageIndex) => {
+          const pageNumber = pageIndex + 1;
+          const h1sInPage = pageEl.querySelectorAll("h1[id^='capitulo-']");
+          h1sInPage.forEach(h1 => {
+            const targetSpan = bookPreview.querySelector(`#pg-${h1.id}`);
+            if (targetSpan) {
+              targetSpan.textContent = pageNumber;
+            }
+          });
+        });
+
         setupPanel.style.display = "none";
         btnImprimir.style.display = "inline-block";
         btnGenerar.disabled = false;
