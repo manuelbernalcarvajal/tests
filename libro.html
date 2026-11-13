@@ -181,19 +181,18 @@
   </style>
 
   <!-- ==========================================================================
-       2. HOJA DE ESTILOS EDITORIAL (Procesada directamente por Paged.js)
+       2. HOJA DE ESTILOS EDITORIAL (Inyectada como Blob CSS en Paged.js)
        ========================================================================== -->
-  <style id="book-editorial-css">
+  <script id="book-editorial-css" type="text/plain">
     @page {
       size: A4 portrait;
-      /* Márgenes clásicos de tratado jurídico (2.5cm superior/inferior, 2.4cm laterales) */
       margin: 2.5cm 2.4cm 2.4cm 2.4cm;
     }
 
-    /* PÁGINAS PARES (Izquierda en libro abierto): Número a la izquierda + Nombre de la Asignatura */
+    /* PÁGINAS PARES (Izquierda en libro abierto): Número a la izquierda + Asignatura */
     @page :left {
       margin-left: 2.2cm;
-      margin-right: 2.7cm; /* Margen interior de lomo más amplio */
+      margin-right: 2.7cm;
 
       @top-left {
         content: counter(page);
@@ -226,9 +225,9 @@
       }
     }
 
-    /* PÁGINAS IMPARES (Derecha en libro abierto): Nombre del Autor + Número a la derecha */
+    /* PÁGINAS IMPARES (Derecha en libro abierto): Autor + Número a la derecha */
     @page :right {
-      margin-left: 2.7cm; /* Margen interior de lomo más amplio */
+      margin-left: 2.7cm;
       margin-right: 2.2cm;
 
       @top-left {
@@ -261,7 +260,7 @@
       }
     }
 
-    /* PORTADA: Totalmente limpia sin encabezados ni números */
+    /* PORTADA: Sin encabezados ni números */
     @page portada {
       margin: 2.6cm;
       @top-left { content: none; border: none; }
@@ -270,7 +269,7 @@
       @bottom-center { content: none; }
     }
 
-    /* ÍNDICE GENERAL: Numeración romana en pie de página y encabezado limpio */
+    /* ÍNDICE GENERAL: Numeración romana en pie y encabezado limpio */
     @page indice {
       @top-left { content: none; border: none; }
       @top-center { content: none; border: none; }
@@ -284,8 +283,8 @@
       }
     }
 
-    /* PÁGINA DE INICIO DE CAPÍTULO (H1): Sin encabezado superior, número abajo centrado */
-    @page capitulo_inicio {
+    /* SOLO LA PRIMERA PÁGINA DE CADA CAPÍTULO: Sin encabezado superior, número abajo centrado */
+    @page capitulo_unit:first {
       @top-left { content: none; border: none; }
       @top-center { content: none; border: none; }
       @top-right { content: none; border: none; }
@@ -430,9 +429,9 @@
       color: #111827;
     }
 
-    /* Cada sección de tema empieza en hoja nueva con estilo capitulo_inicio */
+    /* Cada tema inicia en página nueva; solo su 1ª hoja aplica capitulo_unit:first */
     .chapter-unit {
-      page: capitulo_inicio;
+      page: capitulo_unit;
       break-before: page;
     }
 
@@ -453,7 +452,7 @@
       text-align: left;
     }
 
-    /* Epígrafes principales (H2) — nunca quedan huérfanos al final de página */
+    /* Epígrafes principales (H2) */
     .book-chapter h2 {
       break-after: avoid;
       page-break-after: avoid;
@@ -469,7 +468,7 @@
       text-align: left;
     }
 
-    /* Subepígrafes (H3) — nunca quedan huérfanos */
+    /* Subepígrafes (H3) */
     .book-chapter h3 {
       break-after: avoid;
       page-break-after: avoid;
@@ -495,7 +494,7 @@
       margin-bottom: 4pt;
     }
 
-    /* Párrafos de doctrina jurídica: justificados, con partición silábica y sangría clásica */
+    /* Párrafos de doctrina jurídica */
     .book-chapter p {
       text-align: justify;
       text-justify: inter-word;
@@ -506,7 +505,6 @@
       widows: 4;
     }
 
-    /* Sangría editorial de 1.4em cuando un párrafo sigue a otro párrafo */
     .book-chapter p + p {
       text-indent: 1.4em;
     }
@@ -590,12 +588,19 @@
       line-height: 1.25;
     }
 
+    .book-chapter img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10pt auto;
+    }
+
     .katex-display {
       break-inside: avoid;
       margin: 9pt 0;
       font-size: 0.9em;
     }
-  </style>
+  </script>
 </head>
 <body>
 
@@ -724,7 +729,6 @@
 
         statusMsg.textContent = "⏳ Maquetando capítulos y calculando paginación editorial...";
 
-        // Ensamblar capítulos
         const chaptersWrapper = document.createElement("div");
         chaptersWrapper.className = "book-chapter";
 
@@ -783,11 +787,14 @@
           ${chaptersWrapper.outerHTML}
         `;
 
-        // Extraer el CSS editorial para pasárselo explícitamente a Paged.js
+        // Crear un Blob URL para que Paged.js parsee el CSS Paged Media (@page :left / :right) de forma nativa
         const editorialCssText = document.getElementById("book-editorial-css").textContent;
+        const cssBlob = new Blob([editorialCssText], { type: "text/css" });
+        const cssUrl = URL.createObjectURL(cssBlob);
 
         const paged = new Paged.Previewer();
-        await paged.preview(fullHtml, [{ [window.location.href]: editorialCssText }], bookPreview);
+        await paged.preview(fullHtml, [cssUrl], bookPreview);
+        URL.revokeObjectURL(cssUrl);
 
         // Post-procesado exacto: localizar la hoja real donde quedó cada H1 e inyectar su número en el índice
         const renderedPages = Array.from(bookPreview.querySelectorAll(".pagedjs_page"));
