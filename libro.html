@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edición Imprimible — Visor de Apuntes MBC</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+
+  <!-- Tipografías editoriales para formato libro -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Parser Markdown + KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.2/lib/index.umd.js"></script>
+
+  <!-- Paged.js (se ejecutará manualmente tras cargar los apuntes) -->
+  <script>
+    window.PagedConfig = { auto: false };
+  </script>
+  <script src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></script>
+
+  <style>
+    /* ==========================================================================
+       1. INTERFAZ DE CONTROL EN PANTALLA (Se oculta al imprimir)
+       ========================================================================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: #e2e8f0;
+      color: #1e293b;
+    }
+
+    #control-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+
+    #control-bar a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 10px;
+      border: 1px solid #334155;
+      border-radius: 6px;
+    }
+    #control-bar a:hover { background: #1e293b; }
+
+    #control-bar select, #control-bar button {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    #control-bar select {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      min-width: 250px;
+    }
+
+    #btn-generar {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #btn-generar:hover { background: #1d4ed8; }
+    #btn-generar:disabled { background: #475569; cursor: not-allowed; }
+
+    #btn-imprimir {
+      background: #10b981;
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: auto;
+      display: none;
+    }
+    #btn-imprimir:hover { background: #059669; }
+
+    /* Panel de selección de temas antes de maquetar */
+    #setup-panel {
+      max-width: 780px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 32px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    #setup-panel h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+    #setup-panel p.desc {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+    .temas-checklist {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      max-height: 360px;
+      overflow-y: auto;
+      background: #f8fafc;
+    }
+    .tema-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    .tema-item:last-child { border-bottom: none; }
+    .tema-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #2563eb;
+      cursor: pointer;
+    }
+    .checklist-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .checklist-actions button {
+      background: #e2e8f0;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #status-msg {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #2563eb;
+      font-weight: 500;
+    }
+
+    /* Vista previa de páginas A4 generadas por Paged.js en pantalla */
+    .pagedjs_pages {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 0 60px 0;
+      gap: 28px;
+    }
+    .pagedjs_page {
+      background: #ffffff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+    }
+
+    @media print {
+      #control-bar, #setup-panel { display: none !important; }
+      body { background: #fff !important; }
+      .pagedjs_pages { padding: 0 !important; gap: 0 !important; display: block !important; }
+      .pagedjs_page { box-shadow: none !important; margin: 0 !important; }
+    }
+
+    /* ==========================================================================
+       2. MAQUETACIÓN EDITORIAL DEL LIBRO (CSS Paged Media para Paged.js)
+       ========================================================================== */
+    @page {
+      size: A4 portrait;
+      margin: 2.4cm 2.2cm 2.4cm 2.5cm;
+
+      @top-left {
+        content: string(asignatura-title);
+        font-family: 'Inter', sans-serif;
+        font-size: 8pt;
+        color: #64748b;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        border-bottom: 0.5pt solid #cbd5e1;
+        padding-bottom: 4pt;
+        margin-bottom: 10pt;
+      }
+
+      @top-right {
+        content: string(capitulo-title);
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-style: italic;
+        font-size: 9pt;
+        color: #475569;
+        border-bottom: 0.5pt solid #cbd5e1;
+        padding-bottom: 4pt;
+        margin-bottom: 10pt;
+      }
+
+      @bottom-left {
+        content: "Manuel Bernal Carvajal — Compendio de Estudio";
+        font-family: 'Inter', sans-serif;
+        font-size: 8pt;
+        color: #94a3b8;
+      }
+
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 10.5pt;
+        font-weight: 600;
+        color: #1e293b;
+      }
+    }
+
+    /* Páginas limpias sin encabezados ni pies (Portada e Índice) */
+    @page portada {
+      margin: 2.5cm;
+      @top-left { content: none; border: none; }
+      @top-right { content: none; border: none; }
+      @bottom-left { content: none; }
+      @bottom-right { content: none; }
+    }
+
+    @page indice {
+      @top-left { content: none; border: none; }
+      @top-right { content: none; border: none; }
+      @bottom-left { content: none; }
+      @bottom-right {
+        content: counter(page, lower-roman);
+        font-family: 'Crimson Pro', Georgia, serif;
+        font-size: 9.5pt;
+        color: #64748b;
+      }
+    }
+
+    /* Contenedor fuente oculto hasta que Paged.js lo pagina */
+    #book-source {
+      display: none;
+    }
+
+    /* --- PORTADA --- */
+    .book-cover {
+      page: portada;
+      break-after: page;
+      height: 24.5cm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-top: 4pt solid #0f172a;
+      border-bottom: 1.5pt solid #0f172a;
+      padding: 2.5cm 0 1.5cm 0;
+    }
+
+    .cover-kicker {
+      font-family: 'Inter', sans-serif;
+      font-size: 10pt;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 14pt;
+    }
+
+    .cover-title {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 34pt;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #0f172a;
+      string-set: asignatura-title content();
+      margin-bottom: 18pt;
+    }
+
+    .cover-divider {
+      width: 60pt;
+      height: 2.5pt;
+      background-color: #1d4ed8;
+      margin: 16pt 0 22pt 0;
+    }
+
+    .cover-subtitle {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-style: italic;
+      font-size: 15pt;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    .cover-footer {
+      border-top: 0.75pt solid #cbd5e1;
+      padding-top: 14pt;
+      font-family: 'Inter', sans-serif;
+      font-size: 9.5pt;
+      color: #475569;
+      line-height: 1.6;
+    }
+    .cover-footer strong {
+      color: #0f172a;
+      font-size: 10.5pt;
+    }
+
+    /* --- ÍNDICE GENERAL (SOLO H1) --- */
+    .book-toc {
+      page: indice;
+      break-after: page;
+    }
+
+    .book-toc-header {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 22pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1.5pt solid #0f172a;
+      padding-bottom: 8pt;
+      margin-bottom: 22pt;
+    }
+
+    .toc-entries {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .toc-entries li {
+      margin-bottom: 11pt;
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 12pt;
+      line-height: 1.35;
+    }
+
+    .toc-entries a {
+      text-decoration: none;
+      color: #0f172a;
+      display: flex;
+      align-items: baseline;
+    }
+
+    /* Línea de puntos editorial + número de página automático */
+    .toc-entries a::after {
+      content: leader('.') " " target-counter(attr(href), page);
+      font-weight: 600;
+      padding-left: 6pt;
+      color: #1e293b;
+    }
+
+    /* --- CUERPO DE CAPÍTULOS --- */
+    .book-chapter {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 11.5pt;
+      line-height: 1.58;
+      color: #111827;
+    }
+
+    /* Cada H1 inicia capítulo en página nueva y actualiza el encabezado superior */
+    .book-chapter h1 {
+      break-before: page;
+      break-after: avoid;
+      string-set: capitulo-title content();
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 21pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #0f172a;
+      border-bottom: 1.5pt solid #0f172a;
+      padding-bottom: 8pt;
+      margin-top: 0;
+      margin-bottom: 18pt;
+      text-align: left;
+    }
+
+    .book-chapter h2 {
+      break-after: avoid;
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 15pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 18pt;
+      margin-bottom: 8pt;
+      text-align: left;
+    }
+
+    .book-chapter h3 {
+      break-after: avoid;
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 12.5pt;
+      font-weight: 700;
+      font-style: italic;
+      color: #334155;
+      margin-top: 14pt;
+      margin-bottom: 6pt;
+      text-align: left;
+    }
+
+    .book-chapter p,
+    .book-chapter li {
+      text-align: justify;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      margin-bottom: 8pt;
+      orphans: 3;
+      widows: 3;
+    }
+
+    .book-chapter ul,
+    .book-chapter ol {
+      margin-left: 18pt;
+      margin-bottom: 10pt;
+    }
+
+    .book-chapter blockquote {
+      border-left: 2.5pt solid #1d4ed8;
+      background: #f8fafc;
+      padding: 8pt 12pt;
+      margin: 12pt 0;
+      font-style: italic;
+      color: #334155;
+      break-inside: avoid;
+    }
+
+    .book-chapter table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14pt 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 8.8pt;
+      break-inside: avoid;
+    }
+
+    .book-chapter th,
+    .book-chapter td {
+      border: 0.6pt solid #94a3b8;
+      padding: 6pt 8pt;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .book-chapter th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .book-chapter pre {
+      background: #f8fafc;
+      border: 0.6pt solid #cbd5e1;
+      border-radius: 3pt;
+      padding: 8pt;
+      margin: 10pt 0;
+      break-inside: avoid;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .book-chapter pre code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 7.5pt;
+      line-height: 1.25;
+    }
+
+    .katex-display {
+      break-inside: avoid;
+      margin: 10pt 0;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra superior de herramientas -->
+  <div id="control-bar">
+    <a href="index.html">🔙 Menú Principal</a>
+    <select id="select-asignatura">
+      <option value="">Selecciona una asignatura...</option>
+    </select>
+    <button type="button" id="btn-generar" disabled>📖 Maquetar Libro</button>
+    <button type="button" id="btn-imprimir" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  </div>
+
+  <!-- Panel inicial de selección de temas -->
+  <div id="setup-panel">
+    <h2>Generador de Libro Imprimible</h2>
+    <p class="desc">Selecciona una asignatura en la barra superior, elige los temas que deseas incluir en este volumen y pulsa <strong>Maquetar Libro</strong>. El sistema generará portada, índice general numerado automáticamente y capítulos paginados en A4.</p>
+
+    <div id="temas-container" style="display:none;">
+      <div class="checklist-actions">
+        <button type="button" id="btn-check-all">Seleccionar todos</button>
+        <button type="button" id="btn-uncheck-all">Desmarcar todos</button>
+      </div>
+      <div class="temas-checklist" id="temas-list"></div>
+    </div>
+
+    <div id="status-msg"></div>
+  </div>
+
+  <!-- Contenedor fuente oculto donde se ensambla el libro antes de paginar -->
+  <div id="book-source"></div>
+
+  <!-- Contenedor destino donde Paged.js renderiza las hojas A4 -->
+  <div id="book-preview"></div>
+
+  <script src="apuntes_config.js"></script>
+  <script>
+    if (typeof marked !== "undefined" && typeof markedKatex !== "undefined") {
+      marked.use(markedKatex({ throwOnError: false, nonStandard: true }));
+    }
+
+    const selAsig = document.getElementById("select-asignatura");
+    const btnGenerar = document.getElementById("btn-generar");
+    const btnImprimir = document.getElementById("btn-imprimir");
+    const setupPanel = document.getElementById("setup-panel");
+    const temasContainer = document.getElementById("temas-container");
+    const temasList = document.getElementById("temas-list");
+    const statusMsg = document.getElementById("status-msg");
+    const bookSource = document.getElementById("book-source");
+    const bookPreview = document.getElementById("book-preview");
+
+    // 1. Cargar asignaturas desde apuntes_config.js
+    if (typeof APUNTES_CONFIG !== "undefined") {
+      APUNTES_CONFIG.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.asignatura;
+        selAsig.appendChild(opt);
+      });
+    }
+
+    // 2. Mostrar checklist de temas al elegir asignatura
+    selAsig.addEventListener("change", () => {
+      const asigId = selAsig.value;
+      temasList.innerHTML = "";
+      statusMsg.textContent = "";
+      btnImprimir.style.display = "none";
+
+      if (!asigId) {
+        temasContainer.style.display = "none";
+        btnGenerar.disabled = true;
+        return;
+      }
+
+      const currentAsig = APUNTES_CONFIG.find(a => a.id === asigId);
+      if (!currentAsig) return;
+
+      currentAsig.temas.forEach((tema, idx) => {
+        const div = document.createElement("div");
+        div.className = "tema-item";
+        div.innerHTML = `
+          <input type="checkbox" id="chk-${idx}" value="${idx}" checked>
+          <label for="chk-${idx}" style="cursor:pointer; flex:1;">${tema.titulo}</label>
+        `;
+        temasList.appendChild(div);
+      });
+
+      temasContainer.style.display = "block";
+      btnGenerar.disabled = false;
+    });
+
+    document.getElementById("btn-check-all").addEventListener("click", () => {
+      temasList.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = true);
+    });
+
+    document.getElementById("btn-uncheck-all").addEventListener("click", () => {
+      temasList.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    });
+
+    // 3. Descargar Markdown, construir Portada + Índice H1 + Capítulos y lanzar Paged.js
+    btnGenerar.addEventListener("click", async () => {
+      const asigId = selAsig.value;
+      const currentAsig = APUNTES_CONFIG.find(a => a.id === asigId);
+      if (!currentAsig) return;
+
+      const selectedIndices = Array.from(temasList.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(chk => parseInt(chk.value, 10));
+
+      if (selectedIndices.length === 0) {
+        statusMsg.textContent = "⚠️ Selecciona al menos un tema para generar el libro.";
+        return;
+      }
+
+      btnGenerar.disabled = true;
+      btnImprimir.style.display = "none";
+      bookPreview.innerHTML = "";
+      statusMsg.textContent = `⏳ Descargando ${selectedIndices.length} tema(s)...`;
+
+      try {
+        const selectedTemas = selectedIndices.map(i => currentAsig.temas[i]);
+
+        // Descargar todos los .md en paralelo manteniendo el orden
+        const markdowns = await Promise.all(
+          selectedTemas.map(async (tema) => {
+            const res = await fetch(tema.archivo);
+            if (!res.ok) throw new Error(`No se pudo cargar: ${tema.titulo}`);
+            const md = await res.text();
+            return { tema, md };
+          })
+        );
+
+        statusMsg.textContent = "⏳ Ensamblando capítulos e índice general...";
+
+        // Contenedor temporal para parsear HTML y extraer los H1 reales
+        const chaptersWrapper = document.createElement("div");
+        chaptersWrapper.className = "book-chapter";
+
+        markdowns.forEach(({ tema, md }) => {
+          let html = marked.parse(md);
+          // Si un archivo .md no empezara con <h1>, le anteponemos el título del tema como H1
+          if (!/^\s*<h1[\s>]/i.test(html)) {
+            html = `<h1>${tema.titulo}</h1>\n` + html;
+          }
+          const section = document.createElement("section");
+          section.innerHTML = html;
+          chaptersWrapper.appendChild(section);
+        });
+
+        // Extraer únicamente los títulos H1 para el Índice General
+        const allH1 = chaptersWrapper.querySelectorAll("h1");
+        let tocItemsHtml = "";
+
+        allH1.forEach((h1, index) => {
+          const capId = `capitulo-${index + 1}`;
+          h1.id = capId;
+          tocItemsHtml += `<li><a href="#${capId}">${h1.textContent}</a></li>\n`;
+        });
+
+        const anioActual = new Date().getFullYear();
+
+        // Montar estructura editorial completa en bookSource
+        bookSource.innerHTML = `
+          <section class="book-cover">
+            <div>
+              <div class="cover-kicker">Máster Universitario en Abogacía — Compendio de Estudio</div>
+              <h1 class="cover-title">${currentAsig.asignatura}</h1>
+              <div class="cover-divider"></div>
+              <p class="cover-subtitle">Temario completo sistematizado y anotado para estudio y consulta profesional.</p>
+            </div>
+            <div class="cover-footer">
+              <strong>Manuel Bernal Carvajal</strong><br>
+              Edición impresa &bull; ${selectedTemas.length} tema(s) incluidos &bull; ${anioActual}
+            </div>
+          </section>
+
+          <section class="book-toc">
+            <h2 class="book-toc-header">Índice General</h2>
+            <ul class="toc-entries">
+              ${tocItemsHtml}
+            </ul>
+          </section>
+        `;
+        bookSource.appendChild(chaptersWrapper);
+
+        statusMsg.textContent = "⏳ Paginando hojas A4 y calculando números de página...";
+
+        // Ejecutar Paged.js sobre el contenido ensamblado
+        const paged = new Paged.Previewer();
+        await paged.preview(bookSource.innerHTML, [], bookPreview);
+
+        // Ocultar el panel de configuración y mostrar el botón de impresión
+        setupPanel.style.display = "none";
+        btnImprimir.style.display = "inline-block";
+        btnGenerar.disabled = false;
+
+      } catch (err) {
+        statusMsg.textContent = `❌ Error: ${err.message}`;
+        btnGenerar.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
