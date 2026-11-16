@@ -67,7 +67,7 @@ const APUNTES_CONFIG = [
       { id: "001", titulo: "T01: /pendiente/Aspectos fundamentales de las reformas penales", archivo: "apuntes/enproceso.md" },
       { id: "002", titulo: "T02: /pendiente/La teoría general del delito en la práctica de la abogacía", archivo: "apuntes/enproceso.md" },
       { id: "003", titulo: "T03: /pendiente/La individualización penal. Ejecución de las penas y derecho penitenciario", archivo: "apuntes/enproceso.md" },
-      { id: "004", titulo: "T04: /pendiente/Parte especial del derecho penal. Los delitos en concreto en la práctica de la abogacía", archivo: "apuntes/enproceso.md" }
+      { id: "004", titulo: "T04: /pendiente/Parte especial del derecho penal. Los delitos en concreto en la práctica de la abogacía", archivo: "apuntes/enproceso.md" },
       { id: "001p", titulo: "Parte Ester: /pendiente/ Lo mismo pero por parte de la asignatura", archivo: "apuntes/penal/001p.md" },
       { id: "002p", titulo: "Parte Miguel: /pendiente/ Lo mismo pero por parte de la asignatura", archivo: "apuntes/enproceso.md" },
       { id: "003p", titulo: "Parte Alfredo: /pendiente/ Lo mismo pero por parte de la asignatura", archivo: "apuntes/enproceso.md" }
