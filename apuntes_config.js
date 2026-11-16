@@ -57,7 +57,17 @@ const APUNTES_CONFIG = [
       { id: "007", titulo: "T07: /pendiente/La intervención del profesional de la Abogacía en centros policiales y oficinas judiciales", archivo: "apuntes/enproceso.md" },
       { id: "008", titulo: "T08: /pendiente/La actuación del profesional de la Abogacía en las distintas fases del proceso penal y en el juzgado de guardia", archivo: "apuntes/enproceso.md" },
       { id: "009", titulo: "T09: /pendiente/La prisión y la libertad provisional", archivo: "apuntes/enproceso.md" },
-      { id: "010", titulo: "T010: /pendiente/El juicio oral en los distintos procesos penales", archivo: "apuntes/enproceso.md" },
+      { id: "010", titulo: "T010: /pendiente/El juicio oral en los distintos procesos penales", archivo: "apuntes/enproceso.md" }
+    ]
+  }
+  {
+    asignatura: "Derecho Penal",
+    id: "penal",
+    temas: [
+      { id: "001", titulo: "T01: /pendiente/Aspectos fundamentales de las reformas penales.", archivo: "apuntes/enproceso.md" },
+      { id: "002", titulo: "T02: /pendiente/La teoría general del delito en la práctica de la abogacía", archivo: "apuntes/enproceso.md" },
+      { id: "003", titulo: "T03: /pendiente/La individualización penal. Ejecución de las penas y derecho penitenciario", archivo: "apuntes/enproceso.md" },
+      { id: "004", titulo: "T04: /pendiente/Parte especial del derecho penal. Los delitos en concreto en la práctica de la abogacía", archivo: "apuntes/enproceso.md" }
     ]
   }
 ];
