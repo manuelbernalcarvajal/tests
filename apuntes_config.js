@@ -59,7 +59,7 @@ const APUNTES_CONFIG = [
       { id: "009", titulo: "T09: /pendiente/La prisión y la libertad provisional", archivo: "apuntes/enproceso.md" },
       { id: "010", titulo: "T010: /pendiente/El juicio oral en los distintos procesos penales", archivo: "apuntes/enproceso.md" }
     ]
-  }
+  },
   {
     asignatura: "Derecho Penal",
     id: "penal",
