@@ -10,6 +10,7 @@ const APUNTES_CONFIG = [
       { id: "005", titulo: "T05: La hipoteca y otras garantías de crédito", archivo: "apuntes/civil/005.md" },
       { id: "006", titulo: "T06: Protección de los consumidores y usuarios: derecho de desistimiento, cláusulas abusivas, régimen de garantías", archivo: "apuntes/civil/006.md" },
       { id: "007", titulo: "T07: Crisis matrimoniales y de parejas de hecho. Procedimientos en el ámbito civil y eclesiástico", archivo: "apuntes/civil/007.md" },
+      { id: "016", titulo: "T07.1: Crisis matrimoniales y de parejas de hecho. Convenio Regulador y Medidas", archivo: "apuntes/civil/007.md" },
       { id: "008", titulo: "T08: Aspectos económicos relacionados con el matrimonio. Liquidación de la sociedad de gananciales", archivo: "apuntes/civil/008.md" },
       { id: "009", titulo: "T09: Edad y personas con discapacidad", archivo: "apuntes/civil/009.md" },
       { id: "010", titulo: "T10: Testamento, legítimas y sucesión intestada. Partición de la herencia", archivo: "apuntes/civil/010.md" },
