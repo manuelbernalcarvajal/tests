@@ -6,6 +6,8 @@
   <title>Asistente Jurídico RAG — Portal by MBC</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Librería BM25 profesional (~8 KB) -->
+  <script src="https://cdn.jsdelivr.net/npm/minisearch@7.1.0/dist/umd/index.min.js"></script>
   <script src="darkmode.js"></script>
   <style>
     :root {
@@ -31,7 +33,6 @@
       overflow: hidden;
     }
 
-    /* Barra superior */
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -80,7 +81,6 @@
       gap: 8px;
     }
 
-    /* Layout principal: Historial + Chat */
     .workspace {
       display: flex;
       flex: 1;
@@ -160,7 +160,6 @@
     }
     .btn-del-chat:hover { color: #dc2626; background: rgba(220,38,38,0.1); }
 
-    /* Zona de conversación */
     .chat-main {
       flex: 1;
       display: flex;
@@ -210,7 +209,6 @@
       width: 100%;
     }
 
-    /* Trazas de búsqueda agéntica */
     .tool-trace {
       background: #f1f5f9;
       border: 1px dashed #94a3b8;
@@ -227,7 +225,6 @@
       text-decoration: underline;
     }
 
-    /* Estilos Markdown dentro de respuestas */
     .msg-assistant p { margin-bottom: 0.8em; }
     .msg-assistant p:last-child { margin-bottom: 0; }
     .msg-assistant ul, .msg-assistant ol { margin-left: 20px; margin-bottom: 0.8em; }
@@ -248,7 +245,6 @@
       font-size: 0.9em;
     }
 
-    /* Caja de entrada inferior */
     .input-area {
       background: var(--surface);
       border-top: 1px solid var(--border);
@@ -304,7 +300,7 @@
       gap: 6px;
     }
 
-    /* Modal de Configuración y Guía API */
+    /* Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -401,7 +397,6 @@
       margin-left: auto;
     }
 
-    /* Guía educativa desplegable */
     details.api-guide {
       margin-top: 20px;
       border: 1px solid var(--border);
@@ -434,7 +429,6 @@
       font-size: 13px;
     }
 
-    /* Adaptación modo oscuro (compatible con darkmode.js) */
     html[data-mbc-theme="dark"] details.api-guide,
     html[data-mbc-theme="dark"] .tool-trace {
       background: #0f172a !important;
@@ -448,7 +442,6 @@
     }
     html[data-mbc-theme="dark"] .history-item:hover { background: #334155 !important; }
 
-    /* Responsive móvil */
     @media (max-width: 768px) {
       aside.history-sidebar {
         position: fixed;
@@ -472,7 +465,7 @@
     <button type="button" id="btn-toggle-history" title="Historial de chats">☰</button>
     <a href="index.html">🔙 Portal</a>
     <span id="provider-badge" class="status-pill beta">⚡ Beta Gratuita (Sin registro)</span>
-    <span id="rag-index-badge" class="status-pill">Indexando temario...</span>
+    <span id="rag-index-badge" class="status-pill">Indexando con MiniSearch...</span>
 
     <div class="header-actions">
       <button type="button" id="btn-open-settings">🔑 Configurar API</button>
@@ -495,14 +488,14 @@
           <button type="button" class="btn-send" id="btn-send">Enviar</button>
         </div>
         <div class="disclaimer-bar">
-          <span id="active-model-label">Modo: Pollinations Beta (Auto-RAG)</span>
-          <span>Cero invención: responde exclusivamente con tus apuntes.</span>
+          <span id="active-model-label">Motor: Pollinations Beta (MiniSearch BM25)</span>
+          <span>Búsqueda BM25 profesional + citas literales de tus apuntes.</span>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- Modal de Configuración de API y Guía -->
+  <!-- Modal de Configuración -->
   <div class="modal-backdrop" id="settings-modal">
     <div class="modal-card">
       <div class="modal-header">
@@ -543,36 +536,32 @@
         <label for="cfg-rag-mode">Estrategia de búsqueda en apuntes</label>
         <select id="cfg-rag-mode">
           <option value="agentic">🧠 Agéntico (El modelo busca varias veces mientras razona — Recomendado con API propia)</option>
-          <option value="direct">⚡ Auto-RAG Directo (Inyecta los mejores bloques en 1 paso — Ideal para Beta gratuita)</option>
+          <option value="direct">⚡ Auto-RAG Directo BM25 (Inyecta los 6 mejores bloques en 1 paso — Ideal para Beta gratuita)</option>
         </select>
       </div>
 
       <div class="modal-actions">
         <button type="button" class="btn-save" id="btn-save-settings">💾 Guardar configuración</button>
-        <button type="button" class="btn-wipe" id="btn-wipe-data" title="Borra la API Key y el historial de este navegador">🗑️ Borrar API Key y chats</button>
+        <button type="button" class="btn-wipe" id="btn-wipe-data">🗑️ Borrar API Key y chats</button>
       </div>
 
       <details class="api-guide" open>
         <summary>📘 Guía rápida: ¿Qué es una API Key, cómo conseguirla gratis y qué NO debes hacer?</summary>
-        
         <h4>1. ¿Qué es una API Key en cristiano?</h4>
-        <p>Es una contraseña larga (parecida a <code>AIzaSyD9x...</code>) que te identifica ante un proveedor de inteligencia artificial cuando usas una aplicación externa como esta. En lugar de pagar tú una suscripción mensual cerrada, esta web conecta directamente desde tu navegador con el servidor de IA usando tu propia llave. <strong>Tu clave nunca pasa por el servidor de esta web</strong>; se guarda exclusivamente en la memoria local (<code>localStorage</code>) de tu navegador.</p>
-
+        <p>Es una contraseña larga (parecida a <code>AIzaSyD9x...</code>) que te identifica ante un proveedor de inteligencia artificial cuando usas una aplicación externa como esta. <strong>Tu clave nunca pasa por el servidor de esta web</strong>; se guarda exclusivamente en la memoria local (<code>localStorage</code>) de tu navegador.</p>
         <h4>2. ¿Cómo conseguir una gratis en 2 minutos?</h4>
         <ul>
-          <li><strong>Opción A — Google Gemini (Recomendada y gratuita):</strong> Entra en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a> con tu cuenta de Gmail, pulsa <em>"Create API Key"</em>, copia el código y pégalo arriba seleccionando el proveedor <strong>Google Gemini</strong> (modelo <code>gemini-2.5-flash</code>). Tiene cuota gratuita diaria más que suficiente para estudiar.</li>
-          <li><strong>Opción B — OpenRouter:</strong> Regístrate en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>, crea una clave y usa modelos etiquetados como <code>:free</code> sin meter tarjeta bancaria.</li>
+          <li><strong>Google Gemini (Recomendada y gratuita):</strong> Entra en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a>, pulsa <em>"Create API Key"</em>, copia el código y pégalo arriba seleccionando <strong>Google Gemini</strong> (modelo <code>gemini-2.5-flash</code>).</li>
+          <li><strong>OpenRouter:</strong> Regístrate en <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a> y usa modelos etiquetados como <code>:free</code> sin meter tarjeta.</li>
         </ul>
-
-        <h4>3. Reglas básicas de supervivencia digital (léelas, por favor)</h4>
+        <h4>3. Reglas básicas de supervivencia digital</h4>
         <ul>
-          <li><strong>Es como la tarjeta del banco:</strong> No se la pases a nadie por WhatsApp, no la subas a GitHub ni la pegues en capturas de pantalla. Si alguien te la coge y tienes saldo asociado, gastará tu cuota.</li>
-          <li><strong>Ordenadores públicos o de la biblioteca:</strong> Si entras desde un PC compartido de la facultad, usa el botón rojo <strong>"🗑️ Borrar API Key y chats"</strong> antes de cerrar la ventana.</li>
-          <li><strong>Regla de oro jurídica:</strong> La IA redacta muy bien, pero puede confundir un plazo de 10 días con uno de 20 o inventarse un número de artículo. Usa siempre los enlaces que aparecen al final de cada respuesta para comprobar el texto literal en tus apuntes o en el <strong>BOE</strong>.</li>
+          <li><strong>No la compartas:</strong> Es como la tarjeta del banco; no la pases por WhatsApp ni la subas a capturas.</li>
+          <li><strong>Ordenadores de la facultad:</strong> Usa el botón rojo <strong>"🗑️ Borrar API Key y chats"</strong> antes de irte.</li>
+          <li><strong>Verifica siempre las citas:</strong> Comprueba los enlaces al temario o al <strong>BOE</strong> antes de usar un plazo en un escrito o examen.</li>
         </ul>
-
         <div class="warning-box">
-          <strong>Aviso sobre el Modo Beta gratuito:</strong> El modo sin registro usa un servicio público gratuito (Pollinations). Puede ir lento en horas punta, fallar si hay saturación y <strong>no debe usarse jamás con datos personales reales de clientes</strong> (nombres, DNI, expedientes reales), ya que las peticiones pasan por infraestructura pública compartida. Para casos reales o estudio intensivo, usa tu propia API Key o Ollama en local.
+          <strong>Aviso Modo Beta gratuito:</strong> Servicio público compartido. No introduzcas nunca datos personales reales de clientes.
         </div>
       </details>
     </div>
@@ -581,10 +570,10 @@
   <script src="apuntes_config.js"></script>
   <script>
     /* ==========================================================================
-       1. CONFIGURACIÓN Y PERSISTENCIA EN LOCALSTORAGE
+       1. CONFIGURACIÓN Y PERSISTENCIA
        ========================================================================== */
-    const CFG_KEY = "mbc_ai_config_v2";
-    const CHATS_KEY = "mbc_ai_chats_v2";
+    const CFG_KEY = "mbc_ai_config_v3";
+    const CHATS_KEY = "mbc_ai_chats_v3";
 
     const PROVIDER_PRESETS = {
       pollinations: {
@@ -627,8 +616,6 @@
     let appConfig = loadConfig();
     let chats = loadChats();
     let activeChatId = chats.length ? chats[0].id : null;
-    let chunksStore = []; // Chunks granulares por encabezado # y subtítulo **negrita**
-    let docFrequency = new Map(); // Frecuencia inversa de documento (IDF) para ponderar términos raros
 
     function loadConfig() {
       try {
@@ -663,7 +650,7 @@
     }
 
     /* ==========================================================================
-       2. MOTOR DE INDEXACIÓN DE ALTA PRECISIÓN (Markdown # + Negritas ** + IDF)
+       2. MOTOR DE BÚSQUEDA BM25 PROFESIONAL CON MINISEARCH
        ========================================================================== */
     const STOPWORDS_ES = new Set([
       "el", "la", "los", "las", "un", "una", "unos", "unas", "lo", "al", "del",
@@ -673,49 +660,34 @@
       "se", "su", "sus", "le", "les", "me", "te", "nos", "os", "mi", "tu",
       "y", "o", "ni", "pero", "sino", "mas", "muy", "ya", "no", "si", "ante", "bajo",
       "articulo", "art", "arts", "establece", "dice", "regula", "significa", "concepto",
-      "segun", "caso", "plazo", "requisitos", "explica", "dime", "puedo", "limite", "limites",
-      "codigo", "civil", "penal", "ley", "enjuiciamiento", "derecho", "espana", "espanol",
-      "cuales", "tipos", "clases", "diferencia", "diferencias", "caracteristicas", "efectos"
+      "segun", "explica", "dime", "puedo", "codigo", "civil", "penal", "ley", "derecho"
     ]);
 
     function normalizar(str) {
       return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     }
 
-    // Stemming español ligero para emparejar plurales y derivaciones básicas
-    function stemEs(word) {
-      if (/^\d+$/.test(word) || word.length < 5) return word;
-      return word
-        .replace(/(ciones|siones)$/i, "cion")
-        .replace(/(amientos|imientos)$/i, "amiento")
-        .replace(/(idades)$/i, "idad")
-        .replace(/(ables|ibles)$/i, "able")
-        .replace(/(ivos|ivas)$/i, "ivo")
-        .replace(/(ores|oras)$/i, "or")
-        .replace(/(es|s)$/i, "");
-    }
+    let miniSearch = null;
+    let chunksById = new Map();
 
-    function tokenizar(str, applyStem = false) {
-      const matches = normalizar(str).match(/[a-z0-9áéíóúñü]+/gi);
-      if (!matches) return [];
-      const filtrados = matches.filter(t => (t.length >= 3 || /^\d+$/.test(t)) && !STOPWORDS_ES.has(t));
-      const base = filtrados.length > 0 ? filtrados : matches.filter(t => t.length >= 2);
-      return applyStem ? base.map(stemEs) : base;
-    }
-
-    function distanciaLevenshtein(a, b) {
-      if (!a.length) return b.length;
-      if (!b.length) return a.length;
-      const matrix = Array.from({ length: b.length + 1 }, (_, i) => [i]);
-      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-      for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-          matrix[i][j] = b[i - 1] === a[j - 1]
-            ? matrix[i - 1][j - 1]
-            : Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+    function initMiniSearch() {
+      miniSearch = new MiniSearch({
+        fields: ["temaTitulo", "heading", "texto"],
+        storeFields: ["id"],
+        // Normalización sin tildes + filtrado de stopwords
+        processTerm: (term) => {
+          const clean = normalizar(term).replace(/[^a-z0-9]/g, "");
+          if (!clean) return null;
+          if (!/^\d+$/.test(clean) && (clean.length < 3 || STOPWORDS_ES.has(clean))) return null;
+          return clean;
+        },
+        searchOptions: {
+          boost: { heading: 3.0, temaTitulo: 1.8, texto: 1.0 },
+          fuzzy: (term) => (/^\d+$/.test(term) || term.length < 5 ? false : 0.18),
+          prefix: (term) => !/^\d+$/.test(term) && term.length >= 4,
+          combineWith: "OR"
         }
-      }
-      return matrix[b.length][a.length];
+      });
     }
 
     async function indexarApuntes() {
@@ -725,10 +697,13 @@
         return;
       }
 
+      initMiniSearch();
+      chunksById.clear();
+
       const tareas = [];
+      const docsToIndex = [];
       let temasCargados = 0;
-      chunksStore = [];
-      docFrequency = new Map();
+      let nextId = 1;
 
       APUNTES_CONFIG.forEach(asig => {
         asig.temas.forEach(tema => {
@@ -751,41 +726,27 @@
                     return;
                   }
                   const fullHeading = currentSub ? `${currentH} > ${currentSub}` : currentH;
-                  const normFull = normalizar(fullHeading + "\n" + text);
-                  const rawTokens = tokenizar(fullHeading + " " + text, false);
-                  const stemmedTokens = new Set(rawTokens.map(stemEs));
-
-                  // Registrar frecuencia global por chunk para calcular IDF
-                  stemmedTokens.forEach(st => {
-                    docFrequency.set(st, (docFrequency.get(st) || 0) + 1);
-                  });
-
-                  chunksStore.push({
+                  const docObj = {
+                    id: nextId++,
                     asigId: asig.id,
                     asigNombre: asig.asignatura,
                     temaId: tema.id,
                     temaTitulo: tema.titulo,
-                    normTemaTitle: normalizar(tema.titulo),
                     heading: fullHeading,
-                    normHeading: normalizar(fullHeading),
-                    rawText: text,
-                    normText: normFull,
-                    rawTokensSet: new Set(rawTokens),
-                    stemmedSet: stemmedTokens
-                  });
+                    texto: text
+                  };
+                  chunksById.set(docObj.id, docObj);
+                  docsToIndex.push(docObj);
                   block = [];
                 };
 
                 lineas.forEach(l => {
                   const trimmed = l.trim();
-                  // 1. Detectar encabezados estándar Markdown (#, ##, ###)
                   if (/^#{1,3}\s+/.test(trimmed)) {
                     pushChunk();
                     currentH = trimmed.replace(/^#{1,3}\s+/, "").replace(/\*\*/g, "").trim();
                     currentSub = "";
-                  }
-                  // 2. Detectar subtítulos independientes en negrita (**Buena fe e integración contractual**)
-                  else if (/^\*\*[^*]{4,110}\*\*$/.test(trimmed) && block.join("\n").trim().length > 180) {
+                  } else if (/^\*\*[^*]{4,110}\*\*$/.test(trimmed) && block.join("\n").trim().length > 180) {
                     pushChunk();
                     currentSub = trimmed.replace(/^\*\*|\*\*$/g, "").trim();
                   } else {
@@ -800,32 +761,46 @@
       });
 
       await Promise.all(tareas);
-      badge.textContent = `📚 ${temasCargados} temas (${chunksStore.length} bloques)`;
+      miniSearch.addAll(docsToIndex);
+      badge.textContent = `📚 ${temasCargados} temas (${docsToIndex.length} bloques BM25)`;
     }
 
-    function extraerVentanaPrecisa(rawText, anchorTerms) {
+    // Expande consultas jurídicas habituales (ej. "plazos" -> añade "prescripcion caducidad anos dias")
+    function expandirConsultaJuridica(q) {
+      const norm = normalizar(q);
+      let extra = "";
+      if (/\bplazos?\b/.test(norm)) {
+        extra += " prescripcion caducidad duracion anos dias habiles";
+      }
+      if (/\brequisitos?\b/.test(norm)) {
+        extra += " elementos presupuestos condiciones";
+      }
+      return (q + extra).trim();
+    }
+
+    function extraerVentana(rawText, queryStr) {
       if (rawText.length <= 2200) return rawText;
       const normRaw = normalizar(rawText);
+      const terms = normalizar(queryStr)
+        .split(/\s+/)
+        .filter(t => (t.length >= 4 || /^\d+$/.test(t)) && !STOPWORDS_ES.has(t))
+        .sort((a, b) => (/^\d+$/.test(b) ? 1 : 0) - (/^\d+$/.test(a) ? 1 : 0) || b.length - a.length);
 
-      let bestPos = -1;
-      for (const t of anchorTerms) {
+      for (const t of terms) {
         const safe = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const rx = /^\d+$/.test(t) ? new RegExp(`\\b${safe}\\b`) : new RegExp(safe);
         const m = normRaw.match(rx);
-        if (m) {
-          bestPos = m.index;
-          break;
+        if (m && m.index > 350) {
+          const start = Math.max(0, rawText.lastIndexOf("\n", m.index - 350));
+          return (start > 0 ? "[...] " : "") + rawText.slice(start, start + 2200) + " [...]";
         }
-      }
-
-      if (bestPos > 400) {
-        const start = Math.max(0, rawText.lastIndexOf("\n", bestPos - 400));
-        return (start > 0 ? "[...] " : "") + rawText.slice(start, start + 2200) + " [...]";
       }
       return rawText.slice(0, 2200) + " [...]";
     }
 
-    function ejecutarConsultaLexica(rawQuery, maxResults = 5, options = { strictNumbers: true }) {
+    function buscarEnApuntes(rawQuery, maxResults = 6) {
+      if (!miniSearch) return { hits: [], quality: "none" };
+
       let q = rawQuery || "";
       let filterAsig = null;
       const asigMatch = q.match(/\basig:([a-z0-9_-]+)/i);
@@ -834,167 +809,78 @@
         q = q.replace(asigMatch[0], " ");
       }
 
-      const exactPhrases = [];
-      q = q.replace(/"([^"]+)"/g, (_, p) => {
-        if (p.trim()) exactPhrases.push(normalizar(p.trim()));
-        return " ";
+      const expandedQuery = expandirConsultaJuridica(q);
+      const requestedNumbers = (q.match(/\b\d+\b/g) || []);
+
+      const rawHits = miniSearch.search(expandedQuery, {
+        filter: (res) => {
+          const doc = chunksById.get(res.id);
+          if (!doc) return false;
+          if (filterAsig && !normalizar(doc.asigId).includes(filterAsig)) return false;
+          return true;
+        }
       });
 
-      const negativeTerms = [];
-      q = q.replace(/(?:^|\s)-([a-z0-9áéíóúñü]+)/gi, (_, n) => {
-        if (n.trim()) negativeTerms.push(normalizar(n.trim()));
-        return " ";
-      });
+      if (!rawHits.length) return { hits: [], quality: "none" };
 
-      const positiveTerms = tokenizar(q, false);
-      if (!positiveTerms.length && !exactPhrases.length) return [];
+      // Si hay un número de artículo concreto (ej. 1258), priorizar bloques que lo contengan literalmente
+      let ordered = rawHits;
+      let quality = "exact";
 
-      const requestedNumbers = positiveTerms.filter(t => /^\d+$/.test(t));
-      const totalChunks = Math.max(chunksStore.length, 1);
-      const candidates = [];
-
-      chunksStore.forEach(chunk => {
-        if (filterAsig && !normalizar(chunk.asigId).includes(filterAsig)) return;
-        if (negativeTerms.some(neg => chunk.normText.includes(neg))) return;
-        if (!exactPhrases.every(p => chunk.normText.includes(p) || chunk.normTemaTitle.includes(p))) return;
-
-        if (options.strictNumbers && requestedNumbers.length > 0) {
-          const hasNumber = requestedNumbers.some(num => new RegExp(`\\b${num}\\b`).test(chunk.normText));
-          if (!hasNumber) return;
-        }
-
-        let score = 0;
-        let distinctMatched = 0;
-
-        for (const term of positiveTerms) {
-          const isNum = /^\d+$/.test(term);
-          const stemmed = stemEs(term);
-          const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const termRegex = isNum ? new RegExp(`\\b${safeTerm}\\b`, "g") : new RegExp(safeTerm, "g");
-
-          let found = isNum
-            ? termRegex.test(chunk.normText)
-            : (chunk.normText.includes(term) || chunk.stemmedSet.has(stemmed) || chunk.normTemaTitle.includes(term));
-
-          if (!found && !isNum && term.length >= 5) {
-            for (const tok of chunk.rawTokensSet) {
-              if (Math.abs(tok.length - term.length) <= 1 && distanciaLevenshtein(term, tok) <= 1) {
-                found = true;
-                break;
-              }
-            }
-          }
-
-          if (found) {
-            distinctMatched++;
-            // Factor IDF: términos que salen en pocos bloques valen muchísimo más que palabras frecuentes
-            const df = docFrequency.get(stemmed) || 1;
-            const idf = Math.max(1, Math.log(totalChunks / df) + 1);
-            const pesoBase = isNum ? 45 : (6 * idf);
-
-            if (chunk.normHeading.includes(term) || chunk.normHeading.includes(stemmed)) score += 30 * idf;
-            if (chunk.normTemaTitle.includes(term)) score += 15;
-
-            const hits = (chunk.normText.match(termRegex) || []).length || 1;
-            score += Math.min(hits, 6) * pesoBase;
-          }
-        }
-
-        exactPhrases.forEach(p => {
-          const safeP = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          if (chunk.normHeading.includes(p)) score += 60;
-          score += ((chunk.normText.match(new RegExp(safeP, "g")) || []).length) * 20;
+      if (requestedNumbers.length > 0) {
+        const withNum = rawHits.filter(r => {
+          const doc = chunksById.get(r.id);
+          const fullNorm = normalizar(doc.heading + " " + doc.texto);
+          return requestedNumbers.some(n => new RegExp(`\\b${n}\\b`).test(fullNorm));
         });
-
-        if (score === 0) return;
-
-        // Bonus fuerte si el bloque contiene varios conceptos de la pregunta juntos
-        if (positiveTerms.length > 1 && distinctMatched > 1) {
-          score *= (1 + (distinctMatched / positiveTerms.length) * 0.8);
+        if (withNum.length > 0) {
+          ordered = withNum;
+        } else {
+          quality = "partial";
         }
+      }
 
-        // Normalización suave por longitud para que bloques gigantes no aplasten definiciones concretas
-        const lengthPenalty = 1 + Math.log10(Math.max(chunk.rawText.length, 200) / 200) * 0.25;
-        score = score / lengthPenalty;
-
-        const anchorList = [
-          ...requestedNumbers,
-          ...exactPhrases,
-          ...[...positiveTerms].filter(t => !/^\d+$/.test(t)).sort((a, b) => b.length - a.length)
-        ];
-
-        candidates.push({
-          asignatura: chunk.asigNombre,
-          asigId: chunk.asigId,
-          tema: chunk.temaTitulo,
-          temaId: chunk.temaId,
-          enlace: `apuntes.html?asig=${encodeURIComponent(chunk.asigId)}&tema=${encodeURIComponent(chunk.temaId)}`,
-          seccion: chunk.heading,
-          extracto: extraerVentanaPrecisa(chunk.rawText, anchorList),
-          score: Number(score.toFixed(2))
-        });
+      const topHits = ordered.slice(0, maxResults).map(r => {
+        const doc = chunksById.get(r.id);
+        return {
+          asignatura: doc.asigNombre,
+          asigId: doc.asigId,
+          tema: doc.temaTitulo,
+          temaId: doc.temaId,
+          enlace: `apuntes.html?asig=${encodeURIComponent(doc.asigId)}&tema=${encodeURIComponent(doc.temaId)}`,
+          seccion: doc.heading,
+          extracto: extraerVentana(doc.texto, expandedQuery),
+          score: Number(r.score.toFixed(2))
+        };
       });
 
-      candidates.sort((a, b) => b.score - a.score);
-      return candidates.slice(0, maxResults);
-    }
-
-    function buscarEnApuntes(rawQuery, maxResults = 5) {
-      // Nivel 1: Búsqueda exacta (respetando números de artículo y filtros)
-      const exactHits = ejecutarConsultaLexica(rawQuery, maxResults, { strictNumbers: true });
-      if (exactHits.length > 0) {
-        return { hits: exactHits, quality: "exact" };
-      }
-
-      // Nivel 2: Relajación con las 2 palabras clave más largas/específicas
-      const nonNumericKeywords = tokenizar(rawQuery, false)
-        .filter(t => !/^\d+$/.test(t))
-        .sort((a, b) => b.length - a.length);
-
-      if (nonNumericKeywords.length >= 2) {
-        const relaxedHits = ejecutarConsultaLexica(`${nonNumericKeywords[0]} ${nonNumericKeywords[1]}`, maxResults, { strictNumbers: false });
-        if (relaxedHits.length > 0) {
-          return { hits: relaxedHits, quality: "partial" };
-        }
-      }
-
-      // Nivel 3: Búsqueda de respaldo por el término más específico
-      if (nonNumericKeywords.length >= 1) {
-        const fallbackHits = ejecutarConsultaLexica(nonNumericKeywords[0], Math.min(maxResults, 3), { strictNumbers: false });
-        if (fallbackHits.length > 0) {
-          return { hits: fallbackHits, quality: "partial" };
-        }
-      }
-
-      return { hits: [], quality: "none" };
+      return { hits: topHits, quality };
     }
 
     /* ==========================================================================
-       3. SYSTEM PROMPT BLINDADO CONTRA ALUCINACIONES Y MOTOR RAG
+       3. SYSTEM PROMPT Y MOTOR RAG
        ========================================================================== */
-    const SYSTEM_PROMPT = `Eres un auditor jurídico estricto conectado a un repositorio cerrado de apuntes del Máster Universitario en Abogacía (Derecho español).
+    const SYSTEM_PROMPT = `Eres un asistente jurídico especializado en Derecho español conectado a un repositorio de apuntes del Máster Universitario en Abogacía.
 
-REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
-1. FUENTE ÚNICA DE VERDAD: Responde EXCLUSIVAMENTE utilizando la información contenida literalmente en los bloques <fragmento> entregados en el contexto. Tienes PROHIBIDO usar conocimientos previos de tu entrenamiento para completar plazos, requisitos, artículos o excepciones que no estén escritos en los fragmentos.
-2. PROHIBICIÓN DE INVENCIÓN: Nunca deduzcas ni inventes números de artículos, cuantías, plazos procesales ni jurisprudencia. Si un dato concreto no figura en los fragmentos, escribe literalmente: "Este extremo no consta en los apuntes recuperados."
-3. GESTIÓN DE INSUFICIENCIA DOCUMENTAL:
-   - Si el contexto indica CALIDAD = "none" o está vacío, responde ÚNICAMENTE: "No consta información sobre esta consulta en los apuntes indexados." y detente.
-   - Si el contexto indica CALIDAD = "partial", inicia tu respuesta exactamente con: "⚠️ **Aviso:** No se ha encontrado en los apuntes ningún resultado que resuelva completamente la consulta exacta; a partir de los epígrafes relacionados disponibles se extrae únicamente lo siguiente:" y expón solo lo que aparezca en esos fragmentos.
-4. CITAS OBLIGATORIAS CON ENLACE: Toda afirmación jurídica debe respaldarse citando el tema y epígrafe usando exactamente el enlace Markdown facilitado en cada bloque (ejemplo: [Derecho Civil · T01 — Buena fe e integración contractual](apuntes.html?asig=civil&tema=001)). No alteres ni inventes URLs.
-5. ESTILO: Directo, estructurado con viñetas claras, lenguaje técnico-jurídico preciso y sin relleno introductorio.`;
+REGLAS DE FIDELIDAD DOCUMENTAL:
+1. Basa tu respuesta ÚNICAMENTE en la información contenida en los bloques <fragmento> entregados. No inventes artículos, plazos, cuantías ni jurisprudencia que no aparezcan en ellos.
+2. Si los fragmentos contienen datos relacionados con la pregunta (por ejemplo, prescripción, duración o regulación general de la institución preguntada), explícalos con claridad citando la fuente.
+3. Si un extremo concreto preguntado por el estudiante no aparece en ningún fragmento, aclara exactamente qué sí consta en los apuntes recuperados y señala qué dato concreto no figura en ellos.
+4. Cita siempre la fuente usando el enlace Markdown exacto facilitado en cada <fragmento> (ej. [Derecho Civil · T05 — Extinción y prescripción](apuntes.html?asig=civil&tema=005)).
+5. Responde en español, con estructura clara en viñetas y rigor técnico-jurídico.`;
 
     const SEARCH_TOOL_DEF = [
       {
         type: "function",
         function: {
           name: "buscar_apuntes",
-          description: "Busca bloques doctrinales y normativos en los apuntes. Admite operadores: asig:civil, asig:procesalcivil1, asig:procesalpenal, asig:penal, \"frase exacta\" y -excluir. Haz búsquedas cortas y específicas (ej. '1258' o 'asig:procesalcivil1 litisconsorcio'). Si la primera búsqueda devuelve 'none' o 'partial', prueba con sinónimos jurídicos antes de responder.",
+          description: "Busca en el índice BM25 de los apuntes jurídicos. Admite filtro opcional asig:civil, asig:procesalcivil1, asig:procesalpenal, asig:penal. Puedes llamarla varias veces con distintos términos jurídicos (ej. 'hipoteca prescripcion' y 'hipoteca ejecucion') para reunir todos los datos.",
           parameters: {
             type: "object",
             properties: {
               query: {
                 type: "string",
-                description: "Palabras clave específicas, número de artículo y/o filtro asig:..."
+                description: "Términos clave jurídicos, número de artículo y/o filtro asig:..."
               }
             },
             required: ["query"]
@@ -1015,7 +901,7 @@ REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
       const body = {
         model: appConfig.model,
         messages,
-        temperature: 0.0 // Temperatura 0 para máxima fidelidad extractiva sin creatividad
+        temperature: 0.1
       };
 
       if (useTools) {
@@ -1040,7 +926,7 @@ REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
     function formatSourcesTrace(searchResult) {
       const { hits, quality } = searchResult;
       if (!hits.length) {
-        return "⚠️ No se encontró ningún resultado directo ni parcial en los apuntes cargados.";
+        return "⚠️ Sin coincidencias en el índice BM25.";
       }
 
       const uniqueLinks = [];
@@ -1053,23 +939,10 @@ REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
         }
       });
 
-      if (quality === "partial") {
-        return `⚠️ Sin coincidencia exacta; usando resultados parciales relacionados: ${uniqueLinks.join(" | ")}`;
-      }
-      return `📚 Fuentes entregadas al modelo: ${uniqueLinks.join(" | ")}`;
-    }
-
-    // Construye una consulta enriquecida si el usuario hace una pregunta de seguimiento corta (ej. "¿y cuál es el plazo?")
-    function buildEffectiveSearchQuery(userPrompt, chatHistory) {
-      const cleanTokens = tokenizar(userPrompt, false);
-      if (cleanTokens.length <= 2 && chatHistory.length >= 2) {
-        const lastUserMsg = [...chatHistory].reverse().find(m => m.role === "user");
-        if (lastUserMsg) {
-          const prevTokens = tokenizar(lastUserMsg.content, false).slice(0, 3);
-          return `${prevTokens.join(" ")} ${userPrompt}`;
-        }
-      }
-      return userPrompt;
+      const prefix = quality === "partial"
+        ? "⚠️ Sin número exacto; bloques relacionados: "
+        : "📚 Bloques BM25 entregados al modelo: ";
+      return prefix + uniqueLinks.join(" | ");
     }
 
     async function runRagPipeline(userPrompt, chatHistory, onTraceUpdate) {
@@ -1079,17 +952,13 @@ REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
         onTraceUpdate([...traceLogs]);
       };
 
-      const effectiveQuery = buildEffectiveSearchQuery(userPrompt, chatHistory);
-
-      // Modo 1: Auto-RAG Directo (1 solo paso, blindado)
       if (appConfig.ragMode === "direct") {
-        const keywords = tokenizar(effectiveQuery, false).join(", ");
-        addTrace(`🔍 Palabras clave analizadas: <code>${escapeHtml(keywords || effectiveQuery)}</code>`);
-        const searchRes = buscarEnApuntes(effectiveQuery, 5);
+        const expanded = expandirConsultaJuridica(userPrompt);
+        addTrace(`🔍 Consulta BM25: <code>${escapeHtml(expanded)}</code>`);
+        const searchRes = buscarEnApuntes(userPrompt, 6);
         addTrace(formatSourcesTrace(searchRes));
 
-        // Cortocircuito seguro: si no hay absolutamente nada en los apuntes, ni siquiera gastamos tokens ni dejamos que alucine
-        if (searchRes.quality === "none" || searchRes.hits.length === 0) {
+        if (!searchRes.hits.length) {
           return {
             reply: "No consta información sobre esta consulta en los apuntes indexados.",
             traces: traceLogs
@@ -1097,37 +966,32 @@ REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
         }
 
         const formattedFragments = searchRes.hits.map((h, i) =>
-          `<fragmento id="${i + 1}" asignatura="${h.asignatura}" tema="${h.tema}" epigrafe="${h.seccion}" enlace="[${h.asignatura} · ${h.tema.split(":")[0]} — ${h.seccion}](${h.enlace})">\n${h.extracto}\n</fragmento>`
+          `<fragmento id="${i + 1}" fuente="[${h.asignatura} · ${h.tema.split(":")[0]} — ${h.seccion}](${h.enlace})">\n${h.extracto}\n</fragmento>`
         ).join("\n\n");
-
-        const userPayload = `CALIDAD_RECUPERACION: "${searchRes.quality}"
-
-CONTEXTO DOCUMENTAL AUTORIZADO:
-${formattedFragments}
-
-PREGUNTA DEL ESTUDIANTE:
-${userPrompt}
-
-Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añadir información externa.`;
 
         const messages = [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPayload }
+          {
+            role: "user",
+            content: `FRAGMENTOS DE LOS APUNTES:\n${formattedFragments}\n\nPREGUNTA DEL ESTUDIANTE:\n${userPrompt}`
+          }
         ];
 
         const data = await callChatCompletion(messages, false);
-        const reply = data.choices?.[0]?.message?.content || "No se recibió respuesta del modelo.";
-        return { reply, traces: traceLogs };
+        return {
+          reply: data.choices?.[0]?.message?.content || "No se recibió respuesta del modelo.",
+          traces: traceLogs
+        };
       }
 
-      // Modo 2: RAG Agéntico Iterativo (Tool Calling con auditoría estricta)
+      // Modo Agéntico (Tool Calling)
       const recentContext = chatHistory.slice(-2).map(m => ({ role: m.role, content: m.content }));
       const messages = [
         { role: "system", content: SYSTEM_PROMPT },
         ...recentContext,
         {
           role: "user",
-          content: `Consulta del estudiante: "${userPrompt}". Usa la herramienta buscar_apuntes antes de responder y cíñete estrictamente a los fragmentos obtenidos.`
+          content: `Consulta del estudiante: "${userPrompt}". Utiliza buscar_apuntes (puedes lanzar varias consultas con distintos términos jurídicos si hace falta) y responde basándote estrictamente en los fragmentos obtenidos.`
         }
       ];
 
@@ -1138,7 +1002,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
           data = await callChatCompletion(messages, true);
         } catch (err) {
           if (step === 0) {
-            addTrace(`⚠️ El proveedor no soporta Tool Calling; conmutando a Auto-RAG directo...`);
+            addTrace(`⚠️ El proveedor no soporta Tool Calling; usando Auto-RAG directo BM25...`);
             const prevMode = appConfig.ragMode;
             appConfig.ragMode = "direct";
             const fallbackResult = await runRagPipeline(userPrompt, chatHistory, onTraceUpdate);
@@ -1149,36 +1013,27 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
         }
 
         const choice = data.choices?.[0]?.message;
-        if (!choice) throw new Error("Respuesta vacía del proveedor de IA.");
-
+        if (!choice) throw new Error("Respuesta vacía del proveedor.");
         messages.push(choice);
 
         if (choice.tool_calls && choice.tool_calls.length > 0) {
           for (const tc of choice.tool_calls) {
             let args = {};
             try { args = JSON.parse(tc.function.arguments || "{}"); } catch (e) {}
-            const q = args.query || effectiveQuery;
-            addTrace(`🧠 Razonando → Consultando: <code>${escapeHtml(q)}</code>`);
+            const q = args.query || userPrompt;
+            addTrace(`🧠 Razonando → BM25: <code>${escapeHtml(q)}</code>`);
 
-            const searchRes = buscarEnApuntes(q, 4);
+            const searchRes = buscarEnApuntes(q, 5);
             addTrace(formatSourcesTrace(searchRes));
-
-            const toolPayload = {
-              CALIDAD_RECUPERACION: searchRes.quality,
-              instruccion: searchRes.quality === "partial"
-                ? "Coincidencia parcial. Avisa al usuario al inicio y usa solo lo presente aquí."
-                : (searchRes.quality === "none" ? "Sin resultados. Prueba otro término jurídico o indica que no consta." : "Coincidencia directa."),
-              fragmentos: searchRes.hits.map((h, i) => ({
-                id: i + 1,
-                cita_markdown: `[${h.asignatura} · ${h.tema.split(":")[0]} — ${h.seccion}](${h.enlace})`,
-                contenido: h.extracto
-              }))
-            };
 
             messages.push({
               role: "tool",
               tool_call_id: tc.id,
-              content: JSON.stringify(toolPayload)
+              content: JSON.stringify(searchRes.hits.map((h, i) => ({
+                id: i + 1,
+                cita_markdown: `[${h.asignatura} · ${h.tema.split(":")[0]} — ${h.seccion}](${h.enlace})`,
+                contenido: h.extracto
+              })))
             });
           }
         } else {
@@ -1197,7 +1052,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
     }
 
     /* ==========================================================================
-       4. GESTIÓN DE INTERFAZ DE CHAT E HISTORIAL
+       4. GESTIÓN DE UI E HISTORIAL
        ========================================================================== */
     const messagesContainer = document.getElementById("messages-container");
     const chatInput = document.getElementById("chat-input");
@@ -1209,13 +1064,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
 
     function createNewChat() {
       const id = "chat_" + Date.now();
-      const newChat = {
-        id,
-        title: "Nueva consulta",
-        updatedAt: Date.now(),
-        messages: []
-      };
-      chats.unshift(newChat);
+      chats.unshift({ id, title: "Nueva consulta", updatedAt: Date.now(), messages: [] });
       activeChatId = id;
       saveChats();
       renderActiveChat();
@@ -1249,9 +1098,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
         item.querySelector(".btn-del-chat").addEventListener("click", (e) => {
           e.stopPropagation();
           chats = chats.filter(c => c.id !== chat.id);
-          if (activeChatId === chat.id) {
-            activeChatId = chats.length ? chats[0].id : null;
-          }
+          if (activeChatId === chat.id) activeChatId = chats.length ? chats[0].id : null;
           saveChats();
           renderActiveChat();
         });
@@ -1267,9 +1114,9 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
         messagesContainer.innerHTML = `
           <div class="msg-wrapper msg-assistant">
             <div class="msg-bubble">
-              <p><strong>⚖️ Auditor Jurídico RAG (Estricto sobre tus apuntes)</strong></p>
-              <p>Las respuestas están blindadas con <code>temperature: 0</code> y extracción literal para evitar invenciones: solo afirma lo que figura en tu temario y enlaza el epígrafe exacto.</p>
-              <p style="font-size:13px; color:var(--muted);">Ejemplos: <em>"¿Qué establece el artículo 1258?"</em> o <em>"Clasificación técnica de los contratos"</em>.</p>
+              <p><strong>⚖️ Asistente Jurídico RAG (Motor MiniSearch BM25)</strong></p>
+              <p>Indexación BM25 con expansión automática de términos jurídicos y citas directas a tus apuntes.</p>
+              <p style="font-size:13px; color:var(--muted);">Ejemplos: <em>"Plazos de la hipoteca"</em>, <em>"¿Qué regula el artículo 1258?"</em> o <em>"Clasificación técnica de los contratos"</em>.</p>
             </div>
           </div>
         `;
@@ -1283,17 +1130,15 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
     function appendMessageToDOM(role, content, traces = []) {
       const wrapper = document.createElement("div");
       wrapper.className = `msg-wrapper msg-${role}`;
-
       const bubble = document.createElement("div");
       bubble.className = "msg-bubble";
 
       if (role === "user") {
         bubble.textContent = content;
       } else {
-        let traceHtml = "";
-        if (traces && traces.length) {
-          traceHtml = `<div class="tool-trace">${traces.map(t => `<div>${t}</div>`).join("")}</div>`;
-        }
+        const traceHtml = (traces && traces.length)
+          ? `<div class="tool-trace">${traces.map(t => `<div>${t}</div>`).join("")}</div>`
+          : "";
         const parsedMd = typeof marked !== "undefined" ? marked.parse(content) : escapeHtml(content);
         bubble.innerHTML = traceHtml + parsedMd;
       }
@@ -1310,7 +1155,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
 
       const preset = PROVIDER_PRESETS[appConfig.provider];
       if (preset && preset.needsKey && !appConfig.apiKey.trim()) {
-        alert("Has seleccionado un proveedor que requiere tu propia API Key. Introdúcela en '🔑 Configurar API' o vuelve al 'Modo Beta Sin Registro'.");
+        alert("Este proveedor requiere tu propia API Key. Introdúcela en '🔑 Configurar API' o usa el 'Modo Beta Sin Registro'.");
         openSettingsModal();
         return;
       }
@@ -1330,19 +1175,15 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
       chatInput.style.height = "auto";
       btnSend.disabled = true;
 
-      const loadingBubble = appendMessageToDOM("assistant", "_Auditando apuntes..._", ["⏳ Iniciando búsqueda léxica + IDF..."]);
+      const loadingBubble = appendMessageToDOM("assistant", "_Buscando con MiniSearch BM25..._", ["⏳ Consultando índice BM25..."]);
 
       try {
         const result = await runRagPipeline(text, priorMessages, (liveTraces) => {
-          loadingBubble.innerHTML = `<div class="tool-trace">${liveTraces.map(t => `<div>${t}</div>`).join("")}</div><p><em>Redactando respuesta fundamentada...</em></p>`;
+          loadingBubble.innerHTML = `<div class="tool-trace">${liveTraces.map(t => `<div>${t}</div>`).join("")}</div><p><em>Redactando respuesta...</em></p>`;
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         });
 
-        chat.messages.push({
-          role: "assistant",
-          content: result.reply,
-          traces: result.traces
-        });
+        chat.messages.push({ role: "assistant", content: result.reply, traces: result.traces });
         saveChats();
 
         const traceHtml = result.traces.length
@@ -1350,7 +1191,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
           : "";
         loadingBubble.innerHTML = traceHtml + (typeof marked !== "undefined" ? marked.parse(result.reply) : escapeHtml(result.reply));
       } catch (err) {
-        loadingBubble.innerHTML = `<p style="color:#dc2626;"><strong>❌ Error al consultar la IA:</strong> ${escapeHtml(err.message)}</p><p style="font-size:13px;">Si estás usando el Modo Beta gratuito, puede estar temporalmente saturado. Prueba de nuevo en unos segundos o configura tu propia API Key gratuita de Google Gemini.</p>`;
+        loadingBubble.innerHTML = `<p style="color:#dc2626;"><strong>❌ Error:</strong> ${escapeHtml(err.message)}</p>`;
       } finally {
         btnSend.disabled = false;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1358,7 +1199,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
     }
 
     /* ==========================================================================
-       5. MODAL DE CONFIGURACIÓN Y EVENTOS UI
+       5. MODAL Y EVENTOS
        ========================================================================== */
     const settingsModal = document.getElementById("settings-modal");
     const cfgProvider = document.getElementById("cfg-provider");
@@ -1380,7 +1221,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
         badge.className = "status-pill";
       }
 
-      const modeText = appConfig.ragMode === "agentic" ? "Agéntico (Tool Calling)" : "Auto-RAG Directo";
+      const modeText = appConfig.ragMode === "agentic" ? "Agéntico (Tool Calling)" : "Auto-RAG BM25";
       label.textContent = `Motor: ${appConfig.model} · ${modeText}`;
     }
 
@@ -1412,7 +1253,6 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
 
     document.getElementById("btn-open-settings").addEventListener("click", openSettingsModal);
     document.getElementById("btn-close-modal").addEventListener("click", () => settingsModal.classList.remove("open"));
-
     document.getElementById("btn-toggle-key").addEventListener("click", () => {
       cfgApiKey.type = cfgApiKey.type === "password" ? "text" : "password";
     });
@@ -1430,7 +1270,7 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
     });
 
     document.getElementById("btn-wipe-data").addEventListener("click", () => {
-      if (!confirm("¿Seguro que quieres borrar tu API Key y todo el historial de chats guardados en este navegador?")) return;
+      if (!confirm("¿Borrar API Key e historial de chats de este navegador?")) return;
       localStorage.removeItem(CFG_KEY);
       localStorage.removeItem(CHATS_KEY);
       appConfig = loadConfig();
@@ -1464,7 +1304,6 @@ Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añ
       chatInput.style.height = Math.min(chatInput.scrollHeight, 140) + "px";
     });
 
-    // Arranque
     updateHeaderStatus();
     renderHistoryList();
     renderActiveChat();
