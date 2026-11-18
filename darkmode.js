@@ -1,14 +1,15 @@
 /**
  * darkmode.js — Modo oscuro no intrusivo para Portal Jurídico MBC
- * Respeta prefers-color-scheme, persiste en localStorage y se desactiva al imprimir.
+ * Seguro para ejecutarse en <head> o al final de <body>.
  */
 (function () {
   const STORAGE_KEY = "mbc_theme_preference";
 
-  // 1. Aplicar atributo de tema lo antes posible para evitar destellos blancos
   function getInitialTheme() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === "dark" || saved === "light") return saved;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === "dark" || saved === "light") return saved;
+    } catch (e) {}
     return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
@@ -16,7 +17,9 @@
 
   function applyTheme(theme) {
     document.documentElement.setAttribute("data-mbc-theme", theme);
-    localStorage.setItem(STORAGE_KEY, theme);
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch (e) {}
     updateToggleButton(theme);
   }
 
@@ -27,7 +30,6 @@
     btn.title = theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro";
   }
 
-  // 2. Inyectar hoja de estilos oscura (solo en pantalla, nunca en @media print)
   function injectDarkStyles() {
     if (document.getElementById("mbc-dark-css")) return;
 
@@ -58,7 +60,6 @@
           color: #e2e8f0 !important;
         }
 
-        /* Tarjetas, contenedores y barras */
         html[data-mbc-theme="dark"] .hero-card,
         html[data-mbc-theme="dark"] .tool-card,
         html[data-mbc-theme="dark"] .search-card,
@@ -75,7 +76,6 @@
           border-color: #334155 !important;
         }
 
-        /* Títulos y textos con color fijo oscuro (#111, #0f172a, #212529) */
         html[data-mbc-theme="dark"] h1,
         html[data-mbc-theme="dark"] h2,
         html[data-mbc-theme="dark"] h3,
@@ -94,7 +94,6 @@
           color: #60a5fa !important;
         }
 
-        /* Inputs, selects y botones secundarios */
         html[data-mbc-theme="dark"] input[type="search"],
         html[data-mbc-theme="dark"] input[type="text"],
         html[data-mbc-theme="dark"] select,
@@ -114,10 +113,11 @@
           background-color: #334155 !important;
         }
 
-        /* Index.html: separadores y code tags */
-        html[data-mbc-theme="dark"] .metrics-row {
+        html[data-mbc-theme="dark"] .metrics-row,
+        html[data-mbc-theme="dark"] .status-bar {
           border-top-color: #334155 !important;
         }
+
         html[data-mbc-theme="dark"] code {
           background-color: #0f172a !important;
           color: #93c5fd !important;
@@ -125,7 +125,6 @@
           border-radius: 3px;
         }
 
-        /* Search.html: extractos, resaltados y botones de copia */
         html[data-mbc-theme="dark"] .result-snippet {
           background-color: #0f172a !important;
           color: #cbd5e1 !important;
@@ -148,11 +147,7 @@
           background-color: #334155 !important;
           color: #ffffff !important;
         }
-        html[data-mbc-theme="dark"] .status-bar {
-          border-top-color: #334155 !important;
-        }
 
-        /* Apuntes.html: índice, bloques de código, tablas y citas */
         html[data-mbc-theme="dark"] aside a {
           color: #cbd5e1 !important;
         }
@@ -177,7 +172,6 @@
           background-color: rgba(59, 130, 246, 0.22) !important;
         }
 
-        /* Test.html: opciones, resumen y revisión de respuestas */
         html[data-mbc-theme="dark"] .option-btn {
           background-color: #0f172a !important;
           color: #e2e8f0 !important;
@@ -219,7 +213,6 @@
           color: #fca5a5 !important;
         }
 
-        /* Count.html: cajas de estadísticas y filas de tabla */
         html[data-mbc-theme="dark"] .stat-box {
           background-color: #0f172a !important;
           border-color: #334155 !important;
@@ -237,7 +230,6 @@
           color: #dbeafe !important;
         }
 
-        /* Libro.html: checklist de selección (las hojas A4 se mantienen en papel blanco) */
         html[data-mbc-theme="dark"] .temas-checklist {
           background-color: #0f172a !important;
           border-color: #334155 !important;
@@ -250,7 +242,6 @@
           color: #f1f5f9 !important;
         }
 
-        /* Compatibilidad con elementos inyectados por mobile.js */
         html[data-mbc-theme="dark"] .nav-bar {
           background-color: #1e293b !important;
           border-top-color: #334155 !important;
@@ -273,7 +264,6 @@
         }
       }
 
-      /* Estilo del botón de cambio de tema */
       #mbc-dark-toggle {
         cursor: pointer;
         border: 1px solid #cbd5e1;
@@ -286,6 +276,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        min-height: 36px;
         transition: background 0.15s ease;
       }
       html[data-mbc-theme="dark"] #mbc-dark-toggle {
@@ -307,12 +298,13 @@
         #mbc-dark-toggle { display: none !important; }
       }
     `;
-    document.head.appendChild(style);
+
+    // Respaldo seguro si document.head aún no está disponible
+    (document.head || document.documentElement).appendChild(style);
   }
 
-  // 3. Insertar el botón de alternancia en la cabecera si existe, o flotante en esquina superior derecha
   function mountToggleButton() {
-    if (document.getElementById("mbc-dark-toggle")) return;
+    if (!document.body || document.getElementById("mbc-dark-toggle")) return;
 
     const btn = document.createElement("button");
     btn.id = "mbc-dark-toggle";
@@ -322,7 +314,6 @@
       applyTheme(current === "dark" ? "light" : "dark");
     });
 
-    // Integración nativa en la barra de acciones de apuntes.html o control-bar de libro.html
     const headerActions = document.querySelector(".header-actions");
     const controlBar = document.getElementById("control-bar");
 
@@ -338,10 +329,10 @@
     updateToggleButton(document.documentElement.getAttribute("data-mbc-theme") || "light");
   }
 
-  // Ejecución inmediata de estilos y tema antes del renderizado completo
-  injectStyles();
+  // Aplicación inmediata del tema y estilos
   const initialTheme = getInitialTheme();
   document.documentElement.setAttribute("data-mbc-theme", initialTheme);
+  injectDarkStyles();
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", mountToggleButton);
@@ -349,12 +340,13 @@
     mountToggleButton();
   }
 
-  // Escuchar cambios en el tema del sistema operativo si el usuario no forzó uno manual
   if (window.matchMedia) {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-      if (!localStorage.getItem(STORAGE_KEY)) {
-        applyTheme(e.matches ? "dark" : "light");
-      }
+      try {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          applyTheme(e.matches ? "dark" : "light");
+        }
+      } catch (err) {}
     });
   }
 })();
