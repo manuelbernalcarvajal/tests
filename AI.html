@@ -630,7 +630,7 @@
     let appConfig = loadConfig();
     let chats = loadChats();
     let activeChatId = chats.length ? chats[0].id : null;
-    let sectionsStore = []; // Indexación granular por sección/epígrafe
+    let sectionsStore = [];
     let vocabulary = new Set();
 
     function loadConfig() {
@@ -666,7 +666,7 @@
     }
 
     /* ==========================================================================
-       2. MOTOR DE INDEXACIÓN GRANULAR Y BÚSQUEDA JURÍDICA REFINADA
+       2. MOTOR DE INDEXACIÓN GRANULAR Y BÚSQUEDA EN 3 NIVELES
        ========================================================================== */
     const STOPWORDS_ES = new Set([
       "el", "la", "los", "las", "un", "una", "unos", "unas", "lo", "al", "del",
@@ -676,7 +676,8 @@
       "se", "su", "sus", "le", "les", "me", "te", "nos", "os", "mi", "tu",
       "y", "o", "ni", "pero", "sino", "mas", "muy", "ya", "no", "si", "ante", "bajo",
       "articulo", "art", "arts", "establece", "dice", "regula", "significa", "concepto",
-      "segun", "caso", "plazo", "requisitos", "cuales", "explica", "dime", "puedo"
+      "segun", "caso", "plazo", "requisitos", "explica", "dime", "puedo", "limite", "limites",
+      "codigo", "civil", "penal", "ley", "enjuiciamiento", "derecho", "espana", "espanol"
     ]);
 
     function normalizar(str) {
@@ -769,7 +770,31 @@
       badge.textContent = `📚 ${temasCargados} temas (${sectionsStore.length} epígrafes)`;
     }
 
-    function ejecutarConsultaLexica(rawQuery, maxResults = 5) {
+    function extraerVentanaCentrada(rawText, anchorTerms) {
+      if (rawText.length <= 1800) return rawText;
+      const normRaw = normalizar(rawText);
+      const anchor = anchorTerms.find(t => {
+        const safe = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const rx = /^\d+$/.test(t) ? new RegExp(`\\b${safe}\\b`) : new RegExp(safe);
+        return rx.test(normRaw);
+      });
+
+      let pos = -1;
+      if (anchor) {
+        const safe = anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const rx = /^\d+$/.test(anchor) ? new RegExp(`\\b${safe}\\b`) : new RegExp(safe);
+        const m = normRaw.match(rx);
+        if (m) pos = m.index;
+      }
+
+      if (pos > 350) {
+        const start = Math.max(0, rawText.lastIndexOf("\n", pos - 350));
+        return (start > 0 ? "[...] " : "") + rawText.slice(start, start + 1800) + " [...]";
+      }
+      return rawText.slice(0, 1800) + " [...]";
+    }
+
+    function ejecutarConsultaLexica(rawQuery, maxResults = 5, options = { strictNumbers: true }) {
       let q = rawQuery || "";
       let filterAsig = null;
       const asigMatch = q.match(/\basig:([a-z0-9_-]+)/i);
@@ -793,12 +818,18 @@
       const positiveTerms = tokenizar(q);
       if (!positiveTerms.length && !exactPhrases.length) return [];
 
+      const requestedNumbers = positiveTerms.filter(t => /^\d+$/.test(t));
       const candidates = [];
 
       sectionsStore.forEach(sec => {
         if (filterAsig && !normalizar(sec.asigId).includes(filterAsig)) return;
         if (negativeTerms.some(neg => sec.normText.includes(neg))) return;
         if (!exactPhrases.every(p => sec.normText.includes(p) || sec.normTemaTitle.includes(p))) return;
+
+        if (options.strictNumbers && requestedNumbers.length > 0) {
+          const hasNumber = requestedNumbers.some(num => new RegExp(`\\b${num}\\b`).test(sec.normText));
+          if (!hasNumber) return;
+        }
 
         let score = 0;
         let distinctTermsMatched = 0;
@@ -823,8 +854,8 @@
 
           if (found) {
             distinctTermsMatched++;
-            const pesoBase = isNum ? 18 : 5;
-            if (sec.normHeading.includes(term)) score += 22;
+            const pesoBase = isNum ? 35 : 5;
+            if (sec.normHeading.includes(term)) score += 25;
             if (sec.normTemaTitle.includes(term)) score += 12;
             const hits = (sec.normText.match(termRegex) || []).length;
             score += Math.min(hits, 8) * pesoBase;
@@ -839,23 +870,15 @@
 
         if (score === 0) return;
 
-        // Bonus por cobertura múltiple (si coinciden varios términos de la pregunta en el mismo epígrafe)
         if (positiveTerms.length > 1 && distinctTermsMatched > 1) {
           score += distinctTermsMatched * 15;
         }
 
-        // Centrar ventana de hasta 1700 caracteres alrededor del término clave si la sección es muy larga
-        let extracto = sec.rawText;
-        if (extracto.length > 1700 && positiveTerms.length > 0) {
-          const firstKey = positiveTerms.find(t => normalizar(extracto).includes(t)) || positiveTerms[0];
-          const pos = normalizar(extracto).indexOf(firstKey);
-          if (pos > 350) {
-            const start = Math.max(0, extracto.lastIndexOf("\n", pos - 250));
-            extracto = (start > 0 ? "[...] " : "") + extracto.slice(start, start + 1700) + " [...]";
-          } else {
-            extracto = extracto.slice(0, 1700) + " [...]";
-          }
-        }
+        // Priorizar números exactos y términos más largos al centrar el extracto
+        const anchorList = [
+          ...requestedNumbers,
+          ...[...positiveTerms].filter(t => !/^\d+$/.test(t)).sort((a, b) => b.length - a.length)
+        ];
 
         candidates.push({
           asignatura: sec.asigNombre,
@@ -864,7 +887,7 @@
           temaId: sec.temaId,
           enlace: `apuntes.html?asig=${encodeURIComponent(sec.asigId)}&tema=${encodeURIComponent(sec.temaId)}`,
           seccion: sec.heading,
-          extracto,
+          extracto: extraerVentanaCentrada(sec.rawText, anchorList),
           score
         });
       });
@@ -873,36 +896,55 @@
       return candidates.slice(0, maxResults);
     }
 
-    // Búsqueda inteligente con relajación automática si una consulta larga devuelve 0 resultados
+    // Búsqueda con respaldo progresivo (Exacta -> Relajada -> Coincidencias parciales menores)
     function buscarEnApuntes(rawQuery, maxResults = 5) {
-      let results = ejecutarConsultaLexica(rawQuery, maxResults);
-      if (results.length === 0) {
-        const keywords = tokenizar(rawQuery).sort((a, b) => b.length - a.length);
-        if (keywords.length >= 2) {
-          // Reintentar con las 2 palabras más largas/específicas
-          results = ejecutarConsultaLexica(`${keywords[0]} ${keywords[1]}`, maxResults);
+      // Nivel 1: Búsqueda exacta (respetando números de artículo y filtros)
+      const exactHits = ejecutarConsultaLexica(rawQuery, maxResults, { strictNumbers: true });
+      if (exactHits.length > 0) {
+        return { hits: exactHits, quality: "exact" };
+      }
+
+      // Nivel 2: Relajación con las 2 palabras clave más largas/específicas (sin exigir número exacto si no estaba)
+      const nonNumericKeywords = tokenizar(rawQuery)
+        .filter(t => !/^\d+$/.test(t))
+        .sort((a, b) => b.length - a.length);
+
+      if (nonNumericKeywords.length >= 2) {
+        const relaxedHits = ejecutarConsultaLexica(`${nonNumericKeywords[0]} ${nonNumericKeywords[1]}`, maxResults, { strictNumbers: false });
+        if (relaxedHits.length > 0) {
+          return { hits: relaxedHits, quality: "partial" };
         }
       }
-      return results;
+
+      // Nivel 3: Búsqueda de respaldo por cualquier término suelto relevante para dar contexto relacionado
+      if (nonNumericKeywords.length >= 1) {
+        const fallbackHits = ejecutarConsultaLexica(nonNumericKeywords[0], Math.min(maxResults, 3), { strictNumbers: false });
+        if (fallbackHits.length > 0) {
+          return { hits: fallbackHits, quality: "partial" };
+        }
+      }
+
+      return { hits: [], quality: "none" };
     }
 
     /* ==========================================================================
        3. MOTOR LLM: SOPORTE AGÉNTICO (TOOL CALLING) Y AUTO-RAG DIRECTO
        ========================================================================== */
     const SYSTEM_PROMPT = `Eres un asistente jurídico especializado en Derecho español (Máster Universitario en Abogacía).
-Tu misión es ayudar al estudiante a resolver casos prácticos, plazos y dudas doctrinales basándote EXCLUSIVAMENTE en los apuntes del repositorio.
-Reglas estrictas:
-1. Fundamenta tus respuestas en los extractos recuperados de los apuntes.
-2. Cita siempre la asignatura, el tema y el epígrafe exacto, incluyendo el enlace Markdown proporcionado en los resultados (ej. [T04: Propiedad Horizontal](apuntes.html?asig=civil&tema=004)).
-3. Si un dato, plazo o requisito no aparece en los apuntes recuperados, dilo con claridad ("No consta en los apuntes consultados") antes de añadir cualquier aclaración general.
-4. No inventes artículos ni jurisprudencia. Sé claro, estructurado y directo.`;
+Tu misión es ayudar al estudiante a resolver casos prácticos, plazos y dudas doctrinales basándote en los apuntes recuperados del repositorio.
+
+Reglas estrictas de actuación:
+1. Si los fragmentos recuperados contienen la respuesta directa, fundamenta tu explicación en ellos con rigor técnico.
+2. Si el sistema indica que los fragmentos son COINCIDENCIAS PARCIALES O RELACIONADAS (porque el precepto o término exacto no figura literal en el temario), comienza advirtiendo explícitamente: "⚠️ **Aviso:** No se ha encontrado en los apuntes ningún resultado que resuelva completamente la consulta exacta, pero a partir de los epígrafes relacionados disponibles se extrae lo siguiente:" y aprovecha lo que sea útil de los fragmentos aportados, distinguiendo claramente qué parte sale de los apuntes y qué parte es doctrina/legislación general complementaria.
+3. Cita siempre la asignatura, el tema y el epígrafe exacto con enlace Markdown (ej. [Derecho Civil · T01](apuntes.html?asig=civil&tema=001)).
+4. Nunca inventes artículos ni jurisprudencia.`;
 
     const SEARCH_TOOL_DEF = [
       {
         type: "function",
         function: {
           name: "buscar_apuntes",
-          description: "Busca epígrafes en el repositorio de apuntes jurídicos. Admite operadores: asig:civil, asig:procesalcivil1, asig:procesalpenal, asig:penal, \"frase exacta\" y -excluir. Úsala varias veces con consultas cortas y específicas (ej. '1256' o 'asig:procesalcivil1 litisconsorcio') si necesitas cruzar conceptos.",
+          description: "Busca epígrafes en el repositorio de apuntes jurídicos. Admite operadores: asig:civil, asig:procesalcivil1, asig:procesalpenal, asig:penal, \"frase exacta\" y -excluir. Úsala varias veces con consultas cortas y específicas (ej. '1258' o 'asig:procesalcivil1 litisconsorcio') si necesitas cruzar conceptos.",
           parameters: {
             type: "object",
             properties: {
@@ -951,8 +993,12 @@ Reglas estrictas:
       return await res.json();
     }
 
-    function formatSourcesTrace(hits) {
-      if (!hits.length) return "⚠️ Sin coincidencias literales en el temario cargado.";
+    function formatSourcesTrace(searchResult) {
+      const { hits, quality } = searchResult;
+      if (!hits.length) {
+        return "⚠️ No se encontró ningún resultado directo ni parcial en los apuntes cargados.";
+      }
+
       const uniqueLinks = [];
       const seen = new Set();
       hits.forEach(h => {
@@ -962,6 +1008,10 @@ Reglas estrictas:
           uniqueLinks.push(`<a href="${h.enlace}">${escapeHtml(h.asignatura)} · ${escapeHtml(h.tema.split(":")[0])} (${escapeHtml(h.seccion)})</a>`);
         }
       });
+
+      if (quality === "partial") {
+        return `⚠️ Sin coincidencia exacta; usando resultados parciales relacionados: ${uniqueLinks.join(" | ")}`;
+      }
       return `📚 Fuentes entregadas al modelo: ${uniqueLinks.join(" | ")}`;
     }
 
@@ -972,16 +1022,23 @@ Reglas estrictas:
         onTraceUpdate([...traceLogs]);
       };
 
-      // Modo 1: Auto-RAG Directo (ideal para Beta sin registro o modelos sin tool-calling)
+      // Modo 1: Auto-RAG Directo
       if (appConfig.ragMode === "direct") {
         const keywords = tokenizar(userPrompt).join(", ");
-        addTrace(`🔍 Palabras clave extraídas: <code>${escapeHtml(keywords || userPrompt)}</code>`);
-        const hits = buscarEnApuntes(userPrompt, 5);
-        addTrace(formatSourcesTrace(hits));
+        addTrace(`🔍 Palabras clave analizadas: <code>${escapeHtml(keywords || userPrompt)}</code>`);
+        const searchRes = buscarEnApuntes(userPrompt, 5);
+        addTrace(formatSourcesTrace(searchRes));
 
-        const contextText = hits.length
-          ? hits.map((h, i) => `[Fragmento ${i + 1} | ${h.asignatura} | ${h.tema} | Epígrafe: ${h.seccion} | Enlace: ${h.enlace}]\n${h.extracto}`).join("\n\n---\n\n")
-          : "No se encontraron coincidencias en los apuntes cargados para los términos de la consulta.";
+        let contextHeader = "";
+        if (searchRes.quality === "partial") {
+          contextHeader = "NOTA DEL BUSCADOR: No se encontró ningún resultado que resuelva completamente la consulta exacta. Los siguientes fragmentos son coincidencias parciales o temas relacionados disponibles en el repositorio:\n\n";
+        } else if (searchRes.quality === "none") {
+          contextHeader = "NOTA DEL BUSCADOR: No existe ningún epígrafe relacionado en los apuntes cargados.\n\n";
+        }
+
+        const contextText = searchRes.hits.length
+          ? contextHeader + searchRes.hits.map((h, i) => `[Fragmento ${i + 1} | ${h.asignatura} | ${h.tema} | Epígrafe: ${h.seccion} | Enlace: ${h.enlace}]\n${h.extracto}`).join("\n\n---\n\n")
+          : contextHeader;
 
         const messages = [
           { role: "system", content: SYSTEM_PROMPT },
@@ -997,7 +1054,7 @@ Reglas estrictas:
         return { reply, traces: traceLogs };
       }
 
-      // Modo 2: RAG Agéntico Iterativo (el LLM decide qué buscar mientras razona)
+      // Modo 2: RAG Agéntico Iterativo (Tool Calling)
       const messages = [
         { role: "system", content: SYSTEM_PROMPT },
         ...chatHistory.slice(-6).map(m => ({ role: m.role, content: m.content })),
@@ -1033,13 +1090,21 @@ Reglas estrictas:
             const q = args.query || userPrompt;
             addTrace(`🧠 Razonando → Consultando: <code>${escapeHtml(q)}</code>`);
 
-            const results = buscarEnApuntes(q, 4);
-            addTrace(formatSourcesTrace(results));
+            const searchRes = buscarEnApuntes(q, 4);
+            addTrace(formatSourcesTrace(searchRes));
+
+            const toolPayload = {
+              calidad_coincidencia: searchRes.quality,
+              aviso: searchRes.quality === "partial"
+                ? "No se encontró coincidencia exacta; se devuelven fragmentos parciales relacionados."
+                : (searchRes.quality === "none" ? "Sin resultados en el temario." : "Coincidencia directa encontrada."),
+              resultados: searchRes.hits
+            };
 
             messages.push({
               role: "tool",
               tool_call_id: tc.id,
-              content: JSON.stringify(results)
+              content: JSON.stringify(toolPayload)
             });
           }
         } else {
@@ -1130,7 +1195,7 @@ Reglas estrictas:
             <div class="msg-bubble">
               <p><strong>⚖️ Asistente Jurídico con Auto-RAG sobre tus apuntes</strong></p>
               <p>Puedes plantear casos prácticos, comparar instituciones procesales o preguntar por plazos y requisitos. Buscaré directamente en tu temario indexado y te citaré los temas exactos.</p>
-              <p style="font-size:13px; color:var(--muted);">Ejemplos: <em>"¿Qué límite establece el artículo 1256?"</em> o <em>"¿Qué plazo tiene el demandado para contestar en el juicio verbal?"</em>.</p>
+              <p style="font-size:13px; color:var(--muted);">Ejemplos: <em>"¿Qué regula el artículo 1258 del Código Civil?"</em> o <em>"¿Qué plazo tiene el demandado para contestar en el juicio verbal?"</em>.</p>
             </div>
           </div>
         `;
