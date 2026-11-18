@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Buscador de Apuntes by MBC</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
+  <script src="https://cdn.jsdelivr.net/npm/minisearch@7.1.0/dist/umd/index.min.js"></script>
   <script src="darkmode.js"></script>
   <style>
     :root {
@@ -37,6 +38,7 @@
       display: flex;
       gap: 15px;
       margin-bottom: 25px;
+      flex-wrap: wrap;
     }
     .top-nav a {
       color: var(--accent);
@@ -81,6 +83,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
     }
     .search-tips code {
       background: #e9ecef;
@@ -98,6 +101,8 @@
       align-items: center;
       border-top: 1px solid #f0f0f0;
       padding-top: 8px;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
     .results-list {
@@ -222,7 +227,7 @@
 
     .empty-msg {
       text-align: center;
-      padding: 50px 0;
+      padding: 50px 16px;
       color: var(--muted);
       font-size: 15px;
       background: var(--surface);
@@ -256,17 +261,19 @@
     <nav class="top-nav">
       <a href="index.html">🔙 Volver al menu general</a>
       <a href="apuntes.html">📖 Visor de Apuntes</a>
+      <a href="AI.html">⚖️ Asistente IA (RAG)</a>
     </nav>
 
     <div class="search-card">
       <h1>Buscador de Apuntes y Casos Prácticos</h1>
       <div class="search-input-wrapper">
-        <input type="search" id="search-input" placeholder="Buscar requisitos, plazos, artículos (ej. prescripción posesión, 1594)..." disabled autocomplete="off">
+        <input type="search" id="search-input" placeholder="Buscar requisitos, plazos, artículos (ej. plazos hipoteca, 1258, prescripción)..." disabled autocomplete="off">
       </div>
       <div class="search-tips">
         <span><code>"frase exacta"</code></span>
         <span><code>-excluir</code></span>
         <span><code>asig:civil</code></span>
+        <span>· Ranking BM25 por epígrafes</span>
       </div>
       <div class="status-bar">
         <span id="index-status">Indexando documentos...</span>
@@ -288,8 +295,20 @@
     const metricsStatus = document.getElementById("metrics-status");
     const resultsContainer = document.getElementById("results");
 
-    let documentsStore = [];
-    let vocabulary = new Set();
+    const STOPWORDS_ES = new Set([
+      "el", "la", "los", "las", "un", "una", "unos", "unas", "lo", "al", "del",
+      "de", "en", "con", "por", "para", "sin", "sobre", "tras", "entre", "hasta",
+      "que", "cual", "cuales", "quien", "quienes", "como", "cuando", "donde",
+      "es", "son", "era", "fue", "ser", "esta", "estan", "hay", "tiene", "tienen",
+      "se", "su", "sus", "le", "les", "me", "te", "nos", "os", "mi", "tu",
+      "y", "o", "ni", "pero", "sino", "mas", "muy", "ya", "no", "si", "ante", "bajo",
+      "articulo", "art", "arts", "establece", "dice", "regula", "significa", "concepto",
+      "segun", "explica", "dime", "puedo", "codigo", "civil", "penal", "ley", "derecho"
+    ]);
+
+    let miniSearch = null;
+    let chunksById = new Map();
+    let vocabularyCount = 0;
 
     function normalizar(str) {
       return (str || "")
@@ -298,36 +317,39 @@
         .toLowerCase();
     }
 
-    function tokenizar(str) {
-      const norm = normalizar(str);
-      const matches = norm.match(/[a-z0-9áéíóúñü]+/gi);
-      return matches ? matches.filter(t => t.length >= 2) : [];
+    function escapeHtml(str) {
+      return (str || "").replace(/[&<>"']/g, m => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[m]));
     }
 
-    function distanciaLevenshtein(a, b) {
-      if (a.length === 0) return b.length;
-      if (b.length === 0) return a.length;
-      const matrix = [];
-      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-
-      for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-          if (b.charAt(i - 1) === a.charAt(j - 1)) {
-            matrix[i][j] = matrix[i - 1][j - 1];
-          } else {
-            matrix[i][j] = Math.min(
-              matrix[i - 1][j - 1] + 1,
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            );
-          }
+    function initMiniSearch() {
+      const vocabSet = new Set();
+      miniSearch = new MiniSearch({
+        fields: ["temaTitulo", "heading", "texto"],
+        storeFields: ["id"],
+        processTerm: (term) => {
+          const clean = normalizar(term).replace(/[^a-z0-9]/g, "");
+          if (!clean) return null;
+          if (!/^\d+$/.test(clean) && (clean.length < 3 || STOPWORDS_ES.has(clean))) return null;
+          vocabSet.add(clean);
+          vocabularyCount = vocabSet.size;
+          return clean;
+        },
+        searchOptions: {
+          boost: { heading: 3.0, temaTitulo: 1.8, texto: 1.0 },
+          fuzzy: (term) => (/^\d+$/.test(term) || term.length < 5 ? false : 0.18),
+          prefix: (term) => !/^\d+$/.test(term) && term.length >= 4,
+          combineWith: "OR"
         }
-      }
-      return matrix[b.length][a.length];
+      });
     }
 
-    // 1. Indexar descomponiendo cada documento en secciones lógicas (#, ##, ###)
+    // 1. Indexar descomponiendo cada documento en subsecciones (#, ##, ### y **subtítulos**)
     async function indexarBaseConocimiento() {
       const t0 = performance.now();
       if (typeof APUNTES_CONFIG === "undefined" || !APUNTES_CONFIG.length) {
@@ -335,7 +357,13 @@
         return;
       }
 
+      initMiniSearch();
+      chunksById.clear();
+
       const descargas = [];
+      const docsToIndex = [];
+      let temasCargados = 0;
+      let nextId = 1;
 
       APUNTES_CONFIG.forEach(asig => {
         asig.temas.forEach(tema => {
@@ -343,60 +371,62 @@
             fetch(tema.archivo)
               .then(res => res.ok ? res.text() : "")
               .then(rawContent => {
-                // Parsear secciones basadas en encabezados Markdown
+                if (!rawContent || !rawContent.trim()) return;
+                temasCargados++;
+
                 const lineas = rawContent.split("\n");
-                const secciones = [];
-                let currentHeading = "Introducción general";
-                let currentBlock = [];
+                let currentH = "Introducción general";
+                let currentSub = "";
+                let block = [];
+
+                const pushChunk = () => {
+                  const text = block.join("\n").trim();
+                  if (!text || text.length < 25) {
+                    block = [];
+                    return;
+                  }
+                  const fullHeading = currentSub ? `${currentH} > ${currentSub}` : currentH;
+                  const docObj = {
+                    id: nextId++,
+                    asigId: asig.id,
+                    asigNombre: asig.asignatura,
+                    temaId: tema.id,
+                    temaTitulo: tema.titulo,
+                    heading: fullHeading,
+                    texto: text,
+                    normFull: normalizar(fullHeading + "\n" + text),
+                    normTitle: normalizar(tema.titulo)
+                  };
+                  chunksById.set(docObj.id, docObj);
+                  docsToIndex.push(docObj);
+                  block = [];
+                };
 
                 lineas.forEach(l => {
-                  if (l.match(/^#{1,3}\s+/)) {
-                    if (currentBlock.length > 0) {
-                      secciones.push({
-                        heading: currentHeading,
-                        text: currentBlock.join("\n").trim()
-                      });
-                      currentBlock = [];
-                    }
-                    currentHeading = l.replace(/^#{1,3}\s+/, "").trim();
+                  const trimmed = l.trim();
+                  if (/^#{1,3}\s+/.test(trimmed)) {
+                    pushChunk();
+                    currentH = trimmed.replace(/^#{1,3}\s+/, "").replace(/\*\*/g, "").trim();
+                    currentSub = "";
+                  } else if (/^\*\*[^*]{4,110}\*\*$/.test(trimmed) && block.join("\n").trim().length > 180) {
+                    pushChunk();
+                    currentSub = trimmed.replace(/^\*\*|\*\*$/g, "").trim();
                   } else {
-                    currentBlock.push(l);
+                    block.push(l);
                   }
                 });
-                if (currentBlock.length > 0) {
-                  secciones.push({
-                    heading: currentHeading,
-                    text: currentBlock.join("\n").trim()
-                  });
-                }
-
-                const normContent = normalizar(rawContent);
-                const tokensContent = tokenizar(rawContent);
-                tokensContent.forEach(t => vocabulary.add(t));
-                tokenizar(tema.titulo).forEach(t => vocabulary.add(t));
-
-                return {
-                  asigId: asig.id,
-                  asigNombre: asig.asignatura,
-                  temaId: tema.id,
-                  temaTitulo: tema.titulo,
-                  rawText: rawContent,
-                  normText: normContent,
-                  normTitle: normalizar(tema.titulo),
-                  secciones: secciones,
-                  tokensSet: new Set(tokensContent)
-                };
+                pushChunk();
               })
               .catch(() => null)
           );
         });
       });
 
-      const docs = await Promise.all(descargas);
-      documentsStore = docs.filter(d => d && d.rawText.trim().length > 0);
+      await Promise.all(descargas);
+      miniSearch.addAll(docsToIndex);
 
       const t1 = performance.now();
-      indexStatus.textContent = `${documentsStore.length} temas indexados (${vocabulary.size} términos clave)`;
+      indexStatus.textContent = `${temasCargados} temas · ${docsToIndex.length} epígrafes (${vocabularyCount} términos)`;
       metricsStatus.textContent = `Listo en ${(t1 - t0).toFixed(0)} ms`;
       searchInput.disabled = false;
       searchInput.focus();
@@ -435,72 +465,83 @@
       }
       q = q.replace(notRegex, " ");
 
-      const positiveTerms = tokenizar(q);
+      const cleanTerms = normalizar(q)
+        .split(/\s+/)
+        .map(t => t.replace(/[^a-z0-9]/g, ""))
+        .filter(t => t.length >= 2 && !STOPWORDS_ES.has(t));
 
-      return { filterAsig, exactPhrases, negativeTerms, positiveTerms };
+      return { filterAsig, exactPhrases, negativeTerms, cleanTerms, cleanQueryText: q.trim() };
     }
 
-    // 2. Extraer el bloque más completo de la sección que responde al caso
-    function extraerContextoExtendido(doc, allSearchTerms) {
-      let mejorSeccion = null;
-      let maxCoincidencias = -1;
-
-      // Localizar qué sección del documento concentra la mayor densidad
-      doc.secciones.forEach(sec => {
-        const secNorm = normalizar(sec.heading + " " + sec.text);
-        let score = 0;
-        allSearchTerms.forEach(t => {
-          const count = (secNorm.match(new RegExp(t, "g")) || []).length;
-          score += count;
-        });
-        if (score > maxCoincidencias) {
-          maxCoincidencias = score;
-          mejorSeccion = sec;
-        }
-      });
-
-      if (!mejorSeccion || !mejorSeccion.text) {
-        mejorSeccion = {
-          heading: doc.temaTitulo,
-          text: doc.rawText.substring(0, 700)
-        };
+    function expandirConsultaJuridica(q) {
+      const norm = normalizar(q);
+      let extra = "";
+      if (/\bplazos?\b/.test(norm)) {
+        extra += " prescripcion caducidad duracion anos dias habiles";
       }
+      if (/\brequisitos?\b/.test(norm)) {
+        extra += " elementos presupuestos condiciones";
+      }
+      return (q + extra).trim();
+    }
 
-      // Tomar una ventana de hasta ~800 caracteres completos sin cortar arbitrariamente
-      let textoLimpio = mejorSeccion.text.trim();
-      if (textoLimpio.length > 850) {
-        // Buscar el primer término dentro de la sección para centrar el bloque
-        const firstTerm = allSearchTerms[0];
-        const idx = normalizar(textoLimpio).indexOf(firstTerm);
+    // 2. Extraer ventana centrada y resaltar coincidencias sin romper el HTML
+    function formatearExtracto(rawText, highlightTerms) {
+      let textoLimpio = rawText.trim();
+
+      if (textoLimpio.length > 900) {
+        const normTxt = normalizar(textoLimpio);
+        let bestIdx = -1;
+
+        for (const t of highlightTerms) {
+          const safe = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const rx = /^\d+$/.test(t) ? new RegExp(`\\b${safe}\\b`) : new RegExp(safe);
+          const m = normTxt.match(rx);
+          if (m) {
+            bestIdx = m.index;
+            break;
+          }
+        }
+
         let start = 0;
-        if (idx > 150) {
-          // Retroceder al inicio de párrafo o punto más cercano
-          const prevDot = textoLimpio.lastIndexOf("\n", idx - 30);
-          start = prevDot !== -1 ? prevDot + 1 : Math.max(0, idx - 100);
+        if (bestIdx > 180) {
+          const prevBreak = textoLimpio.lastIndexOf("\n", bestIdx - 60);
+          start = prevBreak !== -1 ? prevBreak + 1 : Math.max(0, bestIdx - 140);
         }
-        let end = Math.min(textoLimpio.length, start + 800);
+        let end = Math.min(textoLimpio.length, start + 880);
         const nextBreak = textoLimpio.indexOf("\n", end - 40);
-        if (nextBreak !== -1 && nextBreak < end + 80) end = nextBreak;
+        if (nextBreak !== -1 && nextBreak < end + 90) end = nextBreak;
 
-        textoLimpio = (start > 0 ? "[...] " : "") + textoLimpio.substring(start, end).trim() + (end < mejorSeccion.text.length ? " [...]" : "");
+        textoLimpio = (start > 0 ? "[...] " : "") + textoLimpio.substring(start, end).trim() + (end < rawText.trim().length ? " [...]" : "");
       }
 
-      // Resaltado de términos
-      let snippetHtml = textoLimpio;
-      allSearchTerms.forEach(term => {
-        const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const regex = new RegExp(`(${safe})`, "gi");
-        snippetHtml = snippetHtml.replace(regex, "<mark>$1</mark>");
+      let safeHtml = escapeHtml(textoLimpio);
+
+      // Ordenar de mayor a menor longitud para evitar solapamientos parciales en <mark>
+      const uniqueSorted = [...new Set(highlightTerms)]
+        .filter(t => t && t.length >= 2)
+        .sort((a, b) => b.length - a.length);
+
+      uniqueSorted.forEach(term => {
+        // Construir patrón tolerante a tildes sobre el texto ya escapado
+        const accentMap = {
+          a: "[aáàä]", e: "[eéèë]", i: "[iíìï]", o: "[oóòö]", u: "[uúùü]", n: "[nñ]"
+        };
+        const pattern = term
+          .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/[aeioun]/gi, ch => accentMap[ch.toLowerCase()] || ch);
+
+        const rx = /^\d+$/.test(term)
+          ? new RegExp(`(?<![<\\w])(${pattern})(?![>\\w])`, "gi")
+          : new RegExp(`(?![^<]*>)(${pattern})`, "gi");
+
+        safeHtml = safeHtml.replace(rx, "<mark>$1</mark>");
       });
 
-      return {
-        heading: mejorSeccion.heading,
-        snippetHtml: snippetHtml,
-        rawSnippet: textoLimpio
-      };
+      return safeHtml;
     }
 
-    // 3. Ejecutar búsqueda ponderada
+    // 3. Ejecutar búsqueda BM25
     function ejecutarBusqueda() {
       const rawInput = searchInput.value.trim();
       if (rawInput.length < 2) {
@@ -511,98 +552,75 @@
 
       const t0 = performance.now();
       const parsed = parsearQuery(rawInput);
-      const matches = [];
 
-      documentsStore.forEach(doc => {
-        if (parsed.filterAsig && !normalizar(doc.asigId).includes(parsed.filterAsig)) return;
-
-        const contieneExcluido = parsed.negativeTerms.some(neg => 
-          doc.normText.includes(neg) || doc.normTitle.includes(neg)
-        );
-        if (contieneExcluido) return;
-
-        const cumpleFrases = parsed.exactPhrases.every(phrase => 
-          doc.normText.includes(phrase) || doc.normTitle.includes(phrase)
-        );
-        if (!cumpleFrases) return;
-
-        let cumpleTerminos = true;
-        const matchingTerms = [];
-
-        for (const term of parsed.positiveTerms) {
-          let found = doc.normText.includes(term) || doc.normTitle.includes(term);
-
-          if (!found && term.length >= 5) {
-            for (const docToken of doc.tokensSet) {
-              if (Math.abs(docToken.length - term.length) <= 1 && distanciaLevenshtein(term, docToken) <= 1) {
-                found = true;
-                matchingTerms.push(docToken);
-                break;
-              }
-            }
-          } else if (found) {
-            matchingTerms.push(term);
-          }
-
-          if (!found) {
-            cumpleTerminos = false;
-            break;
-          }
-        }
-
-        if (!cumpleTerminos) return;
-
-        let score = 0;
-        parsed.exactPhrases.forEach(p => {
-          if (doc.normTitle.includes(p)) score += 50;
-          score += ((doc.normText.match(new RegExp(p, "g")) || []).length) * 6;
-        });
-
-        matchingTerms.forEach(t => {
-          if (doc.normTitle.includes(t)) score += 20;
-          const count = (doc.normText.match(new RegExp(t, "g")) || []).length;
-          score += Math.min(count, 20);
-        });
-
-        const allTerms = [...matchingTerms, ...parsed.exactPhrases];
-        const context = extraerContextoExtendido(doc, allTerms);
-
-        matches.push({
-          ...doc,
-          score,
-          headingMatched: context.heading,
-          snippetHtml: context.snippetHtml,
-          rawSnippet: context.rawSnippet
-        });
-      });
-
-      matches.sort((a, b) => b.score - a.score);
-
-      const t1 = performance.now();
-      metricsStatus.textContent = `${matches.length} tema(s) en ${(t1 - t0).toFixed(1)} ms`;
-
-      if (matches.length === 0) {
-        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron fundamentos para "<strong>${rawInput}</strong>".</div>`;
+      const queryBase = [parsed.cleanQueryText, ...parsed.exactPhrases].join(" ").trim();
+      if (!queryBase) {
+        resultsContainer.innerHTML = "";
         return;
       }
 
+      const expandedQuery = expandirConsultaJuridica(queryBase);
+      const requestedNumbers = parsed.cleanTerms.filter(t => /^\d+$/.test(t));
+
+      const rawResults = miniSearch.search(expandedQuery, {
+        filter: (res) => {
+          const doc = chunksById.get(res.id);
+          if (!doc) return false;
+          if (parsed.filterAsig && !normalizar(doc.asigId).includes(parsed.filterAsig)) return false;
+          if (parsed.negativeTerms.some(neg => doc.normFull.includes(neg) || doc.normTitle.includes(neg))) return false;
+          if (!parsed.exactPhrases.every(p => doc.normFull.includes(p) || doc.normTitle.includes(p))) return false;
+          return true;
+        }
+      });
+
+      // Priorizar resultados que contengan el número de artículo si el usuario buscó un número
+      let orderedResults = rawResults;
+      if (requestedNumbers.length > 0) {
+        const withNum = rawResults.filter(r => {
+          const doc = chunksById.get(r.id);
+          return requestedNumbers.some(n => new RegExp(`\\b${n}\\b`).test(doc.normFull));
+        });
+        if (withNum.length > 0) orderedResults = withNum;
+      }
+
+      const t1 = performance.now();
+      metricsStatus.textContent = `${orderedResults.length} epígrafe(s) en ${(t1 - t0).toFixed(1)} ms`;
+
+      if (orderedResults.length === 0) {
+        resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron fundamentos para "<strong>${escapeHtml(rawInput)}</strong>".</div>`;
+        return;
+      }
+
+      // Términos a priorizar para centrar ventana y resaltar
+      const anchorTerms = [
+        ...requestedNumbers,
+        ...parsed.exactPhrases,
+        ...parsed.cleanTerms.filter(t => !/^\d+$/.test(t)).sort((a, b) => b.length - a.length)
+      ];
+      const highlightList = [
+        ...anchorTerms,
+        ...(expandedQuery !== queryBase ? ["prescripcion", "caducidad", "anos", "dias"] : [])
+      ];
+
       resultsContainer.innerHTML = "";
-      matches.forEach((item, index) => {
+      orderedResults.slice(0, 35).forEach((res, index) => {
+        const doc = chunksById.get(res.id);
         const card = document.createElement("article");
         card.className = "result-card";
 
-        const cleanLink = `apuntes.html?asig=${encodeURIComponent(item.asigId)}&tema=${encodeURIComponent(item.temaId)}`;
+        const cleanLink = `apuntes.html?asig=${encodeURIComponent(doc.asigId)}&tema=${encodeURIComponent(doc.temaId)}`;
+        const snippetHtml = formatearExtracto(doc.texto, highlightList);
 
         card.innerHTML = `
           <div class="result-header">
-            <span class="result-asig">${item.asigNombre}</span>
-            <a href="${cleanLink}" class="result-title">${item.temaTitulo}</a>
-            <span class="result-score">${item.score} pts</span>
+            <span class="result-asig">${escapeHtml(doc.asigNombre)}</span>
+            <a href="${cleanLink}" class="result-title">${escapeHtml(doc.temaTitulo)}</a>
+            <span class="result-score">${res.score.toFixed(1)} pts</span>
           </div>
-          <div class="result-section-crumb">📍 Sección: ${item.headingMatched}</div>
-          <div class="result-snippet" id="snippet-${index}">${item.snippetHtml}</div>
+          <div class="result-section-crumb">📍 Sección: ${escapeHtml(doc.heading)}</div>
+          <div class="result-snippet" id="snippet-${index}">${snippetHtml}</div>
           <div class="result-actions">
-            <button type="button" class="btn-action" onclick="copiarAlPortapapeles(${index})">
+            <button type="button" class="btn-action" onclick="copiarAlPortapapeles(${index}, this)">
               📋 Copiar extracto
             </button>
             <a href="${cleanLink}" class="link-viewer">Abrir tema completo →</a>
@@ -612,13 +630,12 @@
       });
     }
 
-    // Copiar el texto limpio (sin tags <mark>) al portapapeles para citarlo
-    window.copiarAlPortapapeles = function(index) {
+    window.copiarAlPortapapeles = function(index, btn) {
       const doc = document.getElementById(`snippet-${index}`);
       if (!doc) return;
       const textToCopy = doc.innerText || doc.textContent;
       navigator.clipboard.writeText(textToCopy).then(() => {
-        const btn = event.target;
+        if (!btn) return;
         const originalText = btn.innerHTML;
         btn.innerHTML = "✅ ¡Copiado!";
         setTimeout(() => {
@@ -631,4 +648,5 @@
     indexarBaseConocimiento();
   </script>
   <script src="mobile.js" defer></script>
+</body>
 </html>
