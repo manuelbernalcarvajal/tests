@@ -480,14 +480,12 @@
   </header>
 
   <div class="workspace">
-    <!-- Barra lateral de chats guardados en localStorage -->
     <aside class="history-sidebar" id="history-sidebar">
       <button type="button" class="btn-new-chat" id="btn-new-chat">+ Nueva consulta jurídica</button>
       <div class="history-title">Historial local</div>
       <div class="history-list" id="history-list"></div>
     </aside>
 
-    <!-- Área principal de chat -->
     <main class="chat-main">
       <div class="messages-container" id="messages-container"></div>
 
@@ -498,7 +496,7 @@
         </div>
         <div class="disclaimer-bar">
           <span id="active-model-label">Modo: Pollinations Beta (Auto-RAG)</span>
-          <span>Las claves y chats se guardan solo en tu navegador (localStorage).</span>
+          <span>Cero invención: responde exclusivamente con tus apuntes.</span>
         </div>
       </div>
     </main>
@@ -545,7 +543,7 @@
         <label for="cfg-rag-mode">Estrategia de búsqueda en apuntes</label>
         <select id="cfg-rag-mode">
           <option value="agentic">🧠 Agéntico (El modelo busca varias veces mientras razona — Recomendado con API propia)</option>
-          <option value="direct">⚡ Auto-RAG Directo (Inyecta los mejores fragmentos en 1 paso — Ideal para Beta gratuita)</option>
+          <option value="direct">⚡ Auto-RAG Directo (Inyecta los mejores bloques en 1 paso — Ideal para Beta gratuita)</option>
         </select>
       </div>
 
@@ -554,7 +552,6 @@
         <button type="button" class="btn-wipe" id="btn-wipe-data" title="Borra la API Key y el historial de este navegador">🗑️ Borrar API Key y chats</button>
       </div>
 
-      <!-- Guía clara para usuarios no técnicos -->
       <details class="api-guide" open>
         <summary>📘 Guía rápida: ¿Qué es una API Key, cómo conseguirla gratis y qué NO debes hacer?</summary>
         
@@ -586,8 +583,8 @@
     /* ==========================================================================
        1. CONFIGURACIÓN Y PERSISTENCIA EN LOCALSTORAGE
        ========================================================================== */
-    const CFG_KEY = "mbc_ai_config_v1";
-    const CHATS_KEY = "mbc_ai_chats_v1";
+    const CFG_KEY = "mbc_ai_config_v2";
+    const CHATS_KEY = "mbc_ai_chats_v2";
 
     const PROVIDER_PRESETS = {
       pollinations: {
@@ -630,8 +627,8 @@
     let appConfig = loadConfig();
     let chats = loadChats();
     let activeChatId = chats.length ? chats[0].id : null;
-    let sectionsStore = [];
-    let vocabulary = new Set();
+    let chunksStore = []; // Chunks granulares por encabezado # y subtítulo **negrita**
+    let docFrequency = new Map(); // Frecuencia inversa de documento (IDF) para ponderar términos raros
 
     function loadConfig() {
       try {
@@ -666,7 +663,7 @@
     }
 
     /* ==========================================================================
-       2. MOTOR DE INDEXACIÓN GRANULAR Y BÚSQUEDA EN 3 NIVELES
+       2. MOTOR DE INDEXACIÓN DE ALTA PRECISIÓN (Markdown # + Negritas ** + IDF)
        ========================================================================== */
     const STOPWORDS_ES = new Set([
       "el", "la", "los", "las", "un", "una", "unos", "unas", "lo", "al", "del",
@@ -677,18 +674,33 @@
       "y", "o", "ni", "pero", "sino", "mas", "muy", "ya", "no", "si", "ante", "bajo",
       "articulo", "art", "arts", "establece", "dice", "regula", "significa", "concepto",
       "segun", "caso", "plazo", "requisitos", "explica", "dime", "puedo", "limite", "limites",
-      "codigo", "civil", "penal", "ley", "enjuiciamiento", "derecho", "espana", "espanol"
+      "codigo", "civil", "penal", "ley", "enjuiciamiento", "derecho", "espana", "espanol",
+      "cuales", "tipos", "clases", "diferencia", "diferencias", "caracteristicas", "efectos"
     ]);
 
     function normalizar(str) {
       return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     }
 
-    function tokenizar(str) {
+    // Stemming español ligero para emparejar plurales y derivaciones básicas
+    function stemEs(word) {
+      if (/^\d+$/.test(word) || word.length < 5) return word;
+      return word
+        .replace(/(ciones|siones)$/i, "cion")
+        .replace(/(amientos|imientos)$/i, "amiento")
+        .replace(/(idades)$/i, "idad")
+        .replace(/(ables|ibles)$/i, "able")
+        .replace(/(ivos|ivas)$/i, "ivo")
+        .replace(/(ores|oras)$/i, "or")
+        .replace(/(es|s)$/i, "");
+    }
+
+    function tokenizar(str, applyStem = false) {
       const matches = normalizar(str).match(/[a-z0-9áéíóúñü]+/gi);
       if (!matches) return [];
       const filtrados = matches.filter(t => (t.length >= 3 || /^\d+$/.test(t)) && !STOPWORDS_ES.has(t));
-      return filtrados.length > 0 ? filtrados : matches.filter(t => t.length >= 2);
+      const base = filtrados.length > 0 ? filtrados : matches.filter(t => t.length >= 2);
+      return applyStem ? base.map(stemEs) : base;
     }
 
     function distanciaLevenshtein(a, b) {
@@ -715,6 +727,8 @@
 
       const tareas = [];
       let temasCargados = 0;
+      chunksStore = [];
+      docFrequency = new Map();
 
       APUNTES_CONFIG.forEach(asig => {
         asig.temas.forEach(tema => {
@@ -726,40 +740,59 @@
                 temasCargados++;
 
                 const lineas = raw.split("\n");
-                let heading = "Introducción general";
+                let currentH = "Introducción general";
+                let currentSub = "";
                 let block = [];
 
-                const pushSection = (h, lines) => {
-                  const text = lines.join("\n").trim();
-                  if (!text) return;
-                  const normFull = normalizar(h + " " + text);
-                  const tokens = tokenizar(h + " " + text);
-                  tokens.forEach(t => vocabulary.add(t));
+                const pushChunk = () => {
+                  const text = block.join("\n").trim();
+                  if (!text || text.length < 25) {
+                    block = [];
+                    return;
+                  }
+                  const fullHeading = currentSub ? `${currentH} > ${currentSub}` : currentH;
+                  const normFull = normalizar(fullHeading + "\n" + text);
+                  const rawTokens = tokenizar(fullHeading + " " + text, false);
+                  const stemmedTokens = new Set(rawTokens.map(stemEs));
 
-                  sectionsStore.push({
+                  // Registrar frecuencia global por chunk para calcular IDF
+                  stemmedTokens.forEach(st => {
+                    docFrequency.set(st, (docFrequency.get(st) || 0) + 1);
+                  });
+
+                  chunksStore.push({
                     asigId: asig.id,
                     asigNombre: asig.asignatura,
                     temaId: tema.id,
                     temaTitulo: tema.titulo,
                     normTemaTitle: normalizar(tema.titulo),
-                    heading: h,
-                    normHeading: normalizar(h),
+                    heading: fullHeading,
+                    normHeading: normalizar(fullHeading),
                     rawText: text,
                     normText: normFull,
-                    tokensSet: new Set(tokens)
+                    rawTokensSet: new Set(rawTokens),
+                    stemmedSet: stemmedTokens
                   });
+                  block = [];
                 };
 
                 lineas.forEach(l => {
-                  if (/^#{1,3}\s+/.test(l)) {
-                    pushSection(heading, block);
-                    block = [];
-                    heading = l.replace(/^#{1,3}\s+/, "").trim();
+                  const trimmed = l.trim();
+                  // 1. Detectar encabezados estándar Markdown (#, ##, ###)
+                  if (/^#{1,3}\s+/.test(trimmed)) {
+                    pushChunk();
+                    currentH = trimmed.replace(/^#{1,3}\s+/, "").replace(/\*\*/g, "").trim();
+                    currentSub = "";
+                  }
+                  // 2. Detectar subtítulos independientes en negrita (**Buena fe e integración contractual**)
+                  else if (/^\*\*[^*]{4,110}\*\*$/.test(trimmed) && block.join("\n").trim().length > 180) {
+                    pushChunk();
+                    currentSub = trimmed.replace(/^\*\*|\*\*$/g, "").trim();
                   } else {
                     block.push(l);
                   }
                 });
-                pushSection(heading, block);
+                pushChunk();
               })
               .catch(() => null)
           );
@@ -767,31 +800,29 @@
       });
 
       await Promise.all(tareas);
-      badge.textContent = `📚 ${temasCargados} temas (${sectionsStore.length} epígrafes)`;
+      badge.textContent = `📚 ${temasCargados} temas (${chunksStore.length} bloques)`;
     }
 
-    function extraerVentanaCentrada(rawText, anchorTerms) {
-      if (rawText.length <= 1800) return rawText;
+    function extraerVentanaPrecisa(rawText, anchorTerms) {
+      if (rawText.length <= 2200) return rawText;
       const normRaw = normalizar(rawText);
-      const anchor = anchorTerms.find(t => {
+
+      let bestPos = -1;
+      for (const t of anchorTerms) {
         const safe = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const rx = /^\d+$/.test(t) ? new RegExp(`\\b${safe}\\b`) : new RegExp(safe);
-        return rx.test(normRaw);
-      });
-
-      let pos = -1;
-      if (anchor) {
-        const safe = anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const rx = /^\d+$/.test(anchor) ? new RegExp(`\\b${safe}\\b`) : new RegExp(safe);
         const m = normRaw.match(rx);
-        if (m) pos = m.index;
+        if (m) {
+          bestPos = m.index;
+          break;
+        }
       }
 
-      if (pos > 350) {
-        const start = Math.max(0, rawText.lastIndexOf("\n", pos - 350));
-        return (start > 0 ? "[...] " : "") + rawText.slice(start, start + 1800) + " [...]";
+      if (bestPos > 400) {
+        const start = Math.max(0, rawText.lastIndexOf("\n", bestPos - 400));
+        return (start > 0 ? "[...] " : "") + rawText.slice(start, start + 2200) + " [...]";
       }
-      return rawText.slice(0, 1800) + " [...]";
+      return rawText.slice(0, 2200) + " [...]";
     }
 
     function ejecutarConsultaLexica(rawQuery, maxResults = 5, options = { strictNumbers: true }) {
@@ -815,36 +846,38 @@
         return " ";
       });
 
-      const positiveTerms = tokenizar(q);
+      const positiveTerms = tokenizar(q, false);
       if (!positiveTerms.length && !exactPhrases.length) return [];
 
       const requestedNumbers = positiveTerms.filter(t => /^\d+$/.test(t));
+      const totalChunks = Math.max(chunksStore.length, 1);
       const candidates = [];
 
-      sectionsStore.forEach(sec => {
-        if (filterAsig && !normalizar(sec.asigId).includes(filterAsig)) return;
-        if (negativeTerms.some(neg => sec.normText.includes(neg))) return;
-        if (!exactPhrases.every(p => sec.normText.includes(p) || sec.normTemaTitle.includes(p))) return;
+      chunksStore.forEach(chunk => {
+        if (filterAsig && !normalizar(chunk.asigId).includes(filterAsig)) return;
+        if (negativeTerms.some(neg => chunk.normText.includes(neg))) return;
+        if (!exactPhrases.every(p => chunk.normText.includes(p) || chunk.normTemaTitle.includes(p))) return;
 
         if (options.strictNumbers && requestedNumbers.length > 0) {
-          const hasNumber = requestedNumbers.some(num => new RegExp(`\\b${num}\\b`).test(sec.normText));
+          const hasNumber = requestedNumbers.some(num => new RegExp(`\\b${num}\\b`).test(chunk.normText));
           if (!hasNumber) return;
         }
 
         let score = 0;
-        let distinctTermsMatched = 0;
+        let distinctMatched = 0;
 
         for (const term of positiveTerms) {
           const isNum = /^\d+$/.test(term);
+          const stemmed = stemEs(term);
           const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           const termRegex = isNum ? new RegExp(`\\b${safeTerm}\\b`, "g") : new RegExp(safeTerm, "g");
 
           let found = isNum
-            ? termRegex.test(sec.normText)
-            : (sec.normText.includes(term) || sec.normTemaTitle.includes(term));
+            ? termRegex.test(chunk.normText)
+            : (chunk.normText.includes(term) || chunk.stemmedSet.has(stemmed) || chunk.normTemaTitle.includes(term));
 
           if (!found && !isNum && term.length >= 5) {
-            for (const tok of sec.tokensSet) {
+            for (const tok of chunk.rawTokensSet) {
               if (Math.abs(tok.length - term.length) <= 1 && distanciaLevenshtein(term, tok) <= 1) {
                 found = true;
                 break;
@@ -853,42 +886,52 @@
           }
 
           if (found) {
-            distinctTermsMatched++;
-            const pesoBase = isNum ? 35 : 5;
-            if (sec.normHeading.includes(term)) score += 25;
-            if (sec.normTemaTitle.includes(term)) score += 12;
-            const hits = (sec.normText.match(termRegex) || []).length;
-            score += Math.min(hits, 8) * pesoBase;
+            distinctMatched++;
+            // Factor IDF: términos que salen en pocos bloques valen muchísimo más que palabras frecuentes
+            const df = docFrequency.get(stemmed) || 1;
+            const idf = Math.max(1, Math.log(totalChunks / df) + 1);
+            const pesoBase = isNum ? 45 : (6 * idf);
+
+            if (chunk.normHeading.includes(term) || chunk.normHeading.includes(stemmed)) score += 30 * idf;
+            if (chunk.normTemaTitle.includes(term)) score += 15;
+
+            const hits = (chunk.normText.match(termRegex) || []).length || 1;
+            score += Math.min(hits, 6) * pesoBase;
           }
         }
 
         exactPhrases.forEach(p => {
           const safeP = p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          if (sec.normHeading.includes(p)) score += 45;
-          score += ((sec.normText.match(new RegExp(safeP, "g")) || []).length) * 14;
+          if (chunk.normHeading.includes(p)) score += 60;
+          score += ((chunk.normText.match(new RegExp(safeP, "g")) || []).length) * 20;
         });
 
         if (score === 0) return;
 
-        if (positiveTerms.length > 1 && distinctTermsMatched > 1) {
-          score += distinctTermsMatched * 15;
+        // Bonus fuerte si el bloque contiene varios conceptos de la pregunta juntos
+        if (positiveTerms.length > 1 && distinctMatched > 1) {
+          score *= (1 + (distinctMatched / positiveTerms.length) * 0.8);
         }
 
-        // Priorizar números exactos y términos más largos al centrar el extracto
+        // Normalización suave por longitud para que bloques gigantes no aplasten definiciones concretas
+        const lengthPenalty = 1 + Math.log10(Math.max(chunk.rawText.length, 200) / 200) * 0.25;
+        score = score / lengthPenalty;
+
         const anchorList = [
           ...requestedNumbers,
+          ...exactPhrases,
           ...[...positiveTerms].filter(t => !/^\d+$/.test(t)).sort((a, b) => b.length - a.length)
         ];
 
         candidates.push({
-          asignatura: sec.asigNombre,
-          asigId: sec.asigId,
-          tema: sec.temaTitulo,
-          temaId: sec.temaId,
-          enlace: `apuntes.html?asig=${encodeURIComponent(sec.asigId)}&tema=${encodeURIComponent(sec.temaId)}`,
-          seccion: sec.heading,
-          extracto: extraerVentanaCentrada(sec.rawText, anchorList),
-          score
+          asignatura: chunk.asigNombre,
+          asigId: chunk.asigId,
+          tema: chunk.temaTitulo,
+          temaId: chunk.temaId,
+          enlace: `apuntes.html?asig=${encodeURIComponent(chunk.asigId)}&tema=${encodeURIComponent(chunk.temaId)}`,
+          seccion: chunk.heading,
+          extracto: extraerVentanaPrecisa(chunk.rawText, anchorList),
+          score: Number(score.toFixed(2))
         });
       });
 
@@ -896,7 +939,6 @@
       return candidates.slice(0, maxResults);
     }
 
-    // Búsqueda con respaldo progresivo (Exacta -> Relajada -> Coincidencias parciales menores)
     function buscarEnApuntes(rawQuery, maxResults = 5) {
       // Nivel 1: Búsqueda exacta (respetando números de artículo y filtros)
       const exactHits = ejecutarConsultaLexica(rawQuery, maxResults, { strictNumbers: true });
@@ -904,8 +946,8 @@
         return { hits: exactHits, quality: "exact" };
       }
 
-      // Nivel 2: Relajación con las 2 palabras clave más largas/específicas (sin exigir número exacto si no estaba)
-      const nonNumericKeywords = tokenizar(rawQuery)
+      // Nivel 2: Relajación con las 2 palabras clave más largas/específicas
+      const nonNumericKeywords = tokenizar(rawQuery, false)
         .filter(t => !/^\d+$/.test(t))
         .sort((a, b) => b.length - a.length);
 
@@ -916,7 +958,7 @@
         }
       }
 
-      // Nivel 3: Búsqueda de respaldo por cualquier término suelto relevante para dar contexto relacionado
+      // Nivel 3: Búsqueda de respaldo por el término más específico
       if (nonNumericKeywords.length >= 1) {
         const fallbackHits = ejecutarConsultaLexica(nonNumericKeywords[0], Math.min(maxResults, 3), { strictNumbers: false });
         if (fallbackHits.length > 0) {
@@ -928,29 +970,31 @@
     }
 
     /* ==========================================================================
-       3. MOTOR LLM: SOPORTE AGÉNTICO (TOOL CALLING) Y AUTO-RAG DIRECTO
+       3. SYSTEM PROMPT BLINDADO CONTRA ALUCINACIONES Y MOTOR RAG
        ========================================================================== */
-    const SYSTEM_PROMPT = `Eres un asistente jurídico especializado en Derecho español (Máster Universitario en Abogacía).
-Tu misión es ayudar al estudiante a resolver casos prácticos, plazos y dudas doctrinales basándote en los apuntes recuperados del repositorio.
+    const SYSTEM_PROMPT = `Eres un auditor jurídico estricto conectado a un repositorio cerrado de apuntes del Máster Universitario en Abogacía (Derecho español).
 
-Reglas estrictas de actuación:
-1. Si los fragmentos recuperados contienen la respuesta directa, fundamenta tu explicación en ellos con rigor técnico.
-2. Si el sistema indica que los fragmentos son COINCIDENCIAS PARCIALES O RELACIONADAS (porque el precepto o término exacto no figura literal en el temario), comienza advirtiendo explícitamente: "⚠️ **Aviso:** No se ha encontrado en los apuntes ningún resultado que resuelva completamente la consulta exacta, pero a partir de los epígrafes relacionados disponibles se extrae lo siguiente:" y aprovecha lo que sea útil de los fragmentos aportados, distinguiendo claramente qué parte sale de los apuntes y qué parte es doctrina/legislación general complementaria.
-3. Cita siempre la asignatura, el tema y el epígrafe exacto con enlace Markdown (ej. [Derecho Civil · T01](apuntes.html?asig=civil&tema=001)).
-4. Nunca inventes artículos ni jurisprudencia.`;
+REGLAS INQUEBRANTABLES (TOLERANCIA CERO A ALUCINACIONES):
+1. FUENTE ÚNICA DE VERDAD: Responde EXCLUSIVAMENTE utilizando la información contenida literalmente en los bloques <fragmento> entregados en el contexto. Tienes PROHIBIDO usar conocimientos previos de tu entrenamiento para completar plazos, requisitos, artículos o excepciones que no estén escritos en los fragmentos.
+2. PROHIBICIÓN DE INVENCIÓN: Nunca deduzcas ni inventes números de artículos, cuantías, plazos procesales ni jurisprudencia. Si un dato concreto no figura en los fragmentos, escribe literalmente: "Este extremo no consta en los apuntes recuperados."
+3. GESTIÓN DE INSUFICIENCIA DOCUMENTAL:
+   - Si el contexto indica CALIDAD = "none" o está vacío, responde ÚNICAMENTE: "No consta información sobre esta consulta en los apuntes indexados." y detente.
+   - Si el contexto indica CALIDAD = "partial", inicia tu respuesta exactamente con: "⚠️ **Aviso:** No se ha encontrado en los apuntes ningún resultado que resuelva completamente la consulta exacta; a partir de los epígrafes relacionados disponibles se extrae únicamente lo siguiente:" y expón solo lo que aparezca en esos fragmentos.
+4. CITAS OBLIGATORIAS CON ENLACE: Toda afirmación jurídica debe respaldarse citando el tema y epígrafe usando exactamente el enlace Markdown facilitado en cada bloque (ejemplo: [Derecho Civil · T01 — Buena fe e integración contractual](apuntes.html?asig=civil&tema=001)). No alteres ni inventes URLs.
+5. ESTILO: Directo, estructurado con viñetas claras, lenguaje técnico-jurídico preciso y sin relleno introductorio.`;
 
     const SEARCH_TOOL_DEF = [
       {
         type: "function",
         function: {
           name: "buscar_apuntes",
-          description: "Busca epígrafes en el repositorio de apuntes jurídicos. Admite operadores: asig:civil, asig:procesalcivil1, asig:procesalpenal, asig:penal, \"frase exacta\" y -excluir. Úsala varias veces con consultas cortas y específicas (ej. '1258' o 'asig:procesalcivil1 litisconsorcio') si necesitas cruzar conceptos.",
+          description: "Busca bloques doctrinales y normativos en los apuntes. Admite operadores: asig:civil, asig:procesalcivil1, asig:procesalpenal, asig:penal, \"frase exacta\" y -excluir. Haz búsquedas cortas y específicas (ej. '1258' o 'asig:procesalcivil1 litisconsorcio'). Si la primera búsqueda devuelve 'none' o 'partial', prueba con sinónimos jurídicos antes de responder.",
           parameters: {
             type: "object",
             properties: {
               query: {
                 type: "string",
-                description: "Consulta de búsqueda concisa con palabras clave, número de artículo y operadores opcionales."
+                description: "Palabras clave específicas, número de artículo y/o filtro asig:..."
               }
             },
             required: ["query"]
@@ -971,7 +1015,7 @@ Reglas estrictas de actuación:
       const body = {
         model: appConfig.model,
         messages,
-        temperature: 0.2
+        temperature: 0.0 // Temperatura 0 para máxima fidelidad extractiva sin creatividad
       };
 
       if (useTools) {
@@ -1015,6 +1059,19 @@ Reglas estrictas de actuación:
       return `📚 Fuentes entregadas al modelo: ${uniqueLinks.join(" | ")}`;
     }
 
+    // Construye una consulta enriquecida si el usuario hace una pregunta de seguimiento corta (ej. "¿y cuál es el plazo?")
+    function buildEffectiveSearchQuery(userPrompt, chatHistory) {
+      const cleanTokens = tokenizar(userPrompt, false);
+      if (cleanTokens.length <= 2 && chatHistory.length >= 2) {
+        const lastUserMsg = [...chatHistory].reverse().find(m => m.role === "user");
+        if (lastUserMsg) {
+          const prevTokens = tokenizar(lastUserMsg.content, false).slice(0, 3);
+          return `${prevTokens.join(" ")} ${userPrompt}`;
+        }
+      }
+      return userPrompt;
+    }
+
     async function runRagPipeline(userPrompt, chatHistory, onTraceUpdate) {
       const traceLogs = [];
       const addTrace = (line) => {
@@ -1022,31 +1079,40 @@ Reglas estrictas de actuación:
         onTraceUpdate([...traceLogs]);
       };
 
-      // Modo 1: Auto-RAG Directo
+      const effectiveQuery = buildEffectiveSearchQuery(userPrompt, chatHistory);
+
+      // Modo 1: Auto-RAG Directo (1 solo paso, blindado)
       if (appConfig.ragMode === "direct") {
-        const keywords = tokenizar(userPrompt).join(", ");
-        addTrace(`🔍 Palabras clave analizadas: <code>${escapeHtml(keywords || userPrompt)}</code>`);
-        const searchRes = buscarEnApuntes(userPrompt, 5);
+        const keywords = tokenizar(effectiveQuery, false).join(", ");
+        addTrace(`🔍 Palabras clave analizadas: <code>${escapeHtml(keywords || effectiveQuery)}</code>`);
+        const searchRes = buscarEnApuntes(effectiveQuery, 5);
         addTrace(formatSourcesTrace(searchRes));
 
-        let contextHeader = "";
-        if (searchRes.quality === "partial") {
-          contextHeader = "NOTA DEL BUSCADOR: No se encontró ningún resultado que resuelva completamente la consulta exacta. Los siguientes fragmentos son coincidencias parciales o temas relacionados disponibles en el repositorio:\n\n";
-        } else if (searchRes.quality === "none") {
-          contextHeader = "NOTA DEL BUSCADOR: No existe ningún epígrafe relacionado en los apuntes cargados.\n\n";
+        // Cortocircuito seguro: si no hay absolutamente nada en los apuntes, ni siquiera gastamos tokens ni dejamos que alucine
+        if (searchRes.quality === "none" || searchRes.hits.length === 0) {
+          return {
+            reply: "No consta información sobre esta consulta en los apuntes indexados.",
+            traces: traceLogs
+          };
         }
 
-        const contextText = searchRes.hits.length
-          ? contextHeader + searchRes.hits.map((h, i) => `[Fragmento ${i + 1} | ${h.asignatura} | ${h.tema} | Epígrafe: ${h.seccion} | Enlace: ${h.enlace}]\n${h.extracto}`).join("\n\n---\n\n")
-          : contextHeader;
+        const formattedFragments = searchRes.hits.map((h, i) =>
+          `<fragmento id="${i + 1}" asignatura="${h.asignatura}" tema="${h.tema}" epigrafe="${h.seccion}" enlace="[${h.asignatura} · ${h.tema.split(":")[0]} — ${h.seccion}](${h.enlace})">\n${h.extracto}\n</fragmento>`
+        ).join("\n\n");
+
+        const userPayload = `CALIDAD_RECUPERACION: "${searchRes.quality}"
+
+CONTEXTO DOCUMENTAL AUTORIZADO:
+${formattedFragments}
+
+PREGUNTA DEL ESTUDIANTE:
+${userPrompt}
+
+Recuerda: responde ÚNICAMENTE con datos presentes en <fragmento>. Prohibido añadir información externa.`;
 
         const messages = [
           { role: "system", content: SYSTEM_PROMPT },
-          ...chatHistory.slice(-6).map(m => ({ role: m.role, content: m.content })),
-          {
-            role: "user",
-            content: `CONTEXTO RECUPERADO DE LOS APUNTES:\n${contextText}\n\nPREGUNTA DEL ESTUDIANTE:\n${userPrompt}`
-          }
+          { role: "user", content: userPayload }
         ];
 
         const data = await callChatCompletion(messages, false);
@@ -1054,11 +1120,15 @@ Reglas estrictas de actuación:
         return { reply, traces: traceLogs };
       }
 
-      // Modo 2: RAG Agéntico Iterativo (Tool Calling)
+      // Modo 2: RAG Agéntico Iterativo (Tool Calling con auditoría estricta)
+      const recentContext = chatHistory.slice(-2).map(m => ({ role: m.role, content: m.content }));
       const messages = [
         { role: "system", content: SYSTEM_PROMPT },
-        ...chatHistory.slice(-6).map(m => ({ role: m.role, content: m.content })),
-        { role: "user", content: userPrompt }
+        ...recentContext,
+        {
+          role: "user",
+          content: `Consulta del estudiante: "${userPrompt}". Usa la herramienta buscar_apuntes antes de responder y cíñete estrictamente a los fragmentos obtenidos.`
+        }
       ];
 
       const MAX_STEPS = 4;
@@ -1068,7 +1138,7 @@ Reglas estrictas de actuación:
           data = await callChatCompletion(messages, true);
         } catch (err) {
           if (step === 0) {
-            addTrace(`⚠️ El proveedor no soporta Tool Calling; cambiando a Auto-RAG directo...`);
+            addTrace(`⚠️ El proveedor no soporta Tool Calling; conmutando a Auto-RAG directo...`);
             const prevMode = appConfig.ragMode;
             appConfig.ragMode = "direct";
             const fallbackResult = await runRagPipeline(userPrompt, chatHistory, onTraceUpdate);
@@ -1087,18 +1157,22 @@ Reglas estrictas de actuación:
           for (const tc of choice.tool_calls) {
             let args = {};
             try { args = JSON.parse(tc.function.arguments || "{}"); } catch (e) {}
-            const q = args.query || userPrompt;
+            const q = args.query || effectiveQuery;
             addTrace(`🧠 Razonando → Consultando: <code>${escapeHtml(q)}</code>`);
 
             const searchRes = buscarEnApuntes(q, 4);
             addTrace(formatSourcesTrace(searchRes));
 
             const toolPayload = {
-              calidad_coincidencia: searchRes.quality,
-              aviso: searchRes.quality === "partial"
-                ? "No se encontró coincidencia exacta; se devuelven fragmentos parciales relacionados."
-                : (searchRes.quality === "none" ? "Sin resultados en el temario." : "Coincidencia directa encontrada."),
-              resultados: searchRes.hits
+              CALIDAD_RECUPERACION: searchRes.quality,
+              instruccion: searchRes.quality === "partial"
+                ? "Coincidencia parcial. Avisa al usuario al inicio y usa solo lo presente aquí."
+                : (searchRes.quality === "none" ? "Sin resultados. Prueba otro término jurídico o indica que no consta." : "Coincidencia directa."),
+              fragmentos: searchRes.hits.map((h, i) => ({
+                id: i + 1,
+                cita_markdown: `[${h.asignatura} · ${h.tema.split(":")[0]} — ${h.seccion}](${h.enlace})`,
+                contenido: h.extracto
+              }))
             };
 
             messages.push({
@@ -1193,9 +1267,9 @@ Reglas estrictas de actuación:
         messagesContainer.innerHTML = `
           <div class="msg-wrapper msg-assistant">
             <div class="msg-bubble">
-              <p><strong>⚖️ Asistente Jurídico con Auto-RAG sobre tus apuntes</strong></p>
-              <p>Puedes plantear casos prácticos, comparar instituciones procesales o preguntar por plazos y requisitos. Buscaré directamente en tu temario indexado y te citaré los temas exactos.</p>
-              <p style="font-size:13px; color:var(--muted);">Ejemplos: <em>"¿Qué regula el artículo 1258 del Código Civil?"</em> o <em>"¿Qué plazo tiene el demandado para contestar en el juicio verbal?"</em>.</p>
+              <p><strong>⚖️ Auditor Jurídico RAG (Estricto sobre tus apuntes)</strong></p>
+              <p>Las respuestas están blindadas con <code>temperature: 0</code> y extracción literal para evitar invenciones: solo afirma lo que figura en tu temario y enlaza el epígrafe exacto.</p>
+              <p style="font-size:13px; color:var(--muted);">Ejemplos: <em>"¿Qué establece el artículo 1258?"</em> o <em>"Clasificación técnica de los contratos"</em>.</p>
             </div>
           </div>
         `;
@@ -1256,11 +1330,11 @@ Reglas estrictas de actuación:
       chatInput.style.height = "auto";
       btnSend.disabled = true;
 
-      const loadingBubble = appendMessageToDOM("assistant", "_Analizando consulta..._", ["⏳ Iniciando motor RAG..."]);
+      const loadingBubble = appendMessageToDOM("assistant", "_Auditando apuntes..._", ["⏳ Iniciando búsqueda léxica + IDF..."]);
 
       try {
         const result = await runRagPipeline(text, priorMessages, (liveTraces) => {
-          loadingBubble.innerHTML = `<div class="tool-trace">${liveTraces.map(t => `<div>${t}</div>`).join("")}</div><p><em>Redactando fundamentación...</em></p>`;
+          loadingBubble.innerHTML = `<div class="tool-trace">${liveTraces.map(t => `<div>${t}</div>`).join("")}</div><p><em>Redactando respuesta fundamentada...</em></p>`;
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         });
 
