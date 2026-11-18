@@ -65,13 +65,12 @@ const APUNTES_CONFIG = [
     asignatura: "Derecho Penal",
     id: "penal",
     temas: [
-      { id: "001", titulo: "T01: /pendiente/Aspectos fundamentales de las reformas penales", archivo: "apuntes/enproceso.md" },
-      { id: "002", titulo: "T02: /pendiente/La teoría general del delito en la práctica de la abogacía", archivo: "apuntes/enproceso.md" },
-      { id: "003", titulo: "T03: /pendiente/La individualización penal. Ejecución de las penas y derecho penitenciario", archivo: "apuntes/enproceso.md" },
-      { id: "004", titulo: "T04: /pendiente/Parte especial del derecho penal. Los delitos en concreto en la práctica de la abogacía", archivo: "apuntes/enproceso.md" },
-      { id: "001p", titulo: "Parte Ester: /pendiente/ Lo mismo pero por parte de la asignatura", archivo: "apuntes/enproceso.md" },
-      { id: "002p", titulo: "Parte Miguel: /pendiente/ Lo mismo pero por parte de la asignatura", archivo: "apuntes/enproceso.md" },
-      { id: "003p", titulo: "Parte Alfredo: /pendiente/ Lo mismo pero por parte de la asignatura", archivo: "apuntes/enproceso.md" }
+      { id: "001", titulo: "T01: /pendiente/Ejecución de sanciones y régimen penitenciario", archivo: "apuntes/enproceso.md" },
+      { id: "002", titulo: "T02: /pendiente/Delitos leves. Lesiones y homicidio", archivo: "apuntes/enproceso.md" },
+      { id: "003", titulo: "T03: /pendiente/Violencia de género y doméstica", archivo: "apuntes/enproceso.md" },
+      { id: "004", titulo: "T04: /pendiente/Libertad sexual. Relaciones familiares", archivo: "apuntes/enproceso.md" },
+      { id: "005", titulo: "T05: /pendiente/Delitos contra el patrimonio y la Hacienda pública", archivo: "apuntes/enproceso.md" },
+      { id: "006", titulo: "T06: /pendiente/Delitos contra la salud pública y la seguridad vial.", archivo: "apuntes/enproceso.md" }
     ]
   }
 ];
