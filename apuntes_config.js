@@ -49,9 +49,9 @@ const APUNTES_CONFIG = [
     asignatura: "Derecho Procesal Penal",
     id: "procesalpenal",
     temas: [
-      { id: "001", titulo: "T01: /iniciado/La incoación del procedimiento", archivo: "apuntes/procesalpenal/001.md" },
+      { id: "001", titulo: "T01: La incoación del procedimiento", archivo: "apuntes/procesalpenal/001.md" },
       { id: "002", titulo: "T02: /iniciado/ Jurisdicción y competencia en el orden jurisdiccional penal", archivo: "apuntes/procesalpenal/002.md" },
-      { id: "003", titulo: "T03: /pendiente/Las partes en el procedimiento penal. Capacidad, legitimación, representación y defensa", archivo: "apuntes/enproceso.md" },
+      { id: "003", titulo: "T03: /iniciado/Las partes en el procedimiento penal. Capacidad, legitimación, representación y defensa", archivo: "apuntes/procesalpenal/003.md" },
       { id: "004", titulo: "T04: /pendiente/El sumario", archivo: "apuntes/enproceso.md" },
       { id: "005", titulo: "T05: /pendiente/El procedimiento abreviado. El procedimiento por delitos leves. El procedimiento para el enjuiciamiento rápido de determinados delitos. El procedimiento ante el tribunal del jurado", archivo: "apuntes/enproceso.md" },
       { id: "006", titulo: "T06: /pendiente/Los procesos penales especiales", archivo: "apuntes/enproceso.md" },
