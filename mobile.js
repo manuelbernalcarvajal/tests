@@ -10,7 +10,7 @@
   }
 
   /* ==========================================================================
-     1. INYECCIÓN DE ESTILOS RESPONSIVE (Solo activos en <= 768px)
+     1. INYECCIÓN DE ESTILOS RESPONSIVE (<= 768px) + BLINDAJE DE IMPRESIÓN
      ========================================================================== */
   function injectStyles() {
     if (document.getElementById("mbc-mobile-css")) return;
@@ -19,10 +19,38 @@
     style.id = "mbc-mobile-css";
     style.textContent = `
       /* Botones auxiliares ocultos en escritorio */
-      .mbc-mobile-only { display: none !important; }
+      .mbc-mobile-only { display: none; }
+
+      /* Reglas de impresión: eliminar elementos flotantes/navegación inyectada */
+      @media print {
+        .mbc-mobile-only,
+        #mbc-fab-toc,
+        #mbc-scroll-top,
+        #mbc-theme-nav,
+        #mbc-drawer-backdrop,
+        #mbc-quick-filters,
+        #mbc-clear-search,
+        #tts-dock {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        body,
+        body.mbc-apuntes {
+          height: auto !important;
+          min-height: 0 !important;
+          overflow: visible !important;
+          padding: 0 !important;
+        }
+
+        pre, table, blockquote {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+      }
 
       @media (max-width: ${MOBILE_BP}px) {
-        .mbc-mobile-only { display: inline-flex !important; }
+        .mbc-mobile-only { display: inline-flex; }
 
         /* Prevenir zoom automático de iOS/Android al enfocar campos */
         input, select, textarea {
@@ -64,6 +92,7 @@
           transition: opacity 0.2s ease, transform 0.2s ease;
         }
         #mbc-scroll-top.visible {
+          display: inline-flex;
           opacity: 1;
           pointer-events: auto;
         }
@@ -225,6 +254,7 @@
           display: block !important;
         }
         #mbc-fab-toc {
+          display: inline-flex;
           position: fixed;
           bottom: 18px;
           left: 16px;
@@ -360,6 +390,7 @@
           padding-right: 38px !important;
         }
         #mbc-clear-search {
+          display: inline-flex;
           position: absolute;
           right: 10px;
           top: 50%;
@@ -504,7 +535,6 @@
     const aside = document.getElementById("toc-container");
     const dock = document.getElementById("tts-dock");
 
-    // Vigilar si el panel de audio TTS está visible para ajustar botones flotantes
     if (dock) {
       const dockObserver = new MutationObserver(() => {
         const isOpen = getComputedStyle(dock).display !== "none";
@@ -513,7 +543,6 @@
       dockObserver.observe(dock, { attributes: true, attributeFilter: ["style"] });
     }
 
-    // Crear Drawer y botón flotante de índice
     if (aside && !document.getElementById("mbc-fab-toc")) {
       const backdrop = document.createElement("div");
       backdrop.id = "mbc-drawer-backdrop";
@@ -526,7 +555,6 @@
       fab.innerHTML = "📑 Índice";
       document.body.appendChild(fab);
 
-      // Cabecera interna del drawer con botón de cierre
       const oldH3 = aside.querySelector("h3");
       const drawerHeader = document.createElement("div");
       drawerHeader.id = "mbc-drawer-header";
@@ -552,7 +580,6 @@
       backdrop.addEventListener("click", closeDrawer);
       drawerHeader.querySelector("#mbc-drawer-close").addEventListener("click", closeDrawer);
 
-      // Cerrar automáticamente al elegir un apartado del índice
       aside.addEventListener("click", (e) => {
         if (isMobile() && e.target.tagName === "A") {
           closeDrawer();
@@ -560,7 +587,6 @@
       });
     }
 
-    // Inyectar navegación "Tema Anterior / Tema Siguiente" al pie del documento
     const docContent = document.getElementById("doc-content");
     const selTema = document.getElementById("select-tema");
     if (docContent && selTema) {
@@ -612,7 +638,6 @@
     const btnNext = document.getElementById("btn-next");
     const qText = document.getElementById("question-text");
 
-    // Scroll suave al inicio de la tarjeta cuando cambia la pregunta
     if (qText) {
       const qObserver = new MutationObserver(() => {
         if (isMobile() && viewTest && !viewTest.classList.contains("hide")) {
@@ -622,7 +647,6 @@
       qObserver.observe(qText, { childList: true, characterData: true, subtree: true });
     }
 
-    // Soporte de gestos táctiles (Swipe izquierda = Siguiente, derecha = Anterior)
     if (viewTest && btnPrev && btnNext) {
       let touchStartX = 0;
       let touchStartY = 0;
@@ -637,7 +661,6 @@
         const deltaX = e.changedTouches[0].screenX - touchStartX;
         const deltaY = e.changedTouches[0].screenY - touchStartY;
 
-        // Solo disparar si el gesto es claramente horizontal (> 65px) y no scroll vertical
         if (Math.abs(deltaX) > 65 && Math.abs(deltaX) > Math.abs(deltaY) * 1.6) {
           if (deltaX < 0 && !btnNext.disabled) {
             btnNext.click();
@@ -679,7 +702,6 @@
       });
     }
 
-    // Chips pulsables para insertar sintaxis sin peleas con el teclado móvil
     if (input && tips && !document.getElementById("mbc-quick-filters")) {
       const chipsBar = document.createElement("div");
       chipsBar.id = "mbc-quick-filters";
@@ -704,7 +726,6 @@
             input.focus();
             input.setSelectionRange(input.value.length - 1, input.value.length - 1);
           } else {
-            // Reemplaza filtro asig: previo si existía
             const cleaned = input.value.replace(/\basig:[a-z0-9_-]+\s*/gi, "").trim();
             input.value = f.token + (cleaned ? cleaned + " " : "");
             input.focus();
