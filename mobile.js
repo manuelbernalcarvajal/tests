@@ -1,6 +1,6 @@
 /**
  * mobile.js — Capa de adaptación móvil integral para Portal Jurídico MBC
- * No altera la lógica ni los archivos originales; actúa de forma reactiva en <= 768px.
+ * Respeta el CSS del visor estándar en justificación (móvil e impresión) y aísla @media print.
  */
 (function () {
   const MOBILE_BP = 768;
@@ -10,7 +10,7 @@
   }
 
   /* ==========================================================================
-     1. INYECCIÓN DE ESTILOS RESPONSIVE (<= 768px) + BLINDAJE DE IMPRESIÓN
+     1. INYECCIÓN DE ESTILOS RESPONSIVE (<= 768px) + AISLAMIENTO DE IMPRESIÓN
      ========================================================================== */
   function injectStyles() {
     if (document.getElementById("mbc-mobile-css")) return;
@@ -18,10 +18,10 @@
     const style = document.createElement("style");
     style.id = "mbc-mobile-css";
     style.textContent = `
-      /* Botones auxiliares ocultos en escritorio */
+      /* Botones auxiliares ocultos por defecto */
       .mbc-mobile-only { display: none; }
 
-      /* Reglas de impresión: eliminar elementos flotantes/navegación inyectada */
+      /* Reglas de impresión: nunca aplicar reglas móviles y conservar justificación estándar */
       @media print {
         .mbc-mobile-only,
         #mbc-fab-toc,
@@ -29,27 +29,47 @@
         #mbc-theme-nav,
         #mbc-drawer-backdrop,
         #mbc-quick-filters,
-        #mbc-clear-search,
-        #tts-dock {
+        #mbc-clear-search {
           display: none !important;
           visibility: hidden !important;
         }
 
         body,
-        body.mbc-apuntes {
+        body.mbc-apuntes,
+        body.mbc-search,
+        body.mbc-test,
+        body.mbc-libro,
+        body.mbc-count,
+        body.mbc-index {
           height: auto !important;
           min-height: 0 !important;
           overflow: visible !important;
           padding: 0 !important;
+          margin: 0 !important;
         }
 
-        pre, table, blockquote {
-          break-inside: avoid;
+        .markdown-body p,
+        .markdown-body li {
+          text-align: justify !important;
+          text-justify: inter-word !important;
+          hyphens: auto !important;
+          -webkit-hyphens: auto !important;
+          orphans: 3;
+          widows: 3;
+        }
+
+        h1, h2, h3 {
+          page-break-after: avoid;
+          break-after: avoid;
+        }
+
+        pre, table, blockquote, .katex-display {
           page-break-inside: avoid;
+          break-inside: avoid;
         }
       }
 
-      @media (max-width: ${MOBILE_BP}px) {
+      @media (max-width: ${MOBILE_BP}px) and (not print) {
         .mbc-mobile-only { display: inline-flex; }
 
         /* Prevenir zoom automático de iOS/Android al enfocar campos */
@@ -291,7 +311,7 @@
           cursor: pointer;
         }
 
-        /* Área de lectura optimizada */
+        /* Área de lectura optimizada con justificación del modo estándar */
         body.mbc-apuntes main {
           overflow: visible !important;
           padding: 10px 8px 60px 8px !important;
@@ -299,17 +319,23 @@
         body.mbc-apuntes .markdown-body {
           padding: 18px 14px !important;
           font-size: 15.5px !important;
-          line-height: 1.62 !important;
+          line-height: 1.65 !important;
           border-radius: 8px !important;
+        }
+        body.mbc-apuntes .markdown-body h1,
+        body.mbc-apuntes .markdown-body h2,
+        body.mbc-apuntes .markdown-body h3 {
+          text-align: left !important;
         }
         body.mbc-apuntes .markdown-body h1 { font-size: 1.45em !important; }
         body.mbc-apuntes .markdown-body h2 { font-size: 1.22em !important; }
         body.mbc-apuntes .markdown-body h3 { font-size: 1.08em !important; }
         body.mbc-apuntes .markdown-body p,
         body.mbc-apuntes .markdown-body li {
-          text-align: left !important;
-          hyphens: none !important;
-          -webkit-hyphens: none !important;
+          text-align: justify !important;
+          text-justify: inter-word !important;
+          hyphens: auto !important;
+          -webkit-hyphens: auto !important;
         }
         body.mbc-apuntes .markdown-body ul,
         body.mbc-apuntes .markdown-body ol {
@@ -426,8 +452,10 @@
           padding: 16px 14px !important;
         }
         body.mbc-search .result-snippet {
-          text-align: left !important;
-          hyphens: none !important;
+          text-align: justify !important;
+          text-justify: inter-word !important;
+          hyphens: auto !important;
+          -webkit-hyphens: auto !important;
           padding: 12px !important;
           font-size: 14px !important;
         }
