@@ -53,9 +53,9 @@ const APUNTES_CONFIG = [
       { id: "002", titulo: "T02: /iniciado/ Jurisdicción y competencia en el orden jurisdiccional penal", archivo: "apuntes/procesalpenal/002.md" },
       { id: "003", titulo: "T03: /iniciado/Las partes en el procedimiento penal. Capacidad, legitimación, representación y defensa", archivo: "apuntes/procesalpenal/003.md" },
       { id: "004", titulo: "T04: /pendiente/El sumario", archivo: "apuntes/enproceso.md" },
-      { id: "005", titulo: "T05: /pendiente/El procedimiento abreviado. El procedimiento por delitos leves. El procedimiento para el enjuiciamiento rápido de determinados delitos. El procedimiento ante el tribunal del jurado", archivo: "apuntes/procesalpenal/005.md" },
-      { id: "006", titulo: "T06: /pendiente/Los procesos penales especiales", archivo: "apuntes/procesalpenal/006.md" },
-      { id: "007", titulo: "T07: /pendiente/La intervención del profesional de la Abogacía en centros policiales y oficinas judiciales", archivo: "apuntes/procesalpenal/007.md" },
+      { id: "005", titulo: "T05: /iniciado/El procedimiento abreviado. El procedimiento por delitos leves. El procedimiento para el enjuiciamiento rápido de determinados delitos. El procedimiento ante el tribunal del jurado", archivo: "apuntes/procesalpenal/005.md" },
+      { id: "006", titulo: "T06: /iniciado/Los procesos penales especiales", archivo: "apuntes/procesalpenal/006.md" },
+      { id: "007", titulo: "T07: /iniciado/La intervención del profesional de la Abogacía en centros policiales y oficinas judiciales", archivo: "apuntes/procesalpenal/007.md" },
       { id: "008", titulo: "T08: /pendiente/La actuación del profesional de la Abogacía en las distintas fases del proceso penal y en el juzgado de guardia", archivo: "apuntes/enproceso.md" },
       { id: "009", titulo: "T09: /pendiente/La prisión y la libertad provisional", archivo: "apuntes/enproceso.md" },
       { id: "010", titulo: "T010: /pendiente/El juicio oral en los distintos procesos penales", archivo: "apuntes/enproceso.md" }
