@@ -21,55 +21,7 @@
       /* Botones auxiliares ocultos por defecto */
       .mbc-mobile-only { display: none; }
 
-      /* Reglas de impresión: nunca aplicar reglas móviles y conservar justificación estándar */
-      @media print {
-        .mbc-mobile-only,
-        #mbc-fab-toc,
-        #mbc-scroll-top,
-        #mbc-theme-nav,
-        #mbc-drawer-backdrop,
-        #mbc-quick-filters,
-        #mbc-clear-search {
-          display: none !important;
-          visibility: hidden !important;
-        }
-
-        body,
-        body.mbc-apuntes,
-        body.mbc-search,
-        body.mbc-test,
-        body.mbc-libro,
-        body.mbc-count,
-        body.mbc-index {
-          height: auto !important;
-          min-height: 0 !important;
-          overflow: visible !important;
-          padding: 0 !important;
-          margin: 0 !important;
-        }
-
-        .markdown-body p,
-        .markdown-body li {
-          text-align: justify !important;
-          text-justify: inter-word !important;
-          hyphens: auto !important;
-          -webkit-hyphens: auto !important;
-          orphans: 3;
-          widows: 3;
-        }
-
-        h1, h2, h3 {
-          page-break-after: avoid;
-          break-after: avoid;
-        }
-
-        pre, table, blockquote, .katex-display {
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-      }
-
-      @media (max-width: ${MOBILE_BP}px) and (not print) {
+      @media (max-width: ${MOBILE_BP}px) {
         .mbc-mobile-only { display: inline-flex; }
 
         /* Prevenir zoom automático de iOS/Android al enfocar campos */
@@ -204,7 +156,7 @@
         }
 
         /* ====================================================================
-           APUNTES.HTML (Visor con Drawer Lateral + Navegación entre temas)
+           APUNTES.HTML (Visor con Drawer Lateral + Justificación estándar)
            ==================================================================== */
         body.mbc-apuntes {
           height: auto !important;
@@ -518,6 +470,54 @@
         body.mbc-count .stats-grid {
           grid-template-columns: 1fr !important;
           gap: 10px !important;
+        }
+      }
+
+      /* Reglas de impresión independientes y limpias */
+      @media print {
+        .mbc-mobile-only,
+        #mbc-fab-toc,
+        #mbc-scroll-top,
+        #mbc-theme-nav,
+        #mbc-drawer-backdrop,
+        #mbc-quick-filters,
+        #mbc-clear-search {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        body,
+        body.mbc-apuntes,
+        body.mbc-search,
+        body.mbc-test,
+        body.mbc-libro,
+        body.mbc-count,
+        body.mbc-index {
+          height: auto !important;
+          min-height: 0 !important;
+          overflow: visible !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        .markdown-body p,
+        .markdown-body li {
+          text-align: justify !important;
+          text-justify: inter-word !important;
+          hyphens: auto !important;
+          -webkit-hyphens: auto !important;
+          orphans: 3;
+          widows: 3;
+        }
+
+        h1, h2, h3 {
+          page-break-after: avoid;
+          break-after: avoid;
+        }
+
+        pre, table, blockquote, .katex-display {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
       }
     `;
