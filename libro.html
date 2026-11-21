@@ -26,9 +26,9 @@
 
   <style>
     /* ==========================================================================
-       1. INTERFAZ DE CONTROL EN PANTALLA (Se oculta al imprimir)
+1. INTERFAZ DE CONTROL EN PANTALLA (Se oculta al imprimir)
        ========================================================================== */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+- { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', system-ui, sans-serif;
@@ -182,7 +182,7 @@
   </style>
 
   <!-- ==========================================================================
-       2. HOJA DE ESTILOS EDITORIAL (Inyectada como Blob CSS en Paged.js)
+2. HOJA DE ESTILOS EDITORIAL (Inyectada como Blob CSS en Paged.js)
        ========================================================================== -->
   <script id="book-editorial-css" type="text/plain">
     @page {
@@ -438,6 +438,8 @@
 
     /* Título de Capítulo (H1) */
     .book-chapter h1 {
+      break-inside: avoid;
+      page-break-inside: avoid;
       break-after: avoid;
       page-break-after: avoid;
       font-family: 'EB Garamond', Georgia, serif;
@@ -449,8 +451,19 @@
       border-bottom: 0.75pt solid #0f172a;
       padding: 12pt 0 10pt 0;
       margin-top: 0;
-      margin-bottom: 20pt;
+      margin-bottom: 16pt;
       text-align: left;
+    }
+
+    .book-chapter h1 + p,
+    .book-chapter h1 + h2,
+    .book-chapter h1 + h3,
+    .book-chapter h1 + ul,
+    .book-chapter h1 + ol,
+    .book-chapter h1 + blockquote {
+      margin-top: 0;
+      break-before: avoid;
+      page-break-before: avoid;
     }
 
     /* Epígrafes principales (H2) */
@@ -797,8 +810,42 @@
         await paged.preview(fullHtml, [cssUrl], bookPreview);
         URL.revokeObjectURL(cssUrl);
 
-        // Post-procesado exacto: localizar la hoja real donde quedó cada H1 e inyectar su número en el índice
         const renderedPages = Array.from(bookPreview.querySelectorAll(".pagedjs_page"));
+
+        // Evitar H1 aislados al final de una hoja: si un H1 no tiene contenido detrás en la misma página,
+        // pasa a encabezar la página siguiente.
+        for (let i = 0; i < renderedPages.length - 1; i++) {
+          const currentPage = renderedPages[i];
+          const nextPage = renderedPages[i + 1];
+          const currentArea = currentPage.querySelector(".pagedjs_page_content");
+          const nextArea = nextPage.querySelector(".pagedjs_page_content");
+
+          if (!currentArea || !nextArea) continue;
+
+          const h1s = Array.from(currentArea.querySelectorAll("h1"));
+          for (const h1 of h1s) {
+            const h1Rect = h1.getBoundingClientRect();
+            const areaRect = currentArea.getBoundingClientRect();
+
+            const hasContentBelow = Array.from(currentArea.querySelectorAll("p, h2, h3, h4, ul, ol, blockquote, table, pre, .katex-display"))
+              .some(el => {
+                const r = el.getBoundingClientRect();
+                return r.height > 0 && r.top >= h1Rect.bottom - 2 && r.bottom <= areaRect.bottom + 2;
+              });
+
+            if (!hasContentBelow) {
+              const parentWrapper = h1.parentElement;
+              const firstNextChild = nextArea.firstElementChild;
+              nextArea.insertBefore(h1, firstNextChild);
+
+              if (parentWrapper && parentWrapper !== currentArea && parentWrapper.textContent.trim() === "") {
+                parentWrapper.remove();
+              }
+            }
+          }
+        }
+
+        // Post-procesado exacto: localizar la hoja real donde quedó cada H1 e inyectar su número en el índice
         renderedPages.forEach((pageEl, pageIndex) => {
           const pageNumber = pageIndex + 1;
           const h1sInPage = pageEl.querySelectorAll("h1[id^='capitulo-']");
