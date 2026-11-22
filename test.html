@@ -33,11 +33,12 @@
     
     .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.15s; font-size: 0.95rem; }
     .btn:hover { opacity: 0.92; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn.active-cat { outline: 3px solid var(--accent); outline-offset: 2px; }
     .btn-todo { background: #047857; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 
-    /* Desplegable / selector de temas */
+    /* Desplegable de temas */
     .topic-dropdown {
       margin-top: 18px;
       padding: 16px;
@@ -77,6 +78,7 @@
       height: 16px;
       cursor: pointer;
       accent-color: var(--primary);
+      flex-shrink: 0;
     }
     .topic-item.all-item {
       font-weight: 700;
@@ -156,9 +158,9 @@
   <div id="view-test" class="card hide">
     <div class="progress"><div id="progress-bar" class="progress-fill"></div></div>
     
-    <div style="display: flex; justify-content: space-between; color: var(--neutral); font-size: 0.9rem; margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; color: var(--neutral); font-size: 0.9rem; margin-bottom: 12px; gap: 12px;">
       <span id="label-category" style="font-weight: 600;"></span>
-      <span id="label-counter"></span>
+      <span id="label-counter" style="white-space: nowrap;"></span>
     </div>
 
     <h3 id="question-text" style="line-height: 1.45; margin-bottom: 18px;"></h3>
@@ -191,32 +193,36 @@
 <script>
   const DEFAULT_TOPIC = "General";
   const ALL_TOPIC_TOKEN = "TODO";
+  const MAX_QUESTIONS = 35;
 
   let examQuestions = [];
   let currentIndex = 0;
   let userAnswers = [];
   let bufferPreguntas = [];
 
-  // Estado de la selección actual en el desplegable
+  // Estado del desplegable y caché por materia
   let activeCategoryKey = null;
   let activeCategoryTitle = "";
   let loadedCategoryQuestions = [];
+  let currentLoadRequestId = 0;
+  const categoryCache = new Map();
 
-  // Receptor global para los archivos de preguntas (.js)
-  // Normaliza "tema" (o "Tema") sin romper preguntas antiguas que no lo incluyan
+  // Receptor global compatible con archivos antiguos (sin tema) y nuevos (con tema/Tema)
   window.registrarPreguntas = function(preguntas) {
     if (!Array.isArray(preguntas)) return;
-    const normalizadas = preguntas.map(q => {
-      const rawTema = (typeof q.tema === "string" && q.tema.trim())
-        ? q.tema.trim()
-        : (typeof q.Tema === "string" && q.Tema.trim())
-          ? q.Tema.trim()
-          : DEFAULT_TOPIC;
-      return {
-        ...q,
-        tema: rawTema
-      };
-    });
+    const normalizadas = preguntas
+      .filter(q => q && typeof q.pregunta === "string" && Array.isArray(q.opciones) && q.opciones.length > 0)
+      .map(q => {
+        const rawTema = (typeof q.tema === "string" && q.tema.trim())
+          ? q.tema.trim()
+          : (typeof q.Tema === "string" && q.Tema.trim())
+            ? q.Tema.trim()
+            : DEFAULT_TOPIC;
+        return {
+          ...q,
+          tema: rawTema
+        };
+      });
     bufferPreguntas.push(...normalizadas);
   };
 
@@ -228,7 +234,10 @@
         script.remove();
         resolve();
       };
-      script.onerror = () => reject(new Error(`No se pudo cargar el script: ${ruta}`));
+      script.onerror = () => {
+        script.remove();
+        reject(new Error(`No se pudo cargar el script: ${ruta}`));
+      };
       document.body.appendChild(script);
     });
   }
@@ -242,6 +251,34 @@
     return a;
   }
 
+  // Codificación segura UTF-8 -> Base64URL para que cualquier carácter en el nombre del tema sobreviva en la URL
+  function encodeTopicsParam(topicsArray) {
+    try {
+      const json = JSON.stringify(topicsArray);
+      const bytes = new TextEncoder().encode(json);
+      let binary = "";
+      bytes.forEach(b => { binary += String.fromCharCode(b); });
+      return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function decodeTopicsParam(encodedStr) {
+    if (!encodedStr || encodedStr === ALL_TOPIC_TOKEN) return null;
+    try {
+      let base64 = encodedStr.replace(/-/g, "+").replace(/_/g, "/");
+      while (base64.length % 4) base64 += "=";
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const parsed = JSON.parse(new TextDecoder().decode(bytes));
+      return Array.isArray(parsed) ? parsed.filter(x => typeof x === "string") : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function syncUrlSelection(categoryKey, selectedTopics, isAllTopics) {
     const url = new URL(window.location.href);
     if (!categoryKey) {
@@ -252,7 +289,7 @@
       if (isAllTopics) {
         url.searchParams.set("temas", ALL_TOPIC_TOKEN);
       } else {
-        url.searchParams.set("temas", selectedTopics.join("|"));
+        url.searchParams.set("temas", encodeTopicsParam(selectedTopics));
       }
     }
     window.history.replaceState({}, "", url.toString());
@@ -275,8 +312,13 @@
     const filtered = isAll
       ? loadedCategoryQuestions
       : loadedCategoryQuestions.filter(q => topics.includes(q.tema));
+
+    const startBtn = document.getElementById("btn-start-filtered");
+    startBtn.disabled = filtered.length === 0;
+
     document.getElementById("topic-pool-count").textContent =
-      `(${filtered.length} preguntas disponibles · máx. 35)`;
+      `(${filtered.length} preguntas disponibles · máx. ${MAX_QUESTIONS})`;
+
     syncUrlSelection(activeCategoryKey, topics, isAll);
   }
 
@@ -288,7 +330,6 @@
     titleEl.textContent = `Temas — ${activeCategoryTitle}`;
     listEl.innerHTML = "";
 
-    // Extraer temas únicos conservando orden de aparición
     const uniqueTopics = [];
     const seen = new Set();
     questions.forEach(q => {
@@ -298,19 +339,20 @@
       }
     });
 
-    // Determinar selección inicial (de fábrica: TODO marcado)
+    // De fábrica: TODO marcado
     let selectAllByDefault = true;
     let allowedSet = new Set(uniqueTopics);
 
     if (preselectedParam && preselectedParam !== ALL_TOPIC_TOKEN) {
-      const parsed = preselectedParam.split("|").map(s => s.trim()).filter(Boolean);
-      if (parsed.length > 0) {
-        allowedSet = new Set(parsed.filter(t => seen.has(t)));
+      const decoded = decodeTopicsParam(preselectedParam);
+      if (Array.isArray(decoded)) {
+        const validFromUrl = decoded.filter(t => seen.has(t));
+        allowedSet = new Set(validFromUrl);
         selectAllByDefault = uniqueTopics.length > 0 && uniqueTopics.every(t => allowedSet.has(t));
       }
     }
 
-    // Fila TODO
+    // Checkbox TODO
     const allRow = document.createElement("label");
     allRow.className = "topic-item all-item";
     const allCb = document.createElement("input");
@@ -337,8 +379,7 @@
       cb.checked = selectAllByDefault || allowedSet.has(topicName);
 
       cb.addEventListener("change", () => {
-        const allChecked = itemCheckboxes.every(x => x.checked);
-        allCb.checked = allChecked;
+        allCb.checked = itemCheckboxes.length > 0 && itemCheckboxes.every(x => x.checked);
         updatePoolCounter();
       });
 
@@ -367,23 +408,49 @@
       return alert("No hay archivos configurados para esta materia.");
     }
 
+    const requestId = ++currentLoadRequestId;
+
     document.querySelectorAll("#category-buttons .btn").forEach(b => b.classList.remove("active-cat"));
     if (buttonEl) buttonEl.classList.add("active-cat");
 
     activeCategoryKey = categoryKey;
     activeCategoryTitle = categoryTitle;
+
+    // Si ya estaba en caché, abrir al instante sin recargar scripts
+    if (categoryCache.has(categoryKey)) {
+      loadedCategoryQuestions = categoryCache.get(categoryKey);
+      renderTopicDropdown(loadedCategoryQuestions, preselectedTopicsParam);
+      return;
+    }
+
+    // Mostrar estado de carga en el desplegable
+    const dropdown = document.getElementById("topic-dropdown");
+    document.getElementById("topic-dropdown-title").textContent = `Cargando temas de ${categoryTitle}...`;
+    document.getElementById("topic-pool-count").textContent = "";
+    document.getElementById("topic-list").innerHTML = "";
+    document.getElementById("btn-start-filtered").disabled = true;
+    dropdown.classList.remove("hide");
+
     bufferPreguntas = [];
 
     try {
       await Promise.all(files.map(cargarScript));
 
+      // Ignorar si el usuario pulsó otra materia mientras cargaba
+      if (requestId !== currentLoadRequestId) return;
+
       if (bufferPreguntas.length === 0) {
+        dropdown.classList.add("hide");
         return alert("Los archivos cargados no contienen preguntas registradas.");
       }
 
-      loadedCategoryQuestions = [...bufferPreguntas];
+      const cached = [...bufferPreguntas];
+      categoryCache.set(categoryKey, cached);
+      loadedCategoryQuestions = cached;
       renderTopicDropdown(loadedCategoryQuestions, preselectedTopicsParam);
     } catch (err) {
+      if (requestId !== currentLoadRequestId) return;
+      dropdown.classList.add("hide");
       alert("Error al cargar los archivos JavaScript de preguntas. Revisa que las rutas existan y coincidan en mayúsculas/minúsculas.");
       console.error(err);
     }
@@ -422,6 +489,7 @@
     });
 
     document.getElementById("btn-close-topics").onclick = () => {
+      currentLoadRequestId++;
       document.getElementById("topic-dropdown").classList.add("hide");
       document.querySelectorAll("#category-buttons .btn").forEach(b => b.classList.remove("active-cat"));
       activeCategoryKey = null;
@@ -442,7 +510,7 @@
         return alert("No hay preguntas para los temas seleccionados.");
       }
 
-      const labelSuffix = isAll ? "Todos los temas" : topics.join(", ");
+      const labelSuffix = isAll ? "Todos los temas" : `${topics.length} tema(s)`;
       launchExam(`${activeCategoryTitle} · ${labelSuffix}`, poolSource);
     };
 
@@ -458,7 +526,7 @@
   }
 
   function launchExam(categoryTitle, sourceQuestions) {
-    const pool = shuffle(sourceQuestions).slice(0, 35);
+    const pool = shuffle(sourceQuestions).slice(0, MAX_QUESTIONS);
 
     examQuestions = pool.map(q => {
       const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
