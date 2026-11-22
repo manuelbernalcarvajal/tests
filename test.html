@@ -23,7 +23,7 @@
       background-color: var(--bg); 
       color: var(--text); 
       margin: 0; 
-      padding: 24px 16px 60px 16px; /* 60px abajo para que el footer no tape el contenido */
+      padding: 24px 16px 60px 16px;
       display: flex; 
       justify-content: center; 
     }
@@ -33,8 +33,56 @@
     
     .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.15s; font-size: 0.95rem; }
     .btn:hover { opacity: 0.92; }
+    .btn.active-cat { outline: 3px solid var(--accent); outline-offset: 2px; }
     .btn-todo { background: #047857; }
     .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+
+    /* Desplegable / selector de temas */
+    .topic-dropdown {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+    .topic-dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .topic-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .topic-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.94rem;
+    }
+    .topic-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+    .topic-item.all-item {
+      font-weight: 700;
+      border-color: #047857;
+      background: #ecfdf5;
+    }
     
     .option-btn { width: 100%; text-align: left; background: #fff; border: 2px solid var(--border); padding: 14px 16px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: all 0.15s; }
     .option-btn:hover { border-color: var(--accent); background: #f0f7ff; }
@@ -53,7 +101,6 @@
     .badge-fail { background: #fee2e2; color: #991b1b; }
     .hide { display: none; }
 
-    /* Pie de página anclado al fondo */
     footer {
       position: fixed;
       bottom: 0;
@@ -69,7 +116,6 @@
     }
   </style>
 
-  <!-- Carga config.js sin restricciones de CORS ni fetch -->
   <script src="config.js"></script>
 </head>
 <body>
@@ -84,11 +130,26 @@
 </a>
   
 <div class="container">
-  <!-- Pantalla 1: Selección de Materia -->
+  <!-- Pantalla 1: Selección de Materia y Temas -->
   <div id="view-menu" class="card">
     <h1>Simulador de Examen</h1>
     <p>Selecciona una materia o realiza un simulacro global con preguntas aleatorias de todos los archivos.</p>
     <div id="category-buttons" class="btn-group"></div>
+
+    <!-- Desplegable de temas -->
+    <div id="topic-dropdown" class="topic-dropdown hide">
+      <div class="topic-dropdown-header">
+        <div>
+          <strong id="topic-dropdown-title">Temas</strong>
+          <span id="topic-pool-count" style="font-size: 0.85rem; color: var(--neutral); margin-left: 8px;"></span>
+        </div>
+        <button type="button" id="btn-close-topics" class="btn" style="background: var(--neutral); padding: 6px 12px; font-size: 0.82rem;">Cerrar</button>
+      </div>
+      <div id="topic-list" class="topic-list"></div>
+      <div class="btn-group" style="margin-top: 14px;">
+        <button type="button" id="btn-start-filtered" class="btn">Empezar test</button>
+      </div>
+    </div>
   </div>
 
   <!-- Pantalla 2: Examen en Curso -->
@@ -128,26 +189,43 @@
 </div>
 
 <script>
+  const DEFAULT_TOPIC = "General";
+  const ALL_TOPIC_TOKEN = "TODO";
+
   let examQuestions = [];
   let currentIndex = 0;
   let userAnswers = [];
   let bufferPreguntas = [];
 
+  // Estado de la selección actual en el desplegable
+  let activeCategoryKey = null;
+  let activeCategoryTitle = "";
+  let loadedCategoryQuestions = [];
+
   // Receptor global para los archivos de preguntas (.js)
+  // Normaliza "tema" (o "Tema") sin romper preguntas antiguas que no lo incluyan
   window.registrarPreguntas = function(preguntas) {
-    if (Array.isArray(preguntas)) {
-      bufferPreguntas.push(...preguntas);
-    }
+    if (!Array.isArray(preguntas)) return;
+    const normalizadas = preguntas.map(q => {
+      const rawTema = (typeof q.tema === "string" && q.tema.trim())
+        ? q.tema.trim()
+        : (typeof q.Tema === "string" && q.Tema.trim())
+          ? q.Tema.trim()
+          : DEFAULT_TOPIC;
+      return {
+        ...q,
+        tema: rawTema
+      };
+    });
+    bufferPreguntas.push(...normalizadas);
   };
 
-  // Carga un archivo JS inyectando una etiqueta script en el documento
   function cargarScript(ruta) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      // Asegura ruta relativa limpia sin slash inicial
       script.src = ruta.replace(/^\//, '');
       script.onload = () => {
-        script.remove(); // Limpieza del DOM tras ejecutar
+        script.remove();
         resolve();
       };
       script.onerror = () => reject(new Error(`No se pudo cargar el script: ${ruta}`));
@@ -164,7 +242,153 @@
     return a;
   }
 
-  // Inicialización de botones leyendo window.CONFIG_TESTS
+  function syncUrlSelection(categoryKey, selectedTopics, isAllTopics) {
+    const url = new URL(window.location.href);
+    if (!categoryKey) {
+      url.searchParams.delete("materia");
+      url.searchParams.delete("temas");
+    } else {
+      url.searchParams.set("materia", categoryKey);
+      if (isAllTopics) {
+        url.searchParams.set("temas", ALL_TOPIC_TOKEN);
+      } else {
+        url.searchParams.set("temas", selectedTopics.join("|"));
+      }
+    }
+    window.history.replaceState({}, "", url.toString());
+  }
+
+  function getSelectedTopicsFromUI() {
+    const allCheckbox = document.getElementById("topic-check-all");
+    const itemBoxes = Array.from(document.querySelectorAll(".topic-item-checkbox"));
+    if (allCheckbox && allCheckbox.checked) {
+      return { isAll: true, topics: itemBoxes.map(cb => cb.value) };
+    }
+    return {
+      isAll: false,
+      topics: itemBoxes.filter(cb => cb.checked).map(cb => cb.value)
+    };
+  }
+
+  function updatePoolCounter() {
+    const { isAll, topics } = getSelectedTopicsFromUI();
+    const filtered = isAll
+      ? loadedCategoryQuestions
+      : loadedCategoryQuestions.filter(q => topics.includes(q.tema));
+    document.getElementById("topic-pool-count").textContent =
+      `(${filtered.length} preguntas disponibles · máx. 35)`;
+    syncUrlSelection(activeCategoryKey, topics, isAll);
+  }
+
+  function renderTopicDropdown(questions, preselectedParam = null) {
+    const dropdown = document.getElementById("topic-dropdown");
+    const titleEl = document.getElementById("topic-dropdown-title");
+    const listEl = document.getElementById("topic-list");
+
+    titleEl.textContent = `Temas — ${activeCategoryTitle}`;
+    listEl.innerHTML = "";
+
+    // Extraer temas únicos conservando orden de aparición
+    const uniqueTopics = [];
+    const seen = new Set();
+    questions.forEach(q => {
+      if (!seen.has(q.tema)) {
+        seen.add(q.tema);
+        uniqueTopics.push(q.tema);
+      }
+    });
+
+    // Determinar selección inicial (de fábrica: TODO marcado)
+    let selectAllByDefault = true;
+    let allowedSet = new Set(uniqueTopics);
+
+    if (preselectedParam && preselectedParam !== ALL_TOPIC_TOKEN) {
+      const parsed = preselectedParam.split("|").map(s => s.trim()).filter(Boolean);
+      if (parsed.length > 0) {
+        allowedSet = new Set(parsed.filter(t => seen.has(t)));
+        selectAllByDefault = uniqueTopics.length > 0 && uniqueTopics.every(t => allowedSet.has(t));
+      }
+    }
+
+    // Fila TODO
+    const allRow = document.createElement("label");
+    allRow.className = "topic-item all-item";
+    const allCb = document.createElement("input");
+    allCb.type = "checkbox";
+    allCb.id = "topic-check-all";
+    allCb.checked = selectAllByDefault;
+    const allSpan = document.createElement("span");
+    allSpan.textContent = `TODO (${questions.length})`;
+    allRow.appendChild(allCb);
+    allRow.appendChild(allSpan);
+    listEl.appendChild(allRow);
+
+    const itemCheckboxes = [];
+
+    uniqueTopics.forEach(topicName => {
+      const count = questions.filter(q => q.tema === topicName).length;
+      const row = document.createElement("label");
+      row.className = "topic-item";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "topic-item-checkbox";
+      cb.value = topicName;
+      cb.checked = selectAllByDefault || allowedSet.has(topicName);
+
+      cb.addEventListener("change", () => {
+        const allChecked = itemCheckboxes.every(x => x.checked);
+        allCb.checked = allChecked;
+        updatePoolCounter();
+      });
+
+      const span = document.createElement("span");
+      span.textContent = `${topicName} (${count})`;
+
+      row.appendChild(cb);
+      row.appendChild(span);
+      listEl.appendChild(row);
+      itemCheckboxes.push(cb);
+    });
+
+    allCb.addEventListener("change", () => {
+      itemCheckboxes.forEach(cb => {
+        cb.checked = allCb.checked;
+      });
+      updatePoolCounter();
+    });
+
+    dropdown.classList.remove("hide");
+    updatePoolCounter();
+  }
+
+  async function openTopicSelector(categoryKey, categoryTitle, files, preselectedTopicsParam = null, buttonEl = null) {
+    if (!files || files.length === 0) {
+      return alert("No hay archivos configurados para esta materia.");
+    }
+
+    document.querySelectorAll("#category-buttons .btn").forEach(b => b.classList.remove("active-cat"));
+    if (buttonEl) buttonEl.classList.add("active-cat");
+
+    activeCategoryKey = categoryKey;
+    activeCategoryTitle = categoryTitle;
+    bufferPreguntas = [];
+
+    try {
+      await Promise.all(files.map(cargarScript));
+
+      if (bufferPreguntas.length === 0) {
+        return alert("Los archivos cargados no contienen preguntas registradas.");
+      }
+
+      loadedCategoryQuestions = [...bufferPreguntas];
+      renderTopicDropdown(loadedCategoryQuestions, preselectedTopicsParam);
+    } catch (err) {
+      alert("Error al cargar los archivos JavaScript de preguntas. Revisa que las rutas existan y coincidan en mayúsculas/minúsculas.");
+      console.error(err);
+    }
+  }
+
   function init() {
     const config = window.CONFIG_TESTS;
     if (!config || typeof config !== 'object') {
@@ -176,65 +400,86 @@
     container.innerHTML = '';
 
     const categories = Object.keys(config);
+    const buttonMap = new Map();
 
     // Botón "Todo"
     const btnAll = document.createElement('button');
     btnAll.className = 'btn btn-todo';
     btnAll.textContent = '📚 Todo (Simulacro Global)';
     const allFiles = Object.values(config).flat();
-    btnAll.onclick = () => startExam('Simulacro Global (Todo)', allFiles);
+    btnAll.onclick = () => openTopicSelector("__ALL__", "Simulacro Global (Todo)", allFiles, ALL_TOPIC_TOKEN, btnAll);
     container.appendChild(btnAll);
+    buttonMap.set("__ALL__", { title: "Simulacro Global (Todo)", files: allFiles, el: btnAll });
 
     // Botones individuales por asignatura
     categories.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.textContent = cat;
-      btn.onclick = () => startExam(cat, config[cat]);
+      btn.onclick = () => openTopicSelector(cat, cat, config[cat], ALL_TOPIC_TOKEN, btn);
       container.appendChild(btn);
+      buttonMap.set(cat, { title: cat, files: config[cat], el: btn });
     });
-  }
 
-  // Descarga dinámica de scripts y preparación del test
-  async function startExam(categoryTitle, files) {
-    if (!files || files.length === 0) return alert("No hay archivos configurados para este tema.");
+    document.getElementById("btn-close-topics").onclick = () => {
+      document.getElementById("topic-dropdown").classList.add("hide");
+      document.querySelectorAll("#category-buttons .btn").forEach(b => b.classList.remove("active-cat"));
+      activeCategoryKey = null;
+      syncUrlSelection(null, [], false);
+    };
 
-    bufferPreguntas = [];
-
-    try {
-      // Carga todos los .js en paralelo
-      await Promise.all(files.map(cargarScript));
-
-      if (bufferPreguntas.length === 0) {
-        return alert("Los archivos cargados no contienen preguntas registradas.");
+    document.getElementById("btn-start-filtered").onclick = () => {
+      const { isAll, topics } = getSelectedTopicsFromUI();
+      if (!isAll && topics.length === 0) {
+        return alert("Selecciona al menos un tema o marca TODO.");
       }
 
-      // Barajar y tomar un máximo de 35 preguntas
-      const pool = shuffle(bufferPreguntas).slice(0, 35);
+      const poolSource = isAll
+        ? loadedCategoryQuestions
+        : loadedCategoryQuestions.filter(q => topics.includes(q.tema));
 
-      examQuestions = pool.map(q => {
-        const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
-          text,
-          isCorrect: idx === q.correcta
-        })));
-        return {
-          pregunta: q.pregunta,
-          explicacion: q.explicacion,
-          opciones: shuffledOpts
-        };
-      });
+      if (poolSource.length === 0) {
+        return alert("No hay preguntas para los temas seleccionados.");
+      }
 
-      userAnswers = new Array(examQuestions.length).fill(null);
-      currentIndex = 0;
+      const labelSuffix = isAll ? "Todos los temas" : topics.join(", ");
+      launchExam(`${activeCategoryTitle} · ${labelSuffix}`, poolSource);
+    };
 
-      document.getElementById('view-menu').classList.add('hide');
-      document.getElementById('view-test').classList.remove('hide');
-      document.getElementById('label-category').textContent = categoryTitle;
-      renderQuestion();
-    } catch (err) {
-      alert("Error al cargar los archivos JavaScript de preguntas. Revisa que las rutas existan y coincidan en mayúsculas/minúsculas.");
-      console.error(err);
+    // Restaurar selección desde URL si existe
+    const params = new URLSearchParams(window.location.search);
+    const materiaParam = params.get("materia");
+    const temasParam = params.get("temas");
+
+    if (materiaParam && buttonMap.has(materiaParam)) {
+      const entry = buttonMap.get(materiaParam);
+      openTopicSelector(materiaParam, entry.title, entry.files, temasParam, entry.el);
     }
+  }
+
+  function launchExam(categoryTitle, sourceQuestions) {
+    const pool = shuffle(sourceQuestions).slice(0, 35);
+
+    examQuestions = pool.map(q => {
+      const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
+        text,
+        isCorrect: idx === q.correcta
+      })));
+      return {
+        pregunta: q.pregunta,
+        tema: q.tema || DEFAULT_TOPIC,
+        explicacion: q.explicacion,
+        opciones: shuffledOpts
+      };
+    });
+
+    userAnswers = new Array(examQuestions.length).fill(null);
+    currentIndex = 0;
+
+    document.getElementById('view-menu').classList.add('hide');
+    document.getElementById('view-test').classList.remove('hide');
+    document.getElementById('label-category').textContent = categoryTitle;
+    renderQuestion();
   }
 
   function renderQuestion() {
@@ -253,7 +498,6 @@
       btn.className = `option-btn ${userAnswers[currentIndex] === idx ? 'selected' : ''}`;
       btn.textContent = opt.text;
 
-      // Clic para marcar o desmarcar
       btn.onclick = () => {
         userAnswers[currentIndex] = (userAnswers[currentIndex] === idx) ? null : idx;
         renderQuestion();
@@ -279,7 +523,6 @@
     }
   };
 
-  // Corrección oficial Abogacía: +1 acierto, -0.333 fallo, 0 blanco
   function finishExam() {
     document.getElementById('view-test').classList.add('hide');
     document.getElementById('view-results').classList.remove('hide');
@@ -315,7 +558,7 @@
       const item = document.createElement('div');
       item.className = `review-item ${estado === 'ok' ? 'ok' : (estado === 'blank' ? 'blank' : '')}`;
       item.innerHTML = `
-        <p><strong>${idx + 1}. ${q.pregunta}</strong></p>
+        <p><strong>${idx + 1}. ${q.pregunta}</strong> <span style="font-size: 0.8rem; color: var(--neutral);">[${q.tema}]</span></p>
         <p>Tu respuesta: <strong>${respuestaTexto}</strong> 
           <span style="font-size: 0.85rem; margin-left: 8px;">
             ${estado === 'ok' ? '✅ (+1.00)' : (estado === 'fail' ? '❌ (-0.33)' : '⚪ (0.00)')}
@@ -356,5 +599,6 @@
 <footer>
   © 2026 Manuel Bernal Carvajal. Todos los derechos reservados. Prohibida su reutilización con fines de lucro sin autorización previa.
 </footer>
-  <script src="mobile.js" defer></script>
+<script src="mobile.js" defer></script>
+</body>
 </html>
