@@ -85,6 +85,26 @@
       border-color: #047857;
       background: #ecfdf5;
     }
+    .count-picker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      font-size: 0.92rem;
+    }
+    .count-picker input[type="number"] {
+      width: 82px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--card);
+    }
     
     .option-btn { width: 100%; text-align: left; background: #fff; border: 2px solid var(--border); padding: 14px 16px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: all 0.15s; }
     .option-btn:hover { border-color: var(--accent); background: #f0f7ff; }
@@ -148,6 +168,13 @@
         <button type="button" id="btn-close-topics" class="btn" style="background: var(--neutral); padding: 6px 12px; font-size: 0.82rem;">Cerrar</button>
       </div>
       <div id="topic-list" class="topic-list"></div>
+
+      <div class="count-picker">
+        <label for="input-question-count"><strong>Número de preguntas:</strong></label>
+        <input type="number" id="input-question-count" min="10" max="50" step="1" value="35">
+        <span style="font-size: 0.82rem; color: var(--neutral);">(Mín. 10 · Máx. 50 · Predeterminado 35)</span>
+      </div>
+
       <div class="btn-group" style="margin-top: 14px;">
         <button type="button" id="btn-start-filtered" class="btn">Empezar test</button>
       </div>
@@ -193,7 +220,9 @@
 <script>
   const DEFAULT_TOPIC = "General";
   const ALL_TOPIC_TOKEN = "TODO";
-  const MAX_QUESTIONS = 35;
+  const MIN_QUESTIONS = 10;
+  const MAX_QUESTIONS = 50;
+  const DEFAULT_QUESTIONS = 35;
 
   let examQuestions = [];
   let currentIndex = 0;
@@ -206,6 +235,18 @@
   let loadedCategoryQuestions = [];
   let currentLoadRequestId = 0;
   const categoryCache = new Map();
+
+  function clampQuestionCount(rawValue) {
+    const num = parseInt(rawValue, 10);
+    if (Number.isNaN(num)) return DEFAULT_QUESTIONS;
+    return Math.min(MAX_QUESTIONS, Math.max(MIN_QUESTIONS, num));
+  }
+
+  function getQuestionCountFromUI() {
+    const input = document.getElementById("input-question-count");
+    if (!input) return DEFAULT_QUESTIONS;
+    return clampQuestionCount(input.value);
+  }
 
   // Receptor global compatible con archivos antiguos (sin tema) y nuevos (con tema/Tema)
   window.registrarPreguntas = function(preguntas) {
@@ -251,7 +292,6 @@
     return a;
   }
 
-  // Codificación segura UTF-8 -> Base64URL para que cualquier carácter en el nombre del tema sobreviva en la URL
   function encodeTopicsParam(topicsArray) {
     try {
       const json = JSON.stringify(topicsArray);
@@ -279,11 +319,12 @@
     }
   }
 
-  function syncUrlSelection(categoryKey, selectedTopics, isAllTopics) {
+  function syncUrlSelection(categoryKey, selectedTopics, isAllTopics, questionCount) {
     const url = new URL(window.location.href);
     if (!categoryKey) {
       url.searchParams.delete("materia");
       url.searchParams.delete("temas");
+      url.searchParams.delete("n");
     } else {
       url.searchParams.set("materia", categoryKey);
       if (isAllTopics) {
@@ -291,6 +332,7 @@
       } else {
         url.searchParams.set("temas", encodeTopicsParam(selectedTopics));
       }
+      url.searchParams.set("n", String(clampQuestionCount(questionCount)));
     }
     window.history.replaceState({}, "", url.toString());
   }
@@ -316,10 +358,11 @@
     const startBtn = document.getElementById("btn-start-filtered");
     startBtn.disabled = filtered.length === 0;
 
+    const chosenCount = getQuestionCountFromUI();
     document.getElementById("topic-pool-count").textContent =
-      `(${filtered.length} preguntas disponibles · máx. ${MAX_QUESTIONS})`;
+      `(${filtered.length} disponibles · se tomarán hasta ${Math.min(chosenCount, filtered.length)})`;
 
-    syncUrlSelection(activeCategoryKey, topics, isAll);
+    syncUrlSelection(activeCategoryKey, topics, isAll, chosenCount);
   }
 
   function renderTopicDropdown(questions, preselectedParam = null) {
@@ -339,7 +382,6 @@
       }
     });
 
-    // De fábrica: TODO marcado
     let selectAllByDefault = true;
     let allowedSet = new Set(uniqueTopics);
 
@@ -352,7 +394,6 @@
       }
     }
 
-    // Checkbox TODO
     const allRow = document.createElement("label");
     allRow.className = "topic-item all-item";
     const allCb = document.createElement("input");
@@ -416,14 +457,12 @@
     activeCategoryKey = categoryKey;
     activeCategoryTitle = categoryTitle;
 
-    // Si ya estaba en caché, abrir al instante sin recargar scripts
     if (categoryCache.has(categoryKey)) {
       loadedCategoryQuestions = categoryCache.get(categoryKey);
       renderTopicDropdown(loadedCategoryQuestions, preselectedTopicsParam);
       return;
     }
 
-    // Mostrar estado de carga en el desplegable
     const dropdown = document.getElementById("topic-dropdown");
     document.getElementById("topic-dropdown-title").textContent = `Cargando temas de ${categoryTitle}...`;
     document.getElementById("topic-pool-count").textContent = "";
@@ -436,7 +475,6 @@
     try {
       await Promise.all(files.map(cargarScript));
 
-      // Ignorar si el usuario pulsó otra materia mientras cargaba
       if (requestId !== currentLoadRequestId) return;
 
       if (bufferPreguntas.length === 0) {
@@ -463,13 +501,30 @@
       return;
     }
 
+    const countInput = document.getElementById("input-question-count");
+    const params = new URLSearchParams(window.location.search);
+    const nParam = params.get("n");
+    if (nParam !== null) {
+      countInput.value = String(clampQuestionCount(nParam));
+    } else {
+      countInput.value = String(DEFAULT_QUESTIONS);
+    }
+
+    countInput.addEventListener("input", () => {
+      updatePoolCounter();
+    });
+
+    countInput.addEventListener("change", () => {
+      countInput.value = String(clampQuestionCount(countInput.value));
+      updatePoolCounter();
+    });
+
     const container = document.getElementById('category-buttons');
     container.innerHTML = '';
 
     const categories = Object.keys(config);
     const buttonMap = new Map();
 
-    // Botón "Todo"
     const btnAll = document.createElement('button');
     btnAll.className = 'btn btn-todo';
     btnAll.textContent = '📚 Todo (Simulacro Global)';
@@ -478,7 +533,6 @@
     container.appendChild(btnAll);
     buttonMap.set("__ALL__", { title: "Simulacro Global (Todo)", files: allFiles, el: btnAll });
 
-    // Botones individuales por asignatura
     categories.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'btn';
@@ -493,7 +547,7 @@
       document.getElementById("topic-dropdown").classList.add("hide");
       document.querySelectorAll("#category-buttons .btn").forEach(b => b.classList.remove("active-cat"));
       activeCategoryKey = null;
-      syncUrlSelection(null, [], false);
+      syncUrlSelection(null, [], false, DEFAULT_QUESTIONS);
     };
 
     document.getElementById("btn-start-filtered").onclick = () => {
@@ -510,12 +564,14 @@
         return alert("No hay preguntas para los temas seleccionados.");
       }
 
+      const clampedCount = clampQuestionCount(countInput.value);
+      countInput.value = String(clampedCount);
+      syncUrlSelection(activeCategoryKey, topics, isAll, clampedCount);
+
       const labelSuffix = isAll ? "Todos los temas" : `${topics.length} tema(s)`;
-      launchExam(`${activeCategoryTitle} · ${labelSuffix}`, poolSource);
+      launchExam(`${activeCategoryTitle} · ${labelSuffix}`, poolSource, clampedCount);
     };
 
-    // Restaurar selección desde URL si existe
-    const params = new URLSearchParams(window.location.search);
     const materiaParam = params.get("materia");
     const temasParam = params.get("temas");
 
@@ -525,8 +581,9 @@
     }
   }
 
-  function launchExam(categoryTitle, sourceQuestions) {
-    const pool = shuffle(sourceQuestions).slice(0, MAX_QUESTIONS);
+  function launchExam(categoryTitle, sourceQuestions, numQuestions = DEFAULT_QUESTIONS) {
+    const limit = clampQuestionCount(numQuestions);
+    const pool = shuffle(sourceQuestions).slice(0, limit);
 
     examQuestions = pool.map(q => {
       const shuffledOpts = shuffle(q.opciones.map((text, idx) => ({
