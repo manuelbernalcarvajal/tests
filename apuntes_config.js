@@ -42,7 +42,7 @@ const APUNTES_CONFIG = [
       { id: "019", titulo: "T19: Resoluciones procesales: tipología", archivo: "apuntes/procesalcivil1/019.md" },
       { id: "020", titulo: "T20: Medios de impugnación", archivo: "apuntes/procesalcivil1/020.md" },
       { id: "023", titulo: "T23: Los actos procesales. Actos de comunicación", archivo: "apuntes/procesalcivil1/023.md" },
-      { id: "024", titulo: "T24: La intervención del procurador en el proceso declarativo y de ejecución", archivo: "apuntes/procesalcivil1/024.md" }
+      { id: "024", titulo: "T24: La intervención del procurador en el proceso declarativo y de ejecución", archivo: "apuntes/procesalcivil1/024.md" },
       { id: "025", titulo: "T24.1: La intervención del procurador (anexo)", archivo: "apuntes/procesalcivil1/025.md" }
     ]
   },
