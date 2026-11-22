@@ -9,6 +9,7 @@ registrarPreguntas([
     ],
     "correcta": 1,
     "explicacion": "dss."
+    "tema": "T1"
   },
   {
     "pregunta": "Pregunta",
@@ -20,5 +21,6 @@ registrarPreguntas([
     ],
     "correcta": 1,
     "explicacion": "dss."
+    "tema": "T1"
   },
 ]);
