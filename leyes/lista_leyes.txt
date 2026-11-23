@@ -1,3 +1,10 @@
 # Formato: Nombre de la Ley | URL consolidada de boe.es
 Código Penal | https://www.boe.es/eli/es/lo/1995/11/23/10/con
 Ley de Enjuiciamiento Penal | https://www.boe.es/eli/es/rd/1882/09/14/(1)/con
+Ley de Enjuiciamiento Civil | https://www.boe.es/eli/es/l/2000/01/07/1/con
+Código Civil | https://www.boe.es/eli/es/rd/1889/07/24/(1)/con
+Ley Orgánica del Poder Judicial | https://www.boe.es/eli/es/lo/1985/07/01/6/con
+Ley Orgánica 5/2000 LORPM | https://www.boe.es/eli/es/lo/2000/01/12/5/con
+Ley Orgánica 5/1995 LOTJ | https://www.boe.es/eli/es/lo/1995/05/22/5/con
+Ley 15/2015 LJV | https://www.boe.es/eli/es/l/2015/07/02/15/con
+Ley 20/2011 del Registro Civil | https://www.boe.es/eli/es/l/2011/07/21/20/con
