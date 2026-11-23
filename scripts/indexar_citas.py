@@ -10,13 +10,21 @@ ABREVIATURAS_FILE = LEYES_DIR / "abreviaturas_leyes.json"
 CITAS_JS_FILE = LEYES_DIR / "citas_apuntes.js"
 
 SUFIJOS_LATINOS = r"(?:bis|ter|quater|quinquies|sexies|septies|octies|novies|decies|[a-z])"
+TOKEN_ART = rf"\d+(?:\s+{SUFIJOS_LATINOS})?(?:[\.,]\d+[ªºa-z]?)?"
 
+# Cubre:
+# - "art. 147", "Arts. 3 y 4", "artículo 588 bis a.4"
+# - "art del 10 al 15", "arts. de 10 a 15", "artículos 10-15"
+# - "art 10 y ss", "art. 10 y ss.", "arts. 10 y siguientes"
 PATRON_BLOQUE_CITA = re.compile(
-    rf"\b(?:art[íi]culos?|arts?\.?)\s+"
+    rf"(?<![A-Za-zÁÉÍÓÚÑáéíóúñ])"
+    rf"(?:art[íi]culos?|arts?\.?)\s+"
+    rf"(?:del?\s+)?"
     rf"("
-    rf"\d+(?:\s+{SUFIJOS_LATINOS})?(?:[\.,]\d+[ªºa-z]?)?"
-    rf"(?:\s*(?:,|y|e|a|al|-|–)\s*\d+(?:\s+{SUFIJOS_LATINOS})?(?:[\.,]\d+[ªºa-z]?)?)*"
-    rf")",
+    rf"{TOKEN_ART}"
+    rf"(?:\s*(?:,|y|e|a|al|del?|-\s*|–\s*)\s*{TOKEN_ART})*"
+    rf")"
+    rf"(?:\s*,?\s*(?:y\s+(?:ss\.?|siguientes?|sgtes\.?)|ss\.?))?",
     re.IGNORECASE,
 )
 
@@ -32,10 +40,6 @@ def normalizar_sin_tildes(texto: str) -> str:
 
 
 def construir_patrones_alias(alias_map: dict[str, list[str]]) -> list[tuple[re.Pattern, list[str]]]:
-    """
-    Compila patrones flexibles (insensibles a mayúsculas y tildes) por cada término
-    y agrupa los slugs de ley que comparten el mismo término.
-    """
     termino_a_slugs: dict[str, list[str]] = {}
     for ley_slug, terminos in alias_map.items():
         for term in terminos:
@@ -47,13 +51,11 @@ def construir_patrones_alias(alias_map: dict[str, list[str]]) -> list[tuple[re.P
                 termino_a_slugs[t_limpio].append(ley_slug)
 
     patrones: list[tuple[re.Pattern, list[str]]] = []
-    # Ordenar de más largo a más corto para que 'Código Penal' case antes que 'CP'
     for term, slugs in sorted(termino_a_slugs.items(), key=lambda x: len(x[0]), reverse=True):
         partes = re.split(r"\s+", normalizar_sin_tildes(term))
-        # Permitir puntos opcionales en siglas como C.P. -> C\.?P\.?
         partes_regex = []
         for p in partes:
-            if len(p) <= 4 and p.isalpha():
+            if len(p) <= 6 and p.isalpha():
                 partes_regex.append("".join(f"{re.escape(ch)}\\.?" for ch in p))
             else:
                 partes_regex.append(re.escape(p))
@@ -96,34 +98,55 @@ def cargar_indices_leyes() -> dict[str, set[str]]:
 
 
 def normalizar_token_articulo(token: str) -> str | None:
-    m = re.match(rf"^\s*(\d+(?:\s+{SUFIJOS_LATINOS})?)", token.strip(), re.IGNORECASE)
+    m = re.match(rf"^\s*({TOKEN_ART})", token.strip(), re.IGNORECASE)
     if not m:
         return None
-    base = slugify(m.group(1))
+    # Quitar apartados decimales tipo ".1" o ",2" para quedarnos con el slug del artículo base
+    raiz = re.sub(r"[\.,]\d+[ªºa-z]?$", "", m.group(1).strip(), flags=re.IGNORECASE)
+    base = slugify(raiz)
     return f"art-{base}" if base else None
 
 
-def expandir_expresion_articulos(expr: str) -> list[str]:
+def expandir_expresion_articulos(expr: str, llevar_solo_al_primero: bool = True) -> tuple[list[str], str]:
+    """
+    Devuelve (lista_slugs, tipo_cita).
+    Si es rango ("10 al 15" o "10 a 15") y llevar_solo_al_primero=True, enlaza al primero
+    (y si se prefiere expandir, puede activar llevar_solo_al_primero=False).
+    """
     resultados: list[str] = []
+    tipo = "directa"
+
+    # Detectar rangos tipo "10 al 15", "10 a 15", "10-15"
+    m_rango_completo = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", expr.strip(), re.IGNORECASE)
+    if m_rango_completo:
+        tipo = "rango_al_primero"
+        inicio = int(m_rango_completo.group(1))
+        fin = int(m_rango_completo.group(2))
+        if llevar_solo_al_primero:
+            return [f"art-{inicio}"], tipo
+        if inicio <= fin and (fin - inicio) <= 30:
+            return [f"art-{n}" for n in range(inicio, fin + 1)], "rango_expandido"
+
     partes = re.split(r"\s*(?:,|\by\b|\be\b)\s*", expr.strip(), flags=re.IGNORECASE)
-
     for parte in partes:
-        if not parte:
+        parte_limpia = parte.strip()
+        if not parte_limpia or parte_limpia.lower() in {"del", "de", "al", "a"}:
             continue
-        m_rango = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", parte.strip(), re.IGNORECASE)
-        if m_rango:
-            inicio = int(m_rango.group(1))
-            fin = int(m_rango.group(2))
-            if inicio <= fin and (fin - inicio) <= 30:
-                for n in range(inicio, fin + 1):
-                    resultados.append(f"art-{n}")
-                continue
 
-        slug = normalizar_token_articulo(parte)
+        m_rango_sub = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", parte_limpia, re.IGNORECASE)
+        if m_rango_sub:
+            tipo = "rango_al_primero"
+            inicio = int(m_rango_sub.group(1))
+            resultados.append(f"art-{inicio}")
+            continue
+
+        slug = normalizar_token_articulo(parte_limpia)
         if slug:
             resultados.append(slug)
 
-    return resultados
+    # Deduplicar conservando orden
+    unicos = list(dict.fromkeys(resultados))
+    return unicos, tipo
 
 
 def detectar_leyes_en_contexto(
@@ -134,23 +157,27 @@ def detectar_leyes_en_contexto(
     patrones_alias: list[tuple[re.Pattern, list[str]]],
     asig_defecto: dict[str, list[str]],
     leyes_disponibles: set[str],
-) -> list[str]:
-    despues = texto_norm[end : min(len(texto_norm), end + 50)]
+) -> tuple[list[str], bool]:
+    """
+    Devuelve (leyes_candidatas, es_por_defecto_o_en_medios).
+    """
+    despues = texto_norm[end : min(len(texto_norm), end + 55)]
     for patron, candidatos in patrones_alias:
         if patron.search(despues):
             validos = [c for c in candidatos if c in leyes_disponibles]
             if validos:
-                return validos
+                return validos, False
 
-    antes = texto_norm[max(0, start - 50) : start]
+    antes = texto_norm[max(0, start - 55) : start]
     for patron, candidatos in patrones_alias:
         if patron.search(antes):
             validos = [c for c in candidatos if c in leyes_disponibles]
             if validos:
-                return validos
+                return validos, False
 
     por_defecto = asig_defecto.get(carpeta_asig, [])
-    return [c for c in por_defecto if c in leyes_disponibles]
+    validos_def = [c for c in por_defecto if c in leyes_disponibles]
+    return validos_def, True
 
 
 def main() -> None:
@@ -162,8 +189,13 @@ def main() -> None:
 
     patrones_alias, asig_defecto = cargar_config_abreviaturas()
     citas: dict[str, set[str]] = {}
-    total_menciones = 0
-    sin_match_articulo = 0
+    stats = {
+        "total": 0,
+        "enlazadas": 0,
+        "rango_o_ss": 0,
+        "en_medios_o_defecto": 0,
+        "sin_match": 0,
+    }
 
     for md_file in sorted(APUNTES_DIR.rglob("*.md")):
         clave_apunte = md_file.relative_to(APUNTES_DIR).as_posix()
@@ -176,11 +208,12 @@ def main() -> None:
 
         for m in PATRON_BLOQUE_CITA.finditer(texto):
             expr = m.group(1)
-            art_slugs = expandir_expresion_articulos(expr)
+            es_y_ss = bool(re.search(r"\by\s+(?:ss\.?|siguientes?|sgtes\.?)\b", m.group(0), re.IGNORECASE))
+            art_slugs, tipo_cita = expandir_expresion_articulos(expr, llevar_solo_al_primero=True)
             if not art_slugs:
                 continue
 
-            leyes_destino = detectar_leyes_en_contexto(
+            leyes_destino, es_defecto = detectar_leyes_en_contexto(
                 texto_norm,
                 m.start(),
                 m.end(),
@@ -190,17 +223,25 @@ def main() -> None:
                 leyes_disponibles,
             )
             if not leyes_destino:
+                stats["en_medios_o_defecto"] += 1
                 continue
 
             for art_slug in art_slugs:
-                total_menciones += 1
+                stats["total"] += 1
+                if es_defecto:
+                    stats["en_medios_o_defecto"] += 1
+                if es_y_ss or tipo_cita == "rango_al_primero":
+                    stats["rango_o_ss"] += 1
+
                 encontrado = False
                 for ley_slug in leyes_destino:
                     if art_slug in indices_leyes[ley_slug]:
                         citas.setdefault(f"{ley_slug}/{art_slug}", set()).add(clave_apunte)
                         encontrado = True
-                if not encontrado:
-                    sin_match_articulo += 1
+                if encontrado:
+                    stats["enlazadas"] += 1
+                else:
+                    stats["sin_match"] += 1
 
     resultado_final = {k: sorted(v) for k, v in sorted(citas.items())}
 
@@ -211,7 +252,8 @@ def main() -> None:
     )
 
     print(f"Indexación completada: {len(resultado_final)} artículos únicos enlazados.")
-    print(f"Menciones procesadas: {total_menciones} (sin artículo en índice: {sin_match_articulo}).")
+    print(f"Menciones procesadas: {stats['total']} | Enlazadas: {stats['enlazadas']} | Sin match en ley: {stats['sin_match']}")
+    print(f"Rangos / 'y ss.' (al 1.º): {stats['rango_o_ss']} | Por defecto/contexto ('en medios'): {stats['en_medios_o_defecto']}")
 
 
 if __name__ == "__main__":
