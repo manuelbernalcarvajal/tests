@@ -4,7 +4,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 APUNTES_DIR = BASE_DIR / "apuntes"
-OUTPUT_FILE = BASE_DIR / "apuntes_fechas.json"
+OUTPUT_FILE = BASE_DIR / "apuntes_fechas.js"
 
 
 def obtener_fecha_git(ruta_relativa: str) -> str | None:
@@ -27,18 +27,21 @@ def main() -> None:
         raise FileNotFoundError(f"No se encuentra el directorio: {APUNTES_DIR}")
 
     for archivo in sorted(APUNTES_DIR.rglob("*.md")):
-        # Ruta relativa a la raíz del repo para git log (ej: "apuntes/civil/001.md")
         ruta_repo = archivo.relative_to(BASE_DIR).as_posix()
-        # Clave relativa a apuntes/ para que sea cómoda en el frontend (ej: "civil/001.md")
         clave = archivo.relative_to(APUNTES_DIR).as_posix()
 
         fecha = obtener_fecha_git(ruta_repo)
         if fecha:
             fechas[clave] = fecha
 
+    contenido_json = json.dumps(fechas, ensure_ascii=False, indent=2)
+    contenido_js = (
+        "// Archivo generado automáticamente por GitHub Actions. No editar a mano.\n"
+        f"window.FECHAS_APUNTES = {contenido_json};\n"
+    )
+
     with OUTPUT_FILE.open("w", encoding="utf-8") as f:
-        json.dump(fechas, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+        f.write(contenido_js)
 
     print(f"Generado {OUTPUT_FILE.name} con {len(fechas)} archivos.")
 
