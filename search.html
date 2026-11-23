@@ -84,12 +84,40 @@
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      justify-content: space-between;
+    }
+    .search-tips-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
     .search-tips code {
       background: #e9ecef;
       padding: 2px 5px;
       border-radius: 3px;
       color: #333;
+    }
+
+    .scope-switch {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .scope-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 3px 9px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .scope-btn.active {
+      background: var(--accent);
+      color: #fff;
     }
 
     .status-bar {
@@ -125,6 +153,9 @@
     .result-card:hover {
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
+    .result-card.law-card {
+      border-left-color: #1e3a8a;
+    }
 
     .result-header {
       display: flex;
@@ -140,6 +171,10 @@
       color: var(--badge-text);
       padding: 3px 8px;
       border-radius: 4px;
+    }
+    .result-card.law-card .result-asig {
+      background: #e0e7ff;
+      color: #1e3a8a;
     }
     .result-title {
       font-size: 17px;
@@ -251,11 +286,12 @@
   </style>
 </head>
 <body>
-  
+
   <div class="container">
     <nav class="top-nav">
       <a href="index.html">🔙 Volver al menu general</a>
       <a href="apuntes.html">📖 Visor de Apuntes</a>
+      <a href="leyes.html">📜 Leyes del BOE</a>
       <a href="AI.html">⚖️ Asistente IA (RAG)</a>
     </nav>
 
@@ -265,10 +301,17 @@
         <input type="search" id="search-input" placeholder="Buscar requisitos, plazos, artículos (ej. plazos hipoteca, 1258, prescripción)..." disabled autocomplete="off">
       </div>
       <div class="search-tips">
-        <span><code>"frase exacta"</code></span>
-        <span><code>-excluir</code></span>
-        <span><code>asig:civil</code></span>
-        <span>· Ranking BM25 por epígrafes</span>
+        <div class="search-tips-left">
+          <span><code>"frase exacta"</code></span>
+          <span><code>-excluir</code></span>
+          <span><code>asig:civil</code></span>
+          <span>· Ranking BM25 por epígrafes</span>
+        </div>
+        <div class="scope-switch" role="group" aria-label="Ámbito de resultados">
+          <button type="button" class="scope-btn active" data-scope="all">Todo</button>
+          <button type="button" class="scope-btn" data-scope="notes">Solo Apuntes</button>
+          <button type="button" class="scope-btn" data-scope="laws">Solo ley</button>
+        </div>
       </div>
       <div class="status-bar">
         <span id="index-status">Indexando documentos...</span>
@@ -284,11 +327,14 @@
   </footer>
 
   <script src="apuntes_config.js"></script>
+  <script src="leyes/leyes_config.js"></script>
+  <script src="leyes/citas_apuntes.js"></script>
   <script>
     const searchInput = document.getElementById("search-input");
     const indexStatus = document.getElementById("index-status");
     const metricsStatus = document.getElementById("metrics-status");
     const resultsContainer = document.getElementById("results");
+    const scopeButtons = Array.from(document.querySelectorAll(".scope-btn"));
 
     const STOPWORDS_ES = new Set([
       "el", "la", "los", "las", "un", "una", "unos", "unas", "lo", "al", "del",
@@ -304,6 +350,23 @@
     let miniSearch = null;
     let chunksById = new Map();
     let vocabularyCount = 0;
+    let activeScope = "all"; // "all" | "notes" | "laws"
+    let searchSeq = 0;
+
+    // Traductor: asigId + temaId (ruta falsa/lógica en config) -> ruta real del .md (ej. "civil/004.md")
+    const mdKeyByAsigTema = new Map();
+    if (typeof APUNTES_CONFIG !== "undefined" && Array.isArray(APUNTES_CONFIG)) {
+      APUNTES_CONFIG.forEach((asig) => {
+        (asig.temas || []).forEach((tema) => {
+          if (!tema.archivo) return;
+          const cleanRel = tema.archivo.replace(/^\.?\//, "").replace(/^apuntes\//i, "");
+          mdKeyByAsigTema.set(`${asig.id}::${tema.id}`, cleanRel);
+        });
+      });
+    }
+
+    const promesasIndicesLeyes = new Map();
+    const cacheArticulosBOE = new Map();
 
     function normalizar(str) {
       return (str || "")
@@ -344,7 +407,6 @@
       });
     }
 
-    // 1. Indexar descomponiendo cada documento en subsecciones (#, ##, ### y **subtítulos**)
     async function indexarBaseConocimiento() {
       const t0 = performance.now();
       if (typeof APUNTES_CONFIG === "undefined" || !APUNTES_CONFIG.length) {
@@ -426,7 +488,6 @@
       searchInput.disabled = false;
       searchInput.focus();
 
-      // Detección automática del término inicial si se llega desde el Hub (?q=...)
       const urlParams = new URLSearchParams(window.location.search);
       const queryInicial = urlParams.get("q");
       if (queryInicial && queryInicial.trim()) {
@@ -480,7 +541,6 @@
       return (q + extra).trim();
     }
 
-    // 2. Extraer ventana centrada y resaltar coincidencias sin romper el HTML
     function formatearExtracto(rawText, highlightTerms) {
       let textoLimpio = rawText.trim();
 
@@ -512,13 +572,11 @@
 
       let safeHtml = escapeHtml(textoLimpio);
 
-      // Ordenar de mayor a menor longitud para evitar solapamientos parciales en <mark>
       const uniqueSorted = [...new Set(highlightTerms)]
         .filter(t => t && t.length >= 2)
         .sort((a, b) => b.length - a.length);
 
       uniqueSorted.forEach(term => {
-        // Construir patrón tolerante a tildes sobre el texto ya escapado
         const accentMap = {
           a: "[aáàä]", e: "[eéèë]", i: "[iíìï]", o: "[oóòö]", u: "[uúùü]", n: "[nñ]"
         };
@@ -536,8 +594,133 @@
       return safeHtml;
     }
 
-    // 3. Ejecutar búsqueda BM25
-    function ejecutarBusqueda() {
+    // Traductor: asigId + temaId (vía apuntes_config.js) -> clave del .md en CITAS_APUNTES_BOE ("civil/004.md")
+    function traducirClaveMdApunte(asigId, temaId) {
+      return mdKeyByAsigTema.get(`${asigId}::${temaId}`) || `${asigId}/${temaId}.md`;
+    }
+
+    function obtenerArticulosCitadosPorApuntes(noteDocs) {
+      if (!window.CITAS_APUNTES_BOE || !Array.isArray(window.LEYES_CONFIG)) return [];
+
+      const clavesMd = new Set(noteDocs.map((d) => traducirClaveMdApunte(d.asigId, d.temaId)));
+      const refs = [];
+      const vistas = new Set();
+
+      for (const [claveLeyArt, apuntesList] of Object.entries(window.CITAS_APUNTES_BOE)) {
+        if (!Array.isArray(apuntesList)) continue;
+        const coincide = apuntesList.some((rutaMd) => clavesMd.has(rutaMd));
+        if (!coincide) continue;
+
+        const [leyId, artId] = claveLeyArt.split("/");
+        if (!leyId || !artId) continue;
+
+        const key = `${leyId}/${artId}`;
+        if (!vistas.has(key)) {
+          vistas.add(key);
+          refs.push({ leyId, artId });
+        }
+      }
+
+      return refs.slice(0, 20);
+    }
+
+    function cargarIndiceLeyBajoDemanda(leyMeta) {
+      window.INDICES_LEYES = window.INDICES_LEYES || {};
+      if (window.INDICES_LEYES[leyMeta.id]) {
+        return Promise.resolve(window.INDICES_LEYES[leyMeta.id]);
+      }
+      if (!leyMeta.indiceScript) {
+        return Promise.resolve(null);
+      }
+      if (promesasIndicesLeyes.has(leyMeta.id)) {
+        return promesasIndicesLeyes.get(leyMeta.id);
+      }
+
+      const promesa = new Promise((resolve) => {
+        const s = document.createElement("script");
+        s.src = leyMeta.indiceScript;
+        s.async = true;
+        s.onload = () => resolve(window.INDICES_LEYES[leyMeta.id] || null);
+        s.onerror = () => resolve(null);
+        document.body.appendChild(s);
+      });
+
+      promesasIndicesLeyes.set(leyMeta.id, promesa);
+      return promesa;
+    }
+
+    async function obtenerTextoArticuloBOE(rutaArchivo) {
+      if (!rutaArchivo) return "";
+      if (cacheArticulosBOE.has(rutaArchivo)) return cacheArticulosBOE.get(rutaArchivo);
+      try {
+        const res = await fetch(rutaArchivo);
+        if (!res.ok) return "";
+        const txt = await res.text();
+        const vigente = txt.split("<!-- HISTORIAL_BOE -->")[0]
+          .replace(/^#+\s+.*$/gm, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        cacheArticulosBOE.set(rutaArchivo, vigente);
+        return vigente;
+      } catch {
+        return "";
+      }
+    }
+
+    async function construirTarjetasLeyesCitadas(noteDocs, highlightList, seqId) {
+      if (activeScope === "notes") return [];
+      const refs = obtenerArticulosCitadosPorApuntes(noteDocs);
+      if (refs.length === 0) return [];
+
+      const leyMetaMap = new Map((window.LEYES_CONFIG || []).map((l) => [l.id, l]));
+      const leyesNecesarias = Array.from(new Set(refs.map((r) => r.leyId)))
+        .map((id) => leyMetaMap.get(id))
+        .filter(Boolean);
+
+      if (leyesNecesarias.length === 0) return [];
+
+      await Promise.all(leyesNecesarias.map((meta) => cargarIndiceLeyBajoDemanda(meta)));
+      if (seqId !== searchSeq) return [];
+
+      const cards = [];
+      for (const { leyId, artId } of refs) {
+        const leyMeta = leyMetaMap.get(leyId);
+        const indiceData = window.INDICES_LEYES?.[leyId];
+        const artMeta = indiceData?.articulos?.find((a) => a.id === artId);
+        if (!leyMeta || !artMeta) continue;
+
+        const textoArt = await obtenerTextoArticuloBOE(artMeta.archivo);
+        if (seqId !== searchSeq) return [];
+
+        const href = `leyes.html?ley=${encodeURIComponent(leyId)}&art=${encodeURIComponent(artId)}`;
+        const crumb = [artMeta.libro, artMeta.tituloNorma, artMeta.capitulo].filter(Boolean).join(" › ") || leyMeta.nombre;
+        const snippetHtml = formatearExtracto(textoArt || artMeta.titulo, highlightList);
+
+        const card = document.createElement("article");
+        card.className = "result-card law-card";
+        card.innerHTML = `
+          <div class="result-header">
+            <span class="result-asig">${escapeHtml(leyMeta.nombre)}</span>
+            <a href="${href}" class="result-title">${escapeHtml(artMeta.titulo)}</a>
+            <span class="result-score">BOE</span>
+          </div>
+          <div class="result-section-crumb">📜 ${escapeHtml(crumb)}</div>
+          <div class="result-snippet">${snippetHtml}</div>
+          <div class="result-actions">
+            <button type="button" class="btn-action" onclick="copiarTextoPlano(this)">
+              📋 Copiar extracto
+            </button>
+            <a href="${href}" class="link-viewer">Ver artículo en visor BOE →</a>
+          </div>
+        `;
+        cards.push(card);
+      }
+
+      return cards;
+    }
+
+    async function ejecutarBusqueda() {
+      const currentSeq = ++searchSeq;
       const rawInput = searchInput.value.trim();
       if (rawInput.length < 2) {
         resultsContainer.innerHTML = "";
@@ -557,6 +740,7 @@
       const expandedQuery = expandirConsultaJuridica(queryBase);
       const requestedNumbers = parsed.cleanTerms.filter(t => /^\d+$/.test(t));
 
+      // 1. Buscar primero en apuntes (BM25)
       const rawResults = miniSearch.search(expandedQuery, {
         filter: (res) => {
           const doc = chunksById.get(res.id);
@@ -568,7 +752,6 @@
         }
       });
 
-      // Priorizar resultados que contengan el número de artículo si el usuario buscó un número
       let orderedResults = rawResults;
       if (requestedNumbers.length > 0) {
         const withNum = rawResults.filter(r => {
@@ -578,15 +761,19 @@
         if (withNum.length > 0) orderedResults = withNum;
       }
 
+      const topNoteDocs = orderedResults.slice(0, 35).map((r) => ({
+        score: r.score,
+        doc: chunksById.get(r.id)
+      })).filter((x) => x.doc);
+
       const t1 = performance.now();
       metricsStatus.textContent = `${orderedResults.length} epígrafe(s) en ${(t1 - t0).toFixed(1)} ms`;
 
-      if (orderedResults.length === 0) {
+      if (topNoteDocs.length === 0) {
         resultsContainer.innerHTML = `<div class="empty-msg">No se encontraron fundamentos para "<strong>${escapeHtml(rawInput)}</strong>".</div>`;
         return;
       }
 
-      // Términos a priorizar para centrar ventana y resaltar
       const anchorTerms = [
         ...requestedNumbers,
         ...parsed.exactPhrases,
@@ -598,31 +785,50 @@
       ];
 
       resultsContainer.innerHTML = "";
-      orderedResults.slice(0, 35).forEach((res, index) => {
-        const doc = chunksById.get(res.id);
-        const card = document.createElement("article");
-        card.className = "result-card";
 
-        const cleanLink = `apuntes.html?asig=${encodeURIComponent(doc.asigId)}&tema=${encodeURIComponent(doc.temaId)}`;
-        const snippetHtml = formatearExtracto(doc.texto, highlightList);
+      if (activeScope !== "laws") {
+        topNoteDocs.forEach(({ score, doc }, index) => {
+          const card = document.createElement("article");
+          card.className = "result-card";
 
-        card.innerHTML = `
-          <div class="result-header">
-            <span class="result-asig">${escapeHtml(doc.asigNombre)}</span>
-            <a href="${cleanLink}" class="result-title">${escapeHtml(doc.temaTitulo)}</a>
-            <span class="result-score">${res.score.toFixed(1)} pts</span>
-          </div>
-          <div class="result-section-crumb">📍 Sección: ${escapeHtml(doc.heading)}</div>
-          <div class="result-snippet" id="snippet-${index}">${snippetHtml}</div>
-          <div class="result-actions">
-            <button type="button" class="btn-action" onclick="copiarAlPortapapeles(${index}, this)">
-              📋 Copiar extracto
-            </button>
-            <a href="${cleanLink}" class="link-viewer">Abrir tema completo →</a>
-          </div>
-        `;
-        resultsContainer.appendChild(card);
-      });
+          const cleanLink = `apuntes.html?asig=${encodeURIComponent(doc.asigId)}&tema=${encodeURIComponent(doc.temaId)}`;
+          const snippetHtml = formatearExtracto(doc.texto, highlightList);
+
+          card.innerHTML = `
+            <div class="result-header">
+              <span class="result-asig">${escapeHtml(doc.asigNombre)}</span>
+              <a href="${cleanLink}" class="result-title">${escapeHtml(doc.temaTitulo)}</a>
+              <span class="result-score">${score.toFixed(1)} pts</span>
+            </div>
+            <div class="result-section-crumb">📍 Sección: ${escapeHtml(doc.heading)}</div>
+            <div class="result-snippet" id="snippet-${index}">${snippetHtml}</div>
+            <div class="result-actions">
+              <button type="button" class="btn-action" onclick="copiarAlPortapapeles(${index}, this)">
+                📋 Copiar extracto
+              </button>
+              <a href="${cleanLink}" class="link-viewer">Abrir tema completo →</a>
+            </div>
+          `;
+          resultsContainer.appendChild(card);
+        });
+      }
+
+      // 2. Incorporar después solo los artículos de las leyes citadas por esos apuntes
+      if (activeScope !== "notes") {
+        const lawCards = await construirTarjetasLeyesCitadas(
+          topNoteDocs.map((x) => x.doc),
+          highlightList,
+          currentSeq
+        );
+        if (currentSeq !== searchSeq) return;
+
+        if (activeScope === "laws" && lawCards.length === 0) {
+          resultsContainer.innerHTML = `<div class="empty-msg">Los apuntes coincidentes no tienen artículos enlazados en el índice de leyes.</div>`;
+          return;
+        }
+
+        lawCards.forEach((card) => resultsContainer.appendChild(card));
+      }
     }
 
     window.copiarAlPortapapeles = function(index, btn) {
@@ -638,6 +844,27 @@
         }, 1500);
       });
     };
+
+    window.copiarTextoPlano = function(btn) {
+      const card = btn.closest(".result-card");
+      const snip = card?.querySelector(".result-snippet");
+      if (!snip) return;
+      navigator.clipboard.writeText(snip.innerText || snip.textContent).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅ ¡Copiado!";
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 1500);
+      });
+    };
+
+    scopeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeScope = btn.getAttribute("data-scope") || "all";
+        scopeButtons.forEach((b) => b.classList.toggle("active", b === btn));
+        ejecutarBusqueda();
+      });
+    });
 
     searchInput.addEventListener("input", ejecutarBusqueda);
     indexarBaseConocimiento();
