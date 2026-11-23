@@ -152,18 +152,56 @@
       border-radius: 9px;
       background: #f8fafc;
     }
-    .trivial-cols {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
-      margin-top: 10px;
+    .trivial-asig-block {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      margin-bottom: 8px;
+      overflow: hidden;
     }
-    .trivial-col-title {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--neutral);
-      margin-bottom: 6px;
-      text-transform: uppercase;
+    .trivial-asig-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+    }
+    .trivial-asig-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      flex: 1;
+    }
+    .trivial-asig-left input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+    .btn-trivial-subtoggle {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-trivial-subtoggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .trivial-subtopics {
+      padding: 8px 10px 10px 28px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
     .trivial-feedback {
       margin-top: 12px;
@@ -238,17 +276,8 @@
     <div class="trivial-footer-box">
       <button type="button" id="btn-toggle-trivial" class="btn-trivial-toggle">🎲 Modo trivial</button>
       <div id="trivial-setup" class="trivial-panel hide">
-        <div style="font-size: 0.88rem; color: var(--neutral);">Elige asignaturas y temas (por defecto <strong>TODO</strong>) y ve encadenando preguntas corregidas al momento.</div>
-        <div class="trivial-cols">
-          <div>
-            <div class="trivial-col-title">Asignaturas</div>
-            <div id="trivial-asig-list" class="topic-list" style="max-height: 190px;"></div>
-          </div>
-          <div>
-            <div class="trivial-col-title">Temas</div>
-            <div id="trivial-topic-list" class="topic-list" style="max-height: 190px;"></div>
-          </div>
-        </div>
+        <div style="font-size: 0.88rem; color: var(--neutral);">Elige asignaturas y despliega los temas de cada una (por defecto <strong>TODO</strong>).</div>
+        <div id="trivial-asig-list" class="topic-list" style="max-height: 290px; margin-top: 10px;"></div>
         <div class="btn-group" style="margin-top: 12px;">
           <button type="button" id="btn-start-trivial" class="btn btn-todo" style="padding: 9px 16px; font-size: 0.88rem;">Iniciar trivial</button>
         </div>
@@ -820,149 +849,205 @@
     `;
   }
 
-  /* === PLUS MODO TRIVIAL (QUEST INFINITO) === */
+  /* === PLUS MODO TRIVIAL (QUEST INFINITO CON TEMAS POR ASIGNATURA) === */
   function initTrivialPlus(config) {
     const categories = Object.keys(config);
     const asigListEl = document.getElementById("trivial-asig-list");
-    const topicListEl = document.getElementById("trivial-topic-list");
     const setupEl = document.getElementById("trivial-setup");
     const startBtn = document.getElementById("btn-start-trivial");
 
-    let trivialPool = [];
+    // Estado por asignatura: { checked, expanded, loaded, questions, selectedTopics: Set|null }
+    const asigState = new Map();
+    categories.forEach(cat => {
+      asigState.set(cat, {
+        checked: true,
+        expanded: false,
+        loaded: false,
+        questions: [],
+        selectedTopics: null // null = TODO de esa asignatura
+      });
+    });
+
     let trivialDeck = [];
     let trivialAnswered = [];
     let currentTrivialQ = null;
     let trivialLocked = false;
 
-    async function loadCategoryQuestions(cat) {
-      if (categoryCache.has(cat)) return categoryCache.get(cat);
+    async function ensureAsigLoaded(cat) {
+      const st = asigState.get(cat);
+      if (!st) return [];
+      if (st.loaded) return st.questions;
+      if (categoryCache.has(cat)) {
+        st.questions = categoryCache.get(cat);
+        st.loaded = true;
+        return st.questions;
+      }
       const files = config[cat] || [];
       bufferPreguntas = [];
       await Promise.all(files.map(cargarScript));
-      const list = [...bufferPreguntas];
-      categoryCache.set(cat, list);
-      return list;
+      st.questions = [...bufferPreguntas];
+      st.loaded = true;
+      categoryCache.set(cat, st.questions);
+      return st.questions;
     }
 
-    function getSelectedTrivialCategories() {
-      const allBox = document.getElementById("trivial-asig-all");
-      const boxes = Array.from(document.querySelectorAll(".trivial-asig-cb"));
-      if (allBox && allBox.checked) return categories;
-      return boxes.filter(b => b.checked).map(b => b.value);
+    function getFilteredPoolFromState() {
+      const out = [];
+      for (const cat of categories) {
+        const st = asigState.get(cat);
+        if (!st || !st.checked || !st.loaded) continue;
+        if (st.selectedTopics === null) {
+          out.push(...st.questions);
+        } else {
+          out.push(...st.questions.filter(q => st.selectedTopics.has(q.tema || DEFAULT_TOPIC)));
+        }
+      }
+      return out;
     }
 
-    function getSelectedTrivialTopics() {
-      const allBox = document.getElementById("trivial-topic-all");
-      const boxes = Array.from(document.querySelectorAll(".trivial-topic-cb"));
-      if (allBox && allBox.checked) return null; // null = TODO
-      return boxes.filter(b => b.checked).map(b => b.value);
-    }
-
-    async function refreshTrivialTopics() {
-      const selectedCats = getSelectedTrivialCategories();
-      topicListEl.innerHTML = "";
-      if (selectedCats.length === 0) {
-        startBtn.disabled = true;
+    function renderSubtopicsBox(cat, containerDiv) {
+      const st = asigState.get(cat);
+      containerDiv.innerHTML = "";
+      if (!st.loaded) {
+        containerDiv.innerHTML = `<span style="font-size:0.82rem; color:var(--neutral);">Cargando temas...</span>`;
         return;
       }
 
-      const arrays = await Promise.all(selectedCats.map(loadCategoryQuestions));
-      const combined = arrays.flat();
-      const topicsSet = new Set(combined.map(q => q.tema || DEFAULT_TOPIC));
-      const topics = Array.from(topicsSet);
+      const uniqueTopics = Array.from(new Set(st.questions.map(q => q.tema || DEFAULT_TOPIC)));
+      const allSelected = st.selectedTopics === null;
 
-      const allRow = document.createElement("label");
-      allRow.className = "topic-item all-item";
+      const allLbl = document.createElement("label");
+      allLbl.className = "topic-item all-item";
+      allLbl.style.padding = "6px 8px";
+      allLbl.style.fontSize = "0.86rem";
       const allCb = document.createElement("input");
       allCb.type = "checkbox";
-      allCb.id = "trivial-topic-all";
-      allCb.checked = true;
-      allRow.appendChild(allCb);
-      const allSpan = document.createElement("span");
-      allSpan.textContent = `TODO (${combined.length})`;
-      allRow.appendChild(allSpan);
-      topicListEl.appendChild(allRow);
+      allCb.checked = allSelected;
+      const allTxt = document.createElement("span");
+      allTxt.textContent = `TODO (${st.questions.length})`;
+      allLbl.appendChild(allCb);
+      allLbl.appendChild(allTxt);
+      containerDiv.appendChild(allLbl);
 
       const itemCbs = [];
-      topics.forEach(t => {
-        const cnt = combined.filter(q => (q.tema || DEFAULT_TOPIC) === t).length;
-        const row = document.createElement("label");
-        row.className = "topic-item";
+      uniqueTopics.forEach(t => {
+        const cnt = st.questions.filter(q => (q.tema || DEFAULT_TOPIC) === t).length;
+        const lbl = document.createElement("label");
+        lbl.className = "topic-item";
+        lbl.style.padding = "6px 8px";
+        lbl.style.fontSize = "0.86rem";
         const cb = document.createElement("input");
         cb.type = "checkbox";
-        cb.className = "trivial-topic-cb";
         cb.value = t;
-        cb.checked = true;
+        cb.checked = allSelected || st.selectedTopics.has(t);
         cb.addEventListener("change", () => {
-          allCb.checked = itemCbs.every(x => x.checked);
-          updateTrivialStartState(combined);
+          const checkedVals = itemCbs.filter(x => x.checked).map(x => x.value);
+          if (checkedVals.length === uniqueTopics.length) {
+            st.selectedTopics = null;
+            allCb.checked = true;
+          } else {
+            st.selectedTopics = new Set(checkedVals);
+            allCb.checked = false;
+          }
         });
-        row.appendChild(cb);
-        const span = document.createElement("span");
-        span.textContent = `${t} (${cnt})`;
-        row.appendChild(span);
-        topicListEl.appendChild(row);
+        const txt = document.createElement("span");
+        txt.textContent = `${t} (${cnt})`;
+        lbl.appendChild(cb);
+        lbl.appendChild(txt);
+        containerDiv.appendChild(lbl);
         itemCbs.push(cb);
       });
 
       allCb.addEventListener("change", () => {
-        itemCbs.forEach(cb => { cb.checked = allCb.checked; });
-        updateTrivialStartState(combined);
+        if (allCb.checked) {
+          st.selectedTopics = null;
+          itemCbs.forEach(cb => { cb.checked = true; });
+        } else {
+          st.selectedTopics = new Set();
+          itemCbs.forEach(cb => { cb.checked = false; });
+        }
       });
-
-      updateTrivialStartState(combined);
-    }
-
-    function updateTrivialStartState(combined) {
-      const chosenTopics = getSelectedTrivialTopics();
-      const filtered = chosenTopics === null
-        ? combined
-        : combined.filter(q => chosenTopics.includes(q.tema || DEFAULT_TOPIC));
-      trivialPool = filtered;
-      startBtn.disabled = filtered.length === 0;
     }
 
     function renderTrivialAsigs() {
       asigListEl.innerHTML = "";
-      const allRow = document.createElement("label");
-      allRow.className = "topic-item all-item";
-      const allCb = document.createElement("input");
-      allCb.type = "checkbox";
-      allCb.id = "trivial-asig-all";
-      allCb.checked = true;
-      allRow.appendChild(allCb);
-      const allSpan = document.createElement("span");
-      allSpan.textContent = "TODO";
-      allRow.appendChild(allSpan);
-      asigListEl.appendChild(allRow);
 
-      const itemCbs = [];
+      const allBlock = document.createElement("label");
+      allBlock.className = "topic-item all-item";
+      const allAsigCb = document.createElement("input");
+      allAsigCb.type = "checkbox";
+      allAsigCb.checked = categories.every(c => asigState.get(c).checked);
+      const allAsigSpan = document.createElement("span");
+      allAsigSpan.textContent = "TODO (Todas las asignaturas)";
+      allBlock.appendChild(allAsigCb);
+      allBlock.appendChild(allAsigSpan);
+      asigListEl.appendChild(allBlock);
+
+      const asigCheckboxes = [];
+
       categories.forEach(cat => {
-        const row = document.createElement("label");
-        row.className = "topic-item";
+        const st = asigState.get(cat);
+        const block = document.createElement("div");
+        block.className = "trivial-asig-block";
+
+        const row = document.createElement("div");
+        row.className = "trivial-asig-row";
+
+        const left = document.createElement("label");
+        left.className = "trivial-asig-left";
         const cb = document.createElement("input");
         cb.type = "checkbox";
-        cb.className = "trivial-asig-cb";
-        cb.value = cat;
-        cb.checked = true;
-        cb.addEventListener("change", () => {
-          allCb.checked = itemCbs.every(x => x.checked);
-          refreshTrivialTopics();
-        });
-        row.appendChild(cb);
+        cb.checked = st.checked;
+
         const span = document.createElement("span");
         span.textContent = cat;
-        row.appendChild(span);
-        asigListEl.appendChild(row);
-        itemCbs.push(cb);
+        span.style.fontWeight = "600";
+
+        left.appendChild(cb);
+        left.appendChild(span);
+
+        const subToggle = document.createElement("button");
+        subToggle.type = "button";
+        subToggle.className = "btn-trivial-subtoggle";
+        subToggle.textContent = st.expanded ? "Temas ▲" : "Temas ▼";
+
+        const subBox = document.createElement("div");
+        subBox.className = "trivial-subtopics" + (st.expanded ? "" : " hide");
+
+        cb.addEventListener("change", () => {
+          st.checked = cb.checked;
+          allAsigCb.checked = asigCheckboxes.every(x => x.checked);
+        });
+
+        subToggle.addEventListener("click", async () => {
+          st.expanded = !st.expanded;
+          subToggle.textContent = st.expanded ? "Temas ▲" : "Temas ▼";
+          subBox.classList.toggle("hide", !st.expanded);
+          if (st.expanded) {
+            await ensureAsigLoaded(cat);
+            renderSubtopicsBox(cat, subBox);
+          }
+        });
+
+        row.appendChild(left);
+        row.appendChild(subToggle);
+        block.appendChild(row);
+        block.appendChild(subBox);
+        asigListEl.appendChild(block);
+
+        if (st.expanded) {
+          ensureAsigLoaded(cat).then(() => renderSubtopicsBox(cat, subBox));
+        }
+
+        asigCheckboxes.push(cb);
       });
 
-      allCb.addEventListener("change", () => {
-        itemCbs.forEach(cb => { cb.checked = allCb.checked; });
-        refreshTrivialTopics();
+      allAsigCb.addEventListener("change", () => {
+        asigCheckboxes.forEach((cb, idx) => {
+          cb.checked = allAsigCb.checked;
+          asigState.get(categories[idx]).checked = allAsigCb.checked;
+        });
       });
-
-      refreshTrivialTopics();
     }
 
     document.getElementById("btn-toggle-trivial").addEventListener("click", () => {
@@ -973,9 +1058,9 @@
       }
     });
 
-    function nextTrivialQuestion() {
+    function nextTrivialQuestion(pool) {
       if (trivialDeck.length === 0) {
-        trivialDeck = shuffle(trivialPool);
+        trivialDeck = shuffle(pool);
       }
       const raw = trivialDeck.pop();
       const shuffledOpts = shuffle(raw.opciones.map((text, idx) => ({
@@ -1048,16 +1133,33 @@
       });
     }
 
-    startBtn.addEventListener("click", () => {
-      if (trivialPool.length === 0) return;
-      trivialAnswered = [];
-      trivialDeck = shuffle(trivialPool);
-      document.getElementById("view-menu").classList.add("hide");
-      document.getElementById("view-trivial").classList.remove("hide");
-      nextTrivialQuestion();
+    let activeTrivialPool = [];
+
+    startBtn.addEventListener("click", async () => {
+      const checkedCats = categories.filter(c => asigState.get(c).checked);
+      if (checkedCats.length === 0) {
+        return alert("Selecciona al menos una asignatura.");
+      }
+
+      startBtn.disabled = true;
+      try {
+        await Promise.all(checkedCats.map(ensureAsigLoaded));
+        activeTrivialPool = getFilteredPoolFromState();
+        if (activeTrivialPool.length === 0) {
+          alert("No hay preguntas para los temas seleccionados.");
+          return;
+        }
+        trivialAnswered = [];
+        trivialDeck = shuffle(activeTrivialPool);
+        document.getElementById("view-menu").classList.add("hide");
+        document.getElementById("view-trivial").classList.remove("hide");
+        nextTrivialQuestion(activeTrivialPool);
+      } finally {
+        startBtn.disabled = false;
+      }
     });
 
-    document.getElementById("btn-trivial-next").addEventListener("click", nextTrivialQuestion);
+    document.getElementById("btn-trivial-next").addEventListener("click", () => nextTrivialQuestion(activeTrivialPool));
 
     function renderTrivialReview(onlyErrors) {
       const list = document.getElementById("trivial-review-list");
