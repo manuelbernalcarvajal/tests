@@ -67,7 +67,7 @@ const APUNTES_CONFIG = [
     id: "penal",
     temas: [
       { id: "001", titulo: "T01: Ejecución de sanciones y régimen penitenciario", archivo: "apuntes/penal/001.md" },
-      { id: "002", titulo: "T02: /pendiente/Delitos leves. Lesiones y homicidio", archivo: "apuntes/enproceso.md" },
+      { id: "002", titulo: "T02: /pendiente/Delitos leves. Lesiones y homicidio", archivo: "apuntes/penal/002.md" },
       { id: "003", titulo: "T03: /pendiente/Violencia de género y doméstica", archivo: "apuntes/enproceso.md" },
       { id: "004", titulo: "T04: /pendiente/Libertad sexual. Relaciones familiares", archivo: "apuntes/enproceso.md" },
       { id: "104", titulo: "T04.1: /pendiente/Preguntas de desarrollo y test avisadas (anexo)", archivo: "apuntes/enproceso.md" },
