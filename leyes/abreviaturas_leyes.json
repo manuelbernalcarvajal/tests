@@ -63,6 +63,36 @@
       "TRLGDCU",
       "LGDCU",
       "Ley General para la Defensa de los Consumidores y Usuarios"
+    ],
+    "ley-organica-5-2000-lorpm": [
+      "LORPM",
+      "L.O.R.P.M.",
+      "LO 5/2000",
+      "Ley Orgánica 5/2000",
+      "Ley de Responsabilidad Penal de los Menores",
+      "Ley Orgánica de Responsabilidad Penal de los Menores"
+    ],
+    "ley-organica-5-1995-lotj": [
+      "LOTJ",
+      "L.O.T.J.",
+      "LO 5/1995",
+      "Ley Orgánica 5/1995",
+      "Ley del Tribunal del Jurado",
+      "Ley Orgánica del Tribunal del Jurado"
+    ],
+    "ley-15-2015-ljv": [
+      "LJV",
+      "L.J.V.",
+      "Ley 15/2015",
+      "Ley de Jurisdicción Voluntaria",
+      "Ley de la Jurisdicción Voluntaria"
+    ],
+    "ley-20-2011-del-registro-civil": [
+      "LRC",
+      "L.R.C.",
+      "Ley 20/2011",
+      "Ley del Registro Civil",
+      "Ley 20/2011 del Registro Civil"
     ]
   },
   "asignaturas_defecto": {
