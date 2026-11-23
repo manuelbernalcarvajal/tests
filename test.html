@@ -72,6 +72,7 @@
       border-radius: 7px;
       cursor: pointer;
       font-size: 0.94rem;
+      flex-shrink: 0;
     }
     .topic-item input[type="checkbox"] {
       width: 16px;
@@ -156,8 +157,7 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--card);
-      margin-bottom: 8px;
-      overflow: hidden;
+      flex-shrink: 0;
     }
     .trivial-asig-row {
       display: flex;
@@ -173,6 +173,7 @@
       gap: 10px;
       cursor: pointer;
       flex: 1;
+      min-width: 0;
     }
     .trivial-asig-left input[type="checkbox"] {
       width: 16px;
@@ -190,6 +191,7 @@
       font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
+      flex-shrink: 0;
     }
     .btn-trivial-subtoggle:hover {
       border-color: var(--accent);
@@ -277,7 +279,7 @@
       <button type="button" id="btn-toggle-trivial" class="btn-trivial-toggle">🎲 Modo trivial</button>
       <div id="trivial-setup" class="trivial-panel hide">
         <div style="font-size: 0.88rem; color: var(--neutral);">Elige asignaturas y despliega los temas de cada una (por defecto <strong>TODO</strong>).</div>
-        <div id="trivial-asig-list" class="topic-list" style="max-height: 290px; margin-top: 10px;"></div>
+        <div id="trivial-asig-list" class="topic-list" style="max-height: 320px; margin-top: 10px;"></div>
         <div class="btn-group" style="margin-top: 12px;">
           <button type="button" id="btn-start-trivial" class="btn btn-todo" style="padding: 9px 16px; font-size: 0.88rem;">Iniciar trivial</button>
         </div>
@@ -711,7 +713,7 @@
       openTopicSelector(materiaParam, entry.title, entry.files, temasParam, entry.el);
     }
 
-    initTrivialPlus(config);
+    initTrivialPlus(config, params);
   }
 
   function launchExam(categoryTitle, sourceQuestions, numQuestions = DEFAULT_QUESTIONS) {
@@ -849,14 +851,13 @@
     `;
   }
 
-  /* === PLUS MODO TRIVIAL (QUEST INFINITO CON TEMAS POR ASIGNATURA) === */
-  function initTrivialPlus(config) {
+  /* === PLUS MODO TRIVIAL (QUEST INFINITO CON TEMAS POR ASIGNATURA + URL) === */
+  function initTrivialPlus(config, initialParams) {
     const categories = Object.keys(config);
     const asigListEl = document.getElementById("trivial-asig-list");
     const setupEl = document.getElementById("trivial-setup");
     const startBtn = document.getElementById("btn-start-trivial");
 
-    // Estado por asignatura: { checked, expanded, loaded, questions, selectedTopics: Set|null }
     const asigState = new Map();
     categories.forEach(cat => {
       asigState.set(cat, {
@@ -872,6 +873,24 @@
     let trivialAnswered = [];
     let currentTrivialQ = null;
     let trivialLocked = false;
+    let activeTrivialPool = [];
+
+    function syncTrivialUrl(isOpen) {
+      const url = new URL(window.location.href);
+      if (!isOpen) {
+        url.searchParams.delete("modo");
+        url.searchParams.delete("tasigs");
+      } else {
+        url.searchParams.set("modo", "trivial");
+        const checked = categories.filter(c => asigState.get(c).checked);
+        if (checked.length === categories.length) {
+          url.searchParams.delete("tasigs");
+        } else {
+          url.searchParams.set("tasigs", encodeTopicsParam(checked));
+        }
+      }
+      window.history.replaceState({}, "", url.toString());
+    }
 
     async function ensureAsigLoaded(cat) {
       const st = asigState.get(cat);
@@ -1017,6 +1036,7 @@
         cb.addEventListener("change", () => {
           st.checked = cb.checked;
           allAsigCb.checked = asigCheckboxes.every(x => x.checked);
+          syncTrivialUrl(true);
         });
 
         subToggle.addEventListener("click", async () => {
@@ -1047,6 +1067,7 @@
           cb.checked = allAsigCb.checked;
           asigState.get(categories[idx]).checked = allAsigCb.checked;
         });
+        syncTrivialUrl(true);
       });
     }
 
@@ -1056,6 +1077,7 @@
       if (opening && asigListEl.children.length === 0) {
         renderTrivialAsigs();
       }
+      syncTrivialUrl(opening);
     });
 
     function nextTrivialQuestion(pool) {
@@ -1133,8 +1155,6 @@
       });
     }
 
-    let activeTrivialPool = [];
-
     startBtn.addEventListener("click", async () => {
       const checkedCats = categories.filter(c => asigState.get(c).checked);
       if (checkedCats.length === 0) {
@@ -1206,6 +1226,19 @@
 
     document.getElementById("btn-trivial-filter-errors").addEventListener("click", () => renderTrivialReview(true));
     document.getElementById("btn-trivial-filter-all").addEventListener("click", () => renderTrivialReview(false));
+
+    // Soporte de URL propia (?modo=trivial&tasigs=...)
+    if (initialParams && initialParams.get("modo") === "trivial") {
+      const decodedAsigs = decodeTopicsParam(initialParams.get("tasigs"));
+      if (Array.isArray(decodedAsigs) && decodedAsigs.length > 0) {
+        const setAsigs = new Set(decodedAsigs);
+        categories.forEach(cat => {
+          asigState.get(cat).checked = setAsigs.has(cat);
+        });
+      }
+      setupEl.classList.remove("hide");
+      renderTrivialAsigs();
+    }
   }
 
   window.addEventListener('DOMContentLoaded', init);
