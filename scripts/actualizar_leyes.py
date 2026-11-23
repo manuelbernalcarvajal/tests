@@ -10,33 +10,13 @@ from bs4 import BeautifulSoup
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LEYES_DIR = BASE_DIR / "leyes"
-APUNTES_DIR = BASE_DIR / "apuntes"
 LISTA_FILE = LEYES_DIR / "lista_leyes.txt"
 CONFIG_JS_FILE = LEYES_DIR / "leyes_config.js"
-CITAS_JS_FILE = LEYES_DIR / "citas_apuntes.js"
 
 MARCADOR_HISTORIAL = "<!-- HISTORIAL_BOE -->"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; EstudioJuridicoMBC/1.0; +https://github.com)"
 }
-
-# Mapeo de carpetas de apuntes -> leyes principales por defecto cuando se cita "art. X" sin siglas
-ASIG_A_LEYES_DEFECTO = {
-    "penal": ["codigo-penal"],
-    "procesalpenal": ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"],
-    "civil": ["codigo-civil", "ley-de-enjuiciamiento-civil"],
-    "procesalcivil1": ["ley-de-enjuiciamiento-civil"],
-}
-
-# Alias explícitos en el texto de los apuntes -> palabras clave del slug de la ley
-ALIAS_LEYES = [
-    (r"\b(?:CP|C[oó]digo\s+Penal)\b", ["codigo-penal"]),
-    (r"\b(?:LECrim|LECr|Ley\s+de\s+Enjuiciamiento\s+Criminal|Ley\s+de\s+Enjuiciamiento\s+Penal)\b", ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"]),
-    (r"\b(?:LEC|Ley\s+de\s+Enjuiciamiento\s+Civil)\b", ["ley-de-enjuiciamiento-civil"]),
-    (r"\b(?:CC|C[oó]digo\s+Civil)\b", ["codigo-civil"]),
-    (r"\b(?:CE|Constituci[oó]n(?:\s+Espa[nñ]ola)?)\b", ["constitucion-espanola"]),
-    (r"\b(?:LOPJ|Ley\s+Org[aá]nica\s+del\s+Poder\s+Judicial)\b", ["ley-organica-del-poder-judicial", "lopj"]),
-]
 
 
 def slugify(texto: str) -> str:
@@ -88,7 +68,6 @@ def extraer_articulos_boe(html: str) -> list[dict]:
     bloques = soup.select("div.bloque")
 
     for bloque in bloques:
-        # 1. Detectar si el bloque es un encabezado estructural (Libro, Título, Capítulo, Sección)
         libro_el = bloque.find(["h3", "h4"], class_=re.compile(r"libro", re.I))
         if libro_el:
             jerarquia["libro"] = limpiar_texto(libro_el)
@@ -115,7 +94,6 @@ def extraer_articulos_boe(html: str) -> list[dict]:
         if sec_el:
             jerarquia["seccion"] = limpiar_texto(sec_el)
 
-        # 2. Detectar si el bloque contiene un artículo
         titulo_el = bloque.find(["h6", "h5", "h4", "h3"], class_=re.compile(r"articulo", re.I))
         if not titulo_el:
             titulo_el = bloque.find(["h6", "h5", "h4", "h3"])
@@ -126,7 +104,6 @@ def extraer_articulos_boe(html: str) -> list[dict]:
         if not re.match(r"^(?:art[íi]culo|art\.?)\b", titulo, re.IGNORECASE):
             continue
 
-        # Extraer nota de última modificación del BOE si existe antes de limpiar ruido
         nota_mod = ""
         for pie in bloque.select("p.pie_unico, p.nota"):
             txt_pie = limpiar_texto(pie)
@@ -195,11 +172,6 @@ def normalizar_hash(texto: str) -> str:
 def guardar_articulo_con_historial(
     ruta_md: Path, nuevo_md: str, fecha_hoy: str, nota_mod: str = ""
 ) -> tuple[bool, bool]:
-    """
-    Guarda el .md del artículo. Si cambió respecto a la versión anterior,
-    conserva la redacción previa etiquetada como 'Anterior' con fecha aproximada
-    de derogación/modificación para facilitar su lectura por personas e IAs.
-    """
     if not ruta_md.exists():
         ruta_md.write_text(nuevo_md + "\n", encoding="utf-8")
         return True, False
@@ -235,55 +207,6 @@ def guardar_articulo_con_historial(
     return True, True
 
 
-def construir_citas_apuntes(indice_por_ley: dict[str, set[str]]) -> dict[str, list[str]]:
-    """
-    Escanea apuntes/**/*.md y construye un mapa ligero:
-    { "codigo-penal/art-147": ["penal/001.md"], ... }
-    """
-    citas: dict[str, set[str]] = {}
-    if not APUNTES_DIR.exists() or not indice_por_ley:
-        return {}
-
-    patron_art = re.compile(
-        r"\b(?:art[íi]culos?|arts?\.?)\s+(\d+(?:\s+(?:bis|ter|quater|quinquies|sexies|[a-z]))?)(?:\s*([A-Za-zÁÉÍÓÚÑáéíóúñ\.]{2,25}))?",
-        re.IGNORECASE,
-    )
-
-    for md_file in sorted(APUNTES_DIR.rglob("*.md")):
-        clave_apunte = md_file.relative_to(APUNTES_DIR).as_posix()
-        if clave_apunte == "enproceso.md":
-            continue
-
-        carpeta_asig = clave_apunte.split("/", 1)[0]
-        texto = md_file.read_text(encoding="utf-8", errors="ignore")
-
-        for m in patron_art.finditer(texto):
-            num_raw = m.group(1)
-            cola = m.group(2) or ""
-            art_slug = f"art-{slugify(num_raw)}"
-
-            # Intentar detectar ley explícita justo después del número (ej. "art. 147 CP")
-            leyes_destino = []
-            ventana = texto[m.start(): min(len(texto), m.end() + 35)]
-            for patron_ley, slugs_candidatos in ALIAS_LEYES:
-                if re.search(patron_ley, ventana):
-                    leyes_destino = [s for s in slugs_candidatos if s in indice_por_ley]
-                    if leyes_destino:
-                        break
-
-            # Si no se mencionó sigla explícita, usar ley por defecto de la asignatura
-            if not leyes_destino:
-                candidatos_asig = ASIG_A_LEYES_DEFECTO.get(carpeta_asig, [])
-                leyes_destino = [s for s in candidatos_asig if s in indice_por_ley]
-
-            for ley_slug in leyes_destino:
-                if art_slug in indice_por_ley[ley_slug]:
-                    clave_cita = f"{ley_slug}/{art_slug}"
-                    citas.setdefault(clave_cita, set()).add(clave_apunte)
-
-    return {k: sorted(v) for k, v in sorted(citas.items())}
-
-
 def leer_lista_leyes() -> list[tuple[str, str]]:
     if not LISTA_FILE.exists():
         raise FileNotFoundError(f"No existe {LISTA_FILE}")
@@ -303,7 +226,6 @@ def main() -> None:
     leyes = leer_lista_leyes()
     fecha_hoy = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     catalogo = []
-    indice_por_ley: dict[str, set[str]] = {}
 
     for idx, (nombre, url) in enumerate(leyes):
         ley_slug = slugify(nombre)
@@ -317,7 +239,6 @@ def main() -> None:
 
         indice_articulos = []
         modificados = 0
-        slugs_ley = set()
 
         for art in articulos:
             nombre_archivo = f"{art['slug']}.md"
@@ -328,7 +249,6 @@ def main() -> None:
             if cambio:
                 modificados += 1
 
-            slugs_ley.add(art["slug"])
             indice_articulos.append({
                 "id": art["slug"],
                 "titulo": art["titulo"],
@@ -339,8 +259,6 @@ def main() -> None:
                 "capitulo": art["capitulo"],
                 "seccion": art["seccion"],
             })
-
-        indice_por_ley[ley_slug] = slugs_ley
 
         indice_js_path = carpeta_ley / f"indice-{ley_slug}.js"
         indice_payload = {
@@ -376,14 +294,7 @@ def main() -> None:
         f"window.LEYES_CONFIG = {json.dumps(catalogo, ensure_ascii=False, indent=2)};\n",
         encoding="utf-8",
     )
-
-    citas_map = construir_citas_apuntes(indice_por_ley)
-    CITAS_JS_FILE.write_text(
-        "// Mapa ligero de citas cruzadas entre leyes y apuntes. No editar a mano.\n"
-        f"window.CITAS_APUNTES_BOE = {json.dumps(citas_map, ensure_ascii=False, indent=2)};\n",
-        encoding="utf-8",
-    )
-    print(f"Catálogo actualizado ({len(catalogo)} leyes) y {len(citas_map)} artículos enlazados con apuntes.")
+    print(f"Catálogo actualizado en {CONFIG_JS_FILE} con {len(catalogo)} leyes.")
 
 
 if __name__ == "__main__":
