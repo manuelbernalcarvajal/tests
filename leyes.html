@@ -17,7 +17,9 @@
       --accent: #0d6efd;
       --border: #dee2e6;
       --muted: #6c757d;
-      --sidebar-width: 310px;
+      --badge-bg: #e7f1ff;
+      --badge-text: #0d6efd;
+      --sidebar-width: 330px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,7 +36,7 @@
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 10px 20px;
+      padding: 10px 18px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -42,10 +44,10 @@
       flex-shrink: 0;
     }
     header a, header select, header button {
-      padding: 6px 12px;
-      font-size: 14px;
+      padding: 6px 11px;
+      font-size: 13.5px;
       border: 1px solid var(--border);
-      border-radius: 4px;
+      border-radius: 5px;
       background: var(--surface);
       color: inherit;
       cursor: pointer;
@@ -62,8 +64,27 @@
     }
 
     #select-ley {
-      min-width: 220px;
-      max-width: 340px;
+      min-width: 210px;
+      max-width: 300px;
+    }
+
+    .view-switch {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .view-switch button {
+      border: none;
+      border-radius: 0;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      background: transparent;
+    }
+    .view-switch button.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
     }
 
     .header-actions {
@@ -97,11 +118,11 @@
       flex-shrink: 0;
     }
     .aside-top {
-      padding: 14px 14px 10px 14px;
+      padding: 12px 14px 10px 14px;
       border-bottom: 1px solid var(--border);
     }
     .aside-top h3 {
-      font-size: 12.5px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--muted);
@@ -124,11 +145,23 @@
     #lista-articulos {
       list-style: none;
       overflow-y: auto;
-      padding: 10px 10px 52px 10px;
+      padding: 8px 10px 56px 10px;
       flex: 1;
     }
-    #lista-articulos li {
-      margin-bottom: 3px;
+    .toc-group-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--muted);
+      padding: 10px 6px 4px 6px;
+      margin-top: 6px;
+      border-top: 1px solid var(--border);
+      line-height: 1.35;
+    }
+    .toc-group-header:first-child {
+      border-top: none;
+      margin-top: 0;
     }
     .art-item-btn {
       width: 100%;
@@ -155,16 +188,26 @@
       color: #ffffff;
       font-weight: 600;
     }
-    .hist-badge {
+    .toc-badges {
+      display: inline-flex;
+      gap: 4px;
       flex-shrink: 0;
+    }
+    .mini-badge {
       font-size: 10px;
       padding: 1px 5px;
       border-radius: 4px;
-      background: rgba(245, 158, 11, 0.18);
-      color: #b45309;
       font-weight: 600;
     }
-    .art-item-btn.active .hist-badge {
+    .mini-badge.hist {
+      background: rgba(245, 158, 11, 0.18);
+      color: #b45309;
+    }
+    .mini-badge.cita {
+      background: var(--badge-bg);
+      color: var(--badge-text);
+    }
+    .art-item-btn.active .mini-badge {
       background: rgba(255, 255, 255, 0.25);
       color: #ffffff;
     }
@@ -172,73 +215,197 @@
     main {
       flex: 1;
       overflow-y: auto;
-      padding: 36px 20px 72px 20px;
+      padding: 28px 20px 76px 20px;
+      scroll-behavior: smooth;
     }
     .doc-shell {
-      max-width: 840px;
+      max-width: 880px;
       margin: 0 auto;
     }
-    .markdown-body {
+
+    /* Miga de pan jerárquica */
+    .hierarchy-banner {
       background: var(--surface);
-      padding: 38px 40px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
       border: 1px solid var(--border);
-      line-height: 1.65;
-      font-size: 16px;
+      border-left: 4px solid var(--accent);
+      border-radius: 7px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
     }
-    .markdown-body h1 {
-      font-size: 24px;
-      margin-bottom: 18px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--border);
+    .hierarchy-banner strong {
+      color: var(--text);
+      display: block;
+      font-size: 14px;
+      margin-top: 2px;
     }
-    .markdown-body h2 {
-      font-size: 18px;
-      margin-top: 28px;
+
+    /* Tarjeta de cada artículo dentro del capítulo */
+    .art-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      scroll-margin-top: 18px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .art-card.highlighted {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.18);
+    }
+
+    .art-card-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
       margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
     }
-    .markdown-body h3 {
-      font-size: 15.5px;
-      margin-top: 18px;
-      margin-bottom: 8px;
+    .art-citas-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
       color: var(--muted);
     }
-    .markdown-body p, .markdown-body li {
-      margin-bottom: 0.9em;
+    .cita-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      text-decoration: none;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+    .cita-chip:hover {
+      opacity: 0.85;
+    }
+    .btn-copy-art {
+      margin-left: auto;
+      font-size: 12px;
+      padding: 4px 9px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .btn-copy-art:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .art-body h1 {
+      font-size: 19px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    .art-body p, .art-body li {
+      font-size: 15.5px;
+      line-height: 1.65;
+      margin-bottom: 0.85em;
       text-align: justify;
       text-justify: inter-word;
     }
-    .markdown-body ul, .markdown-body ol {
+    .art-body ul, .art-body ol {
       margin-left: 22px;
-      margin-bottom: 1em;
+      margin-bottom: 0.9em;
     }
-    .markdown-body blockquote {
+    .art-body blockquote {
       border-left: 4px solid var(--accent);
       padding-left: 14px;
       color: var(--muted);
-      margin: 1em 0;
+      margin: 0.9em 0;
     }
-    .markdown-body hr {
-      border: none;
-      border-top: 1px dashed var(--border);
-      margin: 24px 0;
+    .art-body a.boe-ref-interna {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      font-weight: 500;
     }
 
-    .boe-historial-box {
-      margin-top: 28px;
-      padding: 18px 20px;
-      border-radius: 8px;
+    .boe-historial-details {
+      margin-top: 14px;
       border: 1px solid rgba(245, 158, 11, 0.45);
       background: rgba(245, 158, 11, 0.07);
+      border-radius: 6px;
+      padding: 10px 14px;
     }
-    .boe-historial-box h2:first-child {
-      margin-top: 0;
-      font-size: 16px;
+    .boe-historial-details summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: #b45309;
+      user-select: none;
+    }
+    .boe-historial-content {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(245, 158, 11, 0.4);
+      font-size: 14px;
+    }
+    .boe-historial-content h2 {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .boe-historial-content h3 {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 10px 0 6px 0;
+    }
+
+    /* Índice estructural cuando aún no se ha elegido capítulo/artículo */
+    .estructura-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .estructura-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 7px;
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      color: var(--text);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .estructura-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-color: var(--accent);
+    }
+    .estructura-card .sup {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .estructura-card .tit {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .estructura-card .meta {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 500;
     }
 
     .nav-articulos {
-      margin-top: 16px;
+      margin-top: 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -290,7 +457,7 @@
         border-right: none;
         border-bottom: 1px solid var(--border);
       }
-      .markdown-body { padding: 22px 18px; }
+      .art-card { padding: 18px 16px; }
       #select-ley { max-width: 100%; flex: 1; }
     }
 
@@ -302,13 +469,14 @@
         background: #fff !important;
         padding: 0 !important;
       }
-      header, aside, footer, .nav-articulos {
+      header, aside, footer, .nav-articulos, .btn-copy-art {
         display: none !important;
       }
-      .markdown-body {
-        border: none !important;
+      .art-card {
         box-shadow: none !important;
-        padding: 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #ccc !important;
+        padding: 8px 0 !important;
       }
     }
   </style>
@@ -326,6 +494,10 @@
     <select id="select-ley" disabled>
       <option value="">Cargando leyes...</option>
     </select>
+    <div class="view-switch" title="Cambiar modo de lectura">
+      <button type="button" id="mode-capitulo-btn" class="active">📖 Por Capítulo</button>
+      <button type="button" id="mode-articulo-btn">📄 Solo Artículo</button>
+    </div>
     <div class="header-actions">
       <a id="link-boe-oficial" href="#" target="_blank" rel="noopener noreferrer">📜 Ver en BOE</a>
       <button type="button" id="btn-print" onclick="window.print()">🖨️ Imprimir</button>
@@ -335,8 +507,8 @@
   <div class="layout">
     <aside>
       <div class="aside-top">
-        <h3>Artículos de la norma</h3>
-        <input type="search" id="filtro-articulos" placeholder="Filtrar (ej. 147, 588, bis)..." disabled autocomplete="off">
+        <h3>Índice de la Norma</h3>
+        <input type="search" id="filtro-articulos" placeholder="Buscar artículo, capítulo..." disabled autocomplete="off">
       </div>
       <ul id="lista-articulos">
         <li style="color: var(--muted); font-size: 13px; padding: 8px;">Selecciona una ley para cargar su índice.</li>
@@ -344,16 +516,20 @@
     </aside>
 
     <main id="main-scroll">
-      <div class="doc-shell">
-        <article class="markdown-body" id="doc-content">
-          <h1>📜 Visor Consolidado del BOE</h1>
-          <p>Elige una norma en la barra superior para cargar su índice ligero y leer artículos sueltos con su historial de cambios.</p>
-        </article>
+      <div class="doc-shell" id="doc-shell">
+        <div class="art-card">
+          <div class="art-body">
+            <h1>📜 Visor Consolidado del BOE</h1>
+            <p>Elige una norma en la barra superior para navegar por sus Libros, Títulos y Capítulos con carga bajo demanda, historial de reformas y enlaces cruzados con tus apuntes.</p>
+          </div>
+        </div>
+      </div>
 
+      <div class="doc-shell">
         <div class="nav-articulos" id="nav-articulos" style="display: none;">
-          <button type="button" id="btn-prev-art">← Anterior</button>
+          <button type="button" id="btn-prev-art">← Bloque / Art. anterior</button>
           <span class="ley-meta-footer" id="ley-actualizado-label"></span>
-          <button type="button" id="btn-next-art">Siguiente →</button>
+          <button type="button" id="btn-next-art">Bloque / Art. siguiente →</button>
         </div>
       </div>
     </main>
@@ -363,35 +539,71 @@
     © 2026 Manuel Bernal Carvajal. Todos los derechos reservados. Prohibida su reutilización con fines de lucro sin autorización previa.
   </footer>
 
+  <script src="apuntes_config.js"></script>
   <script src="leyes/leyes_config.js"></script>
+  <script src="leyes/citas_apuntes.js"></script>
   <script>
     (function () {
       "use strict";
 
       const MARCADOR_HISTORIAL = "<!-- HISTORIAL_BOE -->";
       const scriptsCargados = new Set();
+      const cacheMarkdown = new Map();
 
       const selLey = document.getElementById("select-ley");
       const filtroInput = document.getElementById("filtro-articulos");
       const listaArticulos = document.getElementById("lista-articulos");
-      const docContent = document.getElementById("doc-content");
+      const docShell = document.getElementById("doc-shell");
       const linkBoe = document.getElementById("link-boe-oficial");
       const navBox = document.getElementById("nav-articulos");
       const btnPrev = document.getElementById("btn-prev-art");
       const btnNext = document.getElementById("btn-next-art");
       const actualLabel = document.getElementById("ley-actualizado-label");
       const mainScroll = document.getElementById("main-scroll");
+      const btnModoCap = document.getElementById("mode-capitulo-btn");
+      const btnModoArt = document.getElementById("mode-articulo-btn");
 
       let articulosActuales = [];
       let indiceSeleccionado = -1;
       let leyActualId = "";
+      let leyActualNombre = "";
+      let modoVista = "capitulo"; // "capitulo" | "articulo"
+
+      function obtenerClaveGrupo(art) {
+        return [art.libro, art.tituloNorma, art.capitulo, art.seccion]
+          .filter(Boolean)
+          .join(" › ") || "Disposiciones generales";
+      }
+
+      function resolverCitasApuntes(leyId, artId) {
+        if (!window.CITAS_APUNTES_BOE) return [];
+        const rutas = window.CITAS_APUNTES_BOE[`${leyId}/${artId}`] || [];
+        return rutas.map((clave) => {
+          const rutaFull = `apuntes/${clave}`;
+          if (typeof APUNTES_CONFIG !== "undefined") {
+            for (const asig of APUNTES_CONFIG) {
+              const tema = asig.temas.find((t) => t.archivo === rutaFull);
+              if (tema) {
+                const match = tema.titulo.match(/^T0*(\d+(?:\.\d+)?)/i);
+                const tShort = match ? `T${match[1]}` : tema.titulo.split(":")[0];
+                const aShort = asig.asignatura.replace(/^Derecho\s+/i, "");
+                return {
+                  etiqueta: `${aShort} · ${tShort}`,
+                  titulo: tema.titulo,
+                  url: `apuntes.html?asig=${encodeURIComponent(asig.id)}&tema=${encodeURIComponent(tema.id)}`,
+                };
+              }
+            }
+          }
+          return { etiqueta: clave, titulo: clave, url: "apuntes.html" };
+        });
+      }
 
       function poblarLeyes() {
         if (!Array.isArray(window.LEYES_CONFIG) || window.LEYES_CONFIG.length === 0) {
           selLey.innerHTML = '<option value="">No hay leyes configuradas</option>';
           return;
         }
-
         selLey.innerHTML = '<option value="">Selecciona una ley...</option>';
         for (const ley of window.LEYES_CONFIG) {
           const opt = document.createElement("option");
@@ -402,7 +614,6 @@
         selLey.disabled = false;
       }
 
-      // Carga dinámica del indice-<ley>.js solo cuando el usuario elige esa ley
       function cargarIndiceLey(leyMeta) {
         return new Promise((resolve, reject) => {
           window.INDICES_LEYES = window.INDICES_LEYES || {};
@@ -410,39 +621,64 @@
             resolve(window.INDICES_LEYES[leyMeta.id]);
             return;
           }
-
           const src = leyMeta.indiceScript;
           if (scriptsCargados.has(src)) {
-            const esperar = setInterval(() => {
+            const timer = setInterval(() => {
               if (window.INDICES_LEYES[leyMeta.id]) {
-                clearInterval(esperar);
+                clearInterval(timer);
                 resolve(window.INDICES_LEYES[leyMeta.id]);
               }
             }, 30);
             setTimeout(() => {
-              clearInterval(esperar);
-              reject(new Error("Tiempo de espera agotado al cargar el índice"));
+              clearInterval(timer);
+              reject(new Error("Tiempo de espera agotado"));
             }, 6000);
             return;
           }
-
           scriptsCargados.add(src);
           const script = document.createElement("script");
           script.src = src;
           script.async = true;
           script.onload = () => {
-            if (window.INDICES_LEYES[leyMeta.id]) {
-              resolve(window.INDICES_LEYES[leyMeta.id]);
-            } else {
-              reject(new Error("El índice no registró la ley esperada"));
-            }
+            if (window.INDICES_LEYES[leyMeta.id]) resolve(window.INDICES_LEYES[leyMeta.id]);
+            else reject(new Error("Índice no válido"));
           };
           script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
           document.body.appendChild(script);
         });
       }
 
-      function renderListaArticulos(filtroTexto = "") {
+      async function obtenerMarkdownArticulo(rutaArchivo) {
+        if (cacheMarkdown.has(rutaArchivo)) return cacheMarkdown.get(rutaArchivo);
+        const res = await fetch(rutaArchivo);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const md = await res.text();
+        cacheMarkdown.set(rutaArchivo, md);
+        return md;
+      }
+
+      function enlazarReferenciasInternas(html) {
+        const mapaIds = new Set(articulosActuales.map((a) => a.id));
+        return html.replace(
+          /\bart[íi]culo\s+(\d+(?:\s+(?:bis|ter|quater|quinquies|sexies|[a-z]))?)/gi,
+          (match, numRaw) => {
+            const slug =
+              "art-" +
+              numRaw
+                .normalize("NFKD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, "-");
+            if (mapaIds.has(slug)) {
+              return `<a href="?ley=${encodeURIComponent(leyActualId)}&art=${encodeURIComponent(slug)}" class="boe-ref-interna" data-target-art="${slug}">${match}</a>`;
+            }
+            return match;
+          }
+        );
+      }
+
+      function renderListaLateral(filtroTexto = "") {
         const q = filtroTexto.trim().toLowerCase();
         listaArticulos.innerHTML = "";
 
@@ -450,9 +686,11 @@
           .map((art, idx) => ({ art, idx }))
           .filter(({ art }) => {
             if (!q) return true;
+            const jer = obtenerClaveGrupo(art).toLowerCase();
             return (
               art.titulo.toLowerCase().includes(q) ||
-              art.id.toLowerCase().includes(q)
+              art.id.toLowerCase().includes(q) ||
+              jer.includes(q)
             );
           });
 
@@ -462,7 +700,18 @@
         }
 
         const fragment = document.createDocumentFragment();
+        let ultimoGrupo = null;
+
         for (const { art, idx } of filtrados) {
+          const grupo = art.capitulo || art.tituloNorma || art.libro || "Articulado";
+          if (grupo !== ultimoGrupo) {
+            const gh = document.createElement("li");
+            gh.className = "toc-group-header";
+            gh.textContent = grupo;
+            fragment.appendChild(gh);
+            ultimoGrupo = grupo;
+          }
+
           const li = document.createElement("li");
           const btn = document.createElement("button");
           btn.type = "button";
@@ -472,13 +721,26 @@
           spanTitulo.textContent = art.titulo;
           btn.appendChild(spanTitulo);
 
-          if (art.historial) {
-            const badge = document.createElement("span");
-            badge.className = "hist-badge";
-            badge.title = "Este artículo tiene historial de cambios anteriores";
-            badge.textContent = "HIST";
-            btn.appendChild(badge);
+          const badgesWrap = document.createElement("span");
+          badgesWrap.className = "toc-badges";
+
+          const citas = resolverCitasApuntes(leyActualId, art.id);
+          if (citas.length > 0) {
+            const bCita = document.createElement("span");
+            bCita.className = "mini-badge cita";
+            bCita.title = `Citado en ${citas.length} tema(s) de apuntes`;
+            bCita.textContent = `📚${citas.length}`;
+            badgesWrap.appendChild(bCita);
           }
+          if (art.historial) {
+            const bHist = document.createElement("span");
+            bHist.className = "mini-badge hist";
+            bHist.title = "Tiene redacciones anteriores";
+            bHist.textContent = "HIST";
+            badgesWrap.appendChild(bHist);
+          }
+
+          if (badgesWrap.childNodes.length > 0) btn.appendChild(badgesWrap);
 
           btn.addEventListener("click", () => seleccionarArticulo(idx));
           li.appendChild(btn);
@@ -487,55 +749,189 @@
         listaArticulos.appendChild(fragment);
       }
 
-      function actualizarBotonesEstado() {
-        document.querySelectorAll(".art-item-btn").forEach((btn) => {
-          btn.classList.remove("active");
-        });
-        // Re-sincronizar si está visible
-        renderListaArticulos(filtroInput.value);
+      function construirTarjetaArticuloHtml(art, mdTexto, esDestacado) {
+        let vigenteMd = mdTexto;
+        let historialHtml = "";
 
-        navBox.style.display = indiceSeleccionado >= 0 ? "flex" : "none";
-        btnPrev.disabled = indiceSeleccionado <= 0;
-        btnNext.disabled = indiceSeleccionado < 0 || indiceSeleccionado >= articulosActuales.length - 1;
-      }
-
-      function renderMarkdownConHistorial(mdTexto) {
         if (mdTexto.includes(MARCADOR_HISTORIAL)) {
-          const [vigenteMd, historialMd] = mdTexto.split(MARCADOR_HISTORIAL, 2);
-          const vigenteHtml = marked.parse(vigenteMd.trim());
-          const historialHtml = marked.parse(historialMd.trim());
-          return `
-            <div class="boe-vigente">${vigenteHtml}</div>
-            <section class="boe-historial-box" aria-label="Historial de redacciones">
-              ${historialHtml}
-            </section>
+          const [vig, hist] = mdTexto.split(MARCADOR_HISTORIAL, 2);
+          vigenteMd = vig.trim();
+          historialHtml = `
+            <details class="boe-historial-details">
+              <summary>📜 Ver redacción anterior / historial de cambios</summary>
+              <div class="boe-historial-content">${marked.parse(hist.trim())}</div>
+            </details>
           `;
         }
-        return marked.parse(mdTexto);
+
+        const cuerpoHtml = enlazarReferenciasInternas(marked.parse(vigenteMd));
+        const citas = resolverCitasApuntes(leyActualId, art.id);
+
+        const citasChipsHtml = citas.length > 0
+          ? `<span>📚 En apuntes:</span>` +
+            citas
+              .map(
+                (c) =>
+                  `<a class="cita-chip" href="${c.url}" title="${c.titulo}">${c.etiqueta}</a>`
+              )
+              .join("")
+          : `<span>${art.id}</span>`;
+
+        return `
+          <article class="art-card ${esDestacado ? "highlighted" : ""}" id="card-${art.id}">
+            <div class="art-card-toolbar">
+              <div class="art-citas-row">${citasChipsHtml}</div>
+              <button type="button" class="btn-copy-art" data-copy-art="${art.id}">📋 Copiar cita</button>
+            </div>
+            <div class="art-body">${cuerpoHtml}</div>
+            ${historialHtml}
+          </article>
+        `;
       }
 
       async function seleccionarArticulo(idx) {
         if (idx < 0 || idx >= articulosActuales.length) return;
         indiceSeleccionado = idx;
-        const art = articulosActuales[idx];
+        const artObjetivo = articulosActuales[idx];
 
         const url = new URL(window.location.href);
         url.searchParams.set("ley", leyActualId);
-        url.searchParams.set("art", art.id);
+        url.searchParams.set("art", artObjetivo.id);
         window.history.replaceState({}, "", url.toString());
 
-        actualizarBotonesEstado();
-        docContent.innerHTML = `<p>Cargando <strong>${art.titulo}</strong>...</p>`;
+        renderListaLateral(filtroInput.value);
+        navBox.style.display = "flex";
+        btnPrev.disabled = idx <= 0;
+        btnNext.disabled = idx >= articulosActuales.length - 1;
+
+        // Determinar si cargamos todo el capítulo/sección o solo el artículo
+        const grupoObjetivo = obtenerClaveGrupo(artObjetivo);
+        const listaACargar =
+          modoVista === "capitulo"
+            ? articulosActuales.filter((a) => obtenerClaveGrupo(a) === grupoObjetivo)
+            : [artObjetivo];
+
+        docShell.innerHTML = `
+          <div class="hierarchy-banner">
+            <span>${grupoObjetivo}</span>
+            <strong>Cargando ${listaACargar.length} artículo(s)...</strong>
+          </div>
+        `;
 
         try {
-          const res = await fetch(art.archivo);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const md = await res.text();
-          docContent.innerHTML = renderMarkdownConHistorial(md);
-          mainScroll.scrollTop = 0;
+          const contenidos = await Promise.all(
+            listaACargar.map(async (item) => ({
+              art: item,
+              md: await obtenerMarkdownArticulo(item.archivo),
+            }))
+          );
+
+          const bannerHtml = `
+            <div class="hierarchy-banner">
+              <span>${leyActualNombre} › ${grupoObjetivo}</span>
+              <strong>${
+                modoVista === "capitulo"
+                  ? `Lectura por bloque (${contenidos.length} artículos)`
+                  : artObjetivo.titulo
+              }</strong>
+            </div>
+          `;
+
+          const tarjetasHtml = contenidos
+            .map(({ art, md }) =>
+              construirTarjetaArticuloHtml(art, md, art.id === artObjetivo.id)
+            )
+            .join("");
+
+          docShell.innerHTML = bannerHtml + tarjetasHtml;
+
+          // Eventos de enlaces internos entre artículos de la misma ley
+          docShell.querySelectorAll("a.boe-ref-interna").forEach((enlace) => {
+            enlace.addEventListener("click", (e) => {
+              e.preventDefault();
+              const targetSlug = enlace.getAttribute("data-target-art");
+              const targetIdx = articulosActuales.findIndex((a) => a.id === targetSlug);
+              if (targetIdx >= 0) seleccionarArticulo(targetIdx);
+            });
+          });
+
+          // Eventos de copiar cita limpia
+          docShell.querySelectorAll("button.btn-copy-art").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              const slug = btn.getAttribute("data-copy-art");
+              const card = document.getElementById(`card-${slug}`);
+              if (!card) return;
+              const titulo = card.querySelector("h1")?.innerText || "";
+              const parrafos = Array.from(card.querySelectorAll(".art-body p, .art-body li"))
+                .map((p) => p.innerText.trim())
+                .join("\n");
+              const textoCita = `${titulo} (${leyActualNombre}):\n${parrafos}`;
+              try {
+                await navigator.clipboard.writeText(textoCita);
+                const prev = btn.textContent;
+                btn.textContent = "✅ Copiado";
+                setTimeout(() => (btn.textContent = prev), 1600);
+              } catch {}
+            });
+          });
+
+          const targetCard = document.getElementById(`card-${artObjetivo.id}`);
+          if (targetCard && modoVista === "capitulo") {
+            targetCard.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            mainScroll.scrollTop = 0;
+          }
         } catch (err) {
-          docContent.innerHTML = `<p style="color: #dc3545;">No se pudo cargar el artículo: ${err.message}</p>`;
+          docShell.innerHTML = `<div class="art-card"><p style="color:#dc3545;">Error al cargar: ${err.message}</p></div>`;
         }
+      }
+
+      function renderPortadaLey(leyMeta) {
+        // Agrupar capítulos/títulos para mostrar índice estructural rico en lugar de página vacía
+        const gruposMap = new Map();
+        articulosActuales.forEach((art, idx) => {
+          const clave = obtenerClaveGrupo(art);
+          if (!gruposMap.has(clave)) {
+            gruposMap.set(clave, {
+              clave,
+              superior: [art.libro, art.tituloNorma].filter(Boolean).join(" · ") || leyMeta.nombre,
+              principal: art.seccion || art.capitulo || art.tituloNorma || leyMeta.nombre,
+              primerIdx: idx,
+              count: 0,
+              conHistorial: 0,
+            });
+          }
+          const g = gruposMap.get(clave);
+          g.count += 1;
+          if (art.historial) g.conHistorial += 1;
+        });
+
+        const tarjetas = Array.from(gruposMap.values())
+          .map(
+            (g) => `
+            <button type="button" class="estructura-card" data-first-idx="${g.primerIdx}">
+              <div class="sup">${g.superior}</div>
+              <div class="tit">${g.principal}</div>
+              <div class="meta">${g.count} artículos${g.conHistorial ? ` · ${g.conHistorial} con historial` : ""} →</div>
+            </button>
+          `
+          )
+          .join("");
+
+        docShell.innerHTML = `
+          <div class="hierarchy-banner">
+            <span>Norma consolidada BOE · ${articulosActuales.length} artículos</span>
+            <strong>${leyMeta.nombre}</strong>
+          </div>
+          <div class="estructura-grid">${tarjetas}</div>
+        `;
+
+        docShell.querySelectorAll(".estructura-card").forEach((card) => {
+          card.addEventListener("click", () => {
+            const idx = Number(card.getAttribute("data-first-idx"));
+            seleccionarArticulo(idx);
+          });
+        });
       }
 
       async function seleccionarLey(leyId, artIdInicial = null) {
@@ -559,12 +955,13 @@
           filtroInput.disabled = true;
           linkBoe.classList.remove("visible");
           listaArticulos.innerHTML = '<li style="color: var(--muted); font-size: 13px; padding: 8px;">Selecciona una ley para cargar su índice.</li>';
-          docContent.innerHTML = '<h1>📜 Visor Consolidado del BOE</h1><p>Elige una norma en la barra superior para cargar su índice ligero y leer artículos sueltos con su historial de cambios.</p>';
+          docShell.innerHTML = '<div class="art-card"><div class="art-body"><h1>📜 Visor Consolidado del BOE</h1><p>Elige una norma en la barra superior para navegar por sus Libros, Títulos y Capítulos.</p></div></div>';
           return;
         }
 
         const leyMeta = (window.LEYES_CONFIG || []).find((l) => l.id === leyId);
         if (!leyMeta) return;
+        leyActualNombre = leyMeta.nombre;
 
         if (leyMeta.urlBoe) {
           linkBoe.href = leyMeta.urlBoe;
@@ -575,8 +972,7 @@
 
         filtroInput.value = "";
         filtroInput.disabled = true;
-        listaArticulos.innerHTML = '<li style="color: var(--muted); font-size: 13px; padding: 8px;">Cargando índice de artículos...</li>';
-        docContent.innerHTML = `<h1>${leyMeta.nombre}</h1><p>Cargando índice de la norma...</p>`;
+        listaArticulos.innerHTML = '<li style="color: var(--muted); font-size: 13px; padding: 8px;">Cargando índice...</li>';
 
         try {
           const indiceData = await cargarIndiceLey(leyMeta);
@@ -585,7 +981,7 @@
             ? `Sincronizado BOE: ${indiceData.actualizado}`
             : "";
           filtroInput.disabled = false;
-          renderListaArticulos("");
+          renderListaLateral("");
 
           if (artIdInicial) {
             const foundIdx = articulosActuales.findIndex((a) => a.id === artIdInicial);
@@ -595,18 +991,31 @@
             }
           }
 
-          docContent.innerHTML = `
-            <h1>${leyMeta.nombre}</h1>
-            <p>Índice cargado (${articulosActuales.length} artículos). Selecciona un artículo en la barra lateral o usa el filtro para ir directo.</p>
-          `;
+          renderPortadaLey(leyMeta);
         } catch (err) {
           listaArticulos.innerHTML = `<li style="color: #dc3545; font-size: 13px; padding: 8px;">Error: ${err.message}</li>`;
-          docContent.innerHTML = `<p style="color: #dc3545;">No se pudo cargar el índice de la ley: ${err.message}</p>`;
+          docShell.innerHTML = `<div class="art-card"><p style="color:#dc3545;">Error: ${err.message}</p></div>`;
         }
       }
 
+      btnModoCap.addEventListener("click", () => {
+        if (modoVista === "capitulo") return;
+        modoVista = "capitulo";
+        btnModoCap.classList.add("active");
+        btnModoArt.classList.remove("active");
+        if (indiceSeleccionado >= 0) seleccionarArticulo(indiceSeleccionado);
+      });
+
+      btnModoArt.addEventListener("click", () => {
+        if (modoVista === "articulo") return;
+        modoVista = "articulo";
+        btnModoArt.classList.add("active");
+        btnModoCap.classList.remove("active");
+        if (indiceSeleccionado >= 0) seleccionarArticulo(indiceSeleccionado);
+      });
+
       selLey.addEventListener("change", () => seleccionarLey(selLey.value));
-      filtroInput.addEventListener("input", () => renderListaArticulos(filtroInput.value));
+      filtroInput.addEventListener("input", () => renderListaLateral(filtroInput.value));
       btnPrev.addEventListener("click", () => seleccionarArticulo(indiceSeleccionado - 1));
       btnNext.addEventListener("click", () => seleccionarArticulo(indiceSeleccionado + 1));
 
