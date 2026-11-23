@@ -1,4 +1,18 @@
 {
+  "_instrucciones_para_usuario_e_ias": {
+    "proposito": "Configuración editable de abreviaturas, denominaciones y asignaturas por defecto para el script scripts/indexar_citas.py, que enlaza citas de artículos en apuntes/**/*.md con los artículos consolidados generados en leyes/<slug-ley>/.",
+    "como_anadir_una_ley_nueva": [
+      "1. Comprueba primero el slug exacto de la carpeta de la ley en leyes/ (generado por scripts/actualizar_leyes.py a partir de leyes/lista_leyes.txt, por ejemplo 'codigo-civil' o 'ley-de-enjuiciamiento-civil').",
+      "2. Añade en 'alias_leyes' una clave con ese slug exacto y un array de cadenas con siglas, abreviaturas con o sin puntos y nombres completos o habituales de la norma.",
+      "3. Ordena o escribe las denominaciones largas junto a las siglas cortas; el script ya normaliza tildes, mayúsculas/minúsculas y puntos opcionales en siglas.",
+      "4. Si la ley corresponde de forma habitual a una carpeta de asignatura de apuntes/ cuando se citan artículos sin mencionar la ley, añádela también en 'asignaturas_defecto'."
+    ],
+    "reglas_para_ias_al_actualizar_este_archivo": [
+      "No eliminar ni alterar los slugs existentes en 'alias_leyes' salvo que el usuario indique que ha cambiado el nombre/carpeta de una ley.",
+      "No borrar 'asignaturas_defecto' ya configuradas; añadir o completar listas manteniendo el orden de prioridad.",
+      "Mantener el JSON válido (sin comentarios //, sin comas finales) y conservar este bloque de instrucciones intacto."
+    ]
+  },
   "alias_leyes": {
     "codigo-penal": [
       "CP",
