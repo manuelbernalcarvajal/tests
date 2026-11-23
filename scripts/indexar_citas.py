@@ -6,50 +6,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 LEYES_DIR = BASE_DIR / "leyes"
 APUNTES_DIR = BASE_DIR / "apuntes"
+ABREVIATURAS_FILE = LEYES_DIR / "abreviaturas_leyes.json"
 CITAS_JS_FILE = LEYES_DIR / "citas_apuntes.js"
-
-# 1. Diccionario de abreviaturas y denominaciones -> posibles slugs de carpeta en leyes/
-ALIAS_LEYES: list[tuple[str, list[str]]] = [
-    (r"\b(?:CP|C\.P\.|C[oó]digo\s+Penal)\b", ["codigo-penal"]),
-    (
-        r"\b(?:LECrim|LECr|L\.E\.Crim\.|Ley\s+de\s+Enjuiciamiento\s+Criminal|Ley\s+de\s+Enjuiciamiento\s+Penal)\b",
-        ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"],
-    ),
-    (
-        r"\b(?:LEC|L\.E\.C\.|Ley\s+de\s+Enjuiciamiento\s+Civil)\b",
-        ["ley-de-enjuiciamiento-civil"],
-    ),
-    (r"\b(?:CC|C\.c\.|C[oó]digo\s+Civil)\b", ["codigo-civil"]),
-    (
-        r"\b(?:CE|C\.E\.|Constituci[oó]n(?:\s+Espa[nñ]ola)?)\b",
-        ["constitucion-espanola", "constitucion"],
-    ),
-    (
-        r"\b(?:LOPJ|L\.O\.P\.J\.|Ley\s+Org[aá]nica\s+del\s+Poder\s+Judicial)\b",
-        ["ley-organica-del-poder-judicial", "lopj"],
-    ),
-    (
-        r"\b(?:LJV|Ley\s+de\s+(?:la\s+)?Jurisdicci[oó]n\s+Voluntaria)\b",
-        ["ley-de-la-jurisdiccion-voluntaria", "ley-de-jurisdiccion-voluntaria"],
-    ),
-    (
-        r"\b(?:TRLGDCU|LGDCU|Ley\s+General\s+para\s+la\s+Defensa\s+de\s+los\s+Consumidores)\b",
-        ["trlgdcu", "ley-general-para-la-defensa-de-los-consumidores-y-usuarios"],
-    ),
-]
-
-# 2. Leyes por defecto según carpeta de asignatura cuando se cita "art. X" sin siglas
-ASIG_A_LEYES_DEFECTO: dict[str, list[str]] = {
-    "penal": ["codigo-penal"],
-    "procesalpenal": ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"],
-    "civil": ["codigo-civil", "ley-de-enjuiciamiento-civil"],
-    "procesalcivil1": ["ley-de-enjuiciamiento-civil"],
-}
 
 SUFIJOS_LATINOS = r"(?:bis|ter|quater|quinquies|sexies|septies|octies|novies|decies|[a-z])"
 
-# Captura bloques completos tipo:
-# "art. 147", "artículo 588 bis a.4", "arts. 10, 11 y 12", "artículos 583 a 588"
 PATRON_BLOQUE_CITA = re.compile(
     rf"\b(?:art[íi]culos?|arts?\.?)\s+"
     rf"("
@@ -66,15 +27,60 @@ def slugify(texto: str) -> str:
     return texto
 
 
+def normalizar_sin_tildes(texto: str) -> str:
+    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii").lower()
+
+
+def construir_patrones_alias(alias_map: dict[str, list[str]]) -> list[tuple[re.Pattern, list[str]]]:
+    """
+    Compila patrones flexibles (insensibles a mayúsculas y tildes) por cada término
+    y agrupa los slugs de ley que comparten el mismo término.
+    """
+    termino_a_slugs: dict[str, list[str]] = {}
+    for ley_slug, terminos in alias_map.items():
+        for term in terminos:
+            t_limpio = term.strip()
+            if not t_limpio:
+                continue
+            termino_a_slugs.setdefault(t_limpio, [])
+            if ley_slug not in termino_a_slugs[t_limpio]:
+                termino_a_slugs[t_limpio].append(ley_slug)
+
+    patrones: list[tuple[re.Pattern, list[str]]] = []
+    # Ordenar de más largo a más corto para que 'Código Penal' case antes que 'CP'
+    for term, slugs in sorted(termino_a_slugs.items(), key=lambda x: len(x[0]), reverse=True):
+        partes = re.split(r"\s+", normalizar_sin_tildes(term))
+        # Permitir puntos opcionales en siglas como C.P. -> C\.?P\.?
+        partes_regex = []
+        for p in partes:
+            if len(p) <= 4 and p.isalpha():
+                partes_regex.append("".join(f"{re.escape(ch)}\\.?" for ch in p))
+            else:
+                partes_regex.append(re.escape(p))
+        regex_str = r"(?<![A-Za-z0-9])" + r"\s+".join(partes_regex) + r"(?![A-Za-z0-9])"
+        patrones.append((re.compile(regex_str, re.IGNORECASE), slugs))
+
+    return patrones
+
+
+def cargar_config_abreviaturas() -> tuple[list[tuple[re.Pattern, list[str]]], dict[str, list[str]]]:
+    if not ABREVIATURAS_FILE.exists():
+        print(f"[AVISO] No existe {ABREVIATURAS_FILE}; usando solo asignaturas por defecto.")
+        return [], {}
+
+    data = json.loads(ABREVIATURAS_FILE.read_text(encoding="utf-8"))
+    alias_raw = data.get("alias_leyes") or {}
+    asig_def = data.get("asignaturas_defecto") or {}
+    return construir_patrones_alias(alias_raw), asig_def
+
+
 def cargar_indices_leyes() -> dict[str, set[str]]:
-    """Lee todos los leyes/*/indice-*.js ya generados y extrae los slugs válidos de cada ley."""
     indices: dict[str, set[str]] = {}
     if not LEYES_DIR.exists():
         return indices
 
     for js_file in sorted(LEYES_DIR.glob("*/indice-*.js")):
         contenido = js_file.read_text(encoding="utf-8", errors="ignore")
-        # Extraer el objeto JSON asignado a window.INDICES_LEYES[...] = {...};
         m = re.search(r"window\.INDICES_LEYES\[[^\]]+\]\s*=\s*(\{.*\});\s*$", contenido, re.DOTALL)
         if not m:
             continue
@@ -90,14 +96,7 @@ def cargar_indices_leyes() -> dict[str, set[str]]:
 
 
 def normalizar_token_articulo(token: str) -> str | None:
-    """
-    Convierte '588 bis a.4' o '24.1' o '147 bis' en 'art-588-bis-a' / 'art-24' / 'art-147-bis'.
-    """
-    m = re.match(
-        rf"^\s*(\d+(?:\s+{SUFIJOS_LATINOS})?)",
-        token.strip(),
-        re.IGNORECASE,
-    )
+    m = re.match(rf"^\s*(\d+(?:\s+{SUFIJOS_LATINOS})?)", token.strip(), re.IGNORECASE)
     if not m:
         return None
     base = slugify(m.group(1))
@@ -105,18 +104,12 @@ def normalizar_token_articulo(token: str) -> str | None:
 
 
 def expandir_expresion_articulos(expr: str) -> list[str]:
-    """
-    Descompone listas ('10, 11 y 12') y rangos ('583 a 588' o '147-150') en slugs ['art-10', ...].
-    """
     resultados: list[str] = []
-    # Separar primero por comas o conjunciones 'y' / 'e'
     partes = re.split(r"\s*(?:,|\by\b|\be\b)\s*", expr.strip(), flags=re.IGNORECASE)
 
     for parte in partes:
         if not parte:
             continue
-
-        # Comprobar si es un rango numérico puro: "583 a 588", "583 al 588", "583-588"
         m_rango = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", parte.strip(), re.IGNORECASE)
         if m_rango:
             inicio = int(m_rango.group(1))
@@ -134,40 +127,40 @@ def expandir_expresion_articulos(expr: str) -> list[str]:
 
 
 def detectar_leyes_en_contexto(
-    texto: str, start: int, end: int, carpeta_asig: str, leyes_disponibles: set[str]
+    texto_norm: str,
+    start: int,
+    end: int,
+    carpeta_asig: str,
+    patrones_alias: list[tuple[re.Pattern, list[str]]],
+    asig_defecto: dict[str, list[str]],
+    leyes_disponibles: set[str],
 ) -> list[str]:
-    """
-    Determina a qué ley o leyes corresponde una cita mirando:
-    1) Siglas/nombre justo después de la cita (ventana +45 chars)
-    2) Siglas/nombre justo antes de la cita (ventana -45 chars)
-    3) Asignatura por defecto de la carpeta
-    """
-    despues = texto[end : min(len(texto), end + 45)]
-    for patron, candidatos in ALIAS_LEYES:
-        if re.search(patron, despues):
+    despues = texto_norm[end : min(len(texto_norm), end + 50)]
+    for patron, candidatos in patrones_alias:
+        if patron.search(despues):
             validos = [c for c in candidatos if c in leyes_disponibles]
             if validos:
                 return validos
 
-    antes = texto[max(0, start - 45) : start]
-    for patron, candidatos in ALIAS_LEYES:
-        if re.search(patron, antes):
+    antes = texto_norm[max(0, start - 50) : start]
+    for patron, candidatos in patrones_alias:
+        if patron.search(antes):
             validos = [c for c in candidatos if c in leyes_disponibles]
             if validos:
                 return validos
 
-    por_defecto = ASIG_A_LEYES_DEFECTO.get(carpeta_asig, [])
+    por_defecto = asig_defecto.get(carpeta_asig, [])
     return [c for c in por_defecto if c in leyes_disponibles]
 
 
 def main() -> None:
     indices_leyes = cargar_indices_leyes()
     leyes_disponibles = set(indices_leyes.keys())
-
     if not indices_leyes:
         print("No hay índices de leyes en leyes/*/indice-*.js todavía.")
         return
 
+    patrones_alias, asig_defecto = cargar_config_abreviaturas()
     citas: dict[str, set[str]] = {}
     total_menciones = 0
     sin_match_articulo = 0
@@ -179,6 +172,7 @@ def main() -> None:
 
         carpeta_asig = clave_apunte.split("/", 1)[0]
         texto = md_file.read_text(encoding="utf-8", errors="ignore")
+        texto_norm = normalizar_sin_tildes(texto)
 
         for m in PATRON_BLOQUE_CITA.finditer(texto):
             expr = m.group(1)
@@ -187,7 +181,13 @@ def main() -> None:
                 continue
 
             leyes_destino = detectar_leyes_en_contexto(
-                texto, m.start(), m.end(), carpeta_asig, leyes_disponibles
+                texto_norm,
+                m.start(),
+                m.end(),
+                carpeta_asig,
+                patrones_alias,
+                asig_defecto,
+                leyes_disponibles,
             )
             if not leyes_destino:
                 continue
