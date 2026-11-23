@@ -337,9 +337,6 @@ window.CITAS_APUNTES_BOE = {
   "codigo-civil/art-773": [
     "civil/007.md"
   ],
-  "codigo-civil/art-775": [
-    "civil/007.md"
-  ],
   "codigo-civil/art-777": [
     "civil/015.md"
   ],
@@ -452,6 +449,9 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-173": [
     "procesalpenal/005.md"
   ],
+  "codigo-penal/art-177-bis": [
+    "procesalcivil1/002.md"
+  ],
   "codigo-penal/art-18": [
     "procesalpenal/002.md"
   ],
@@ -502,6 +502,9 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-penal/art-325": [
     "penal/000p.md"
+  ],
+  "codigo-penal/art-368": [
+    "procesalpenal/005.md"
   ],
   "codigo-penal/art-369": [
     "penal/001.md"
@@ -1258,9 +1261,6 @@ window.CITAS_APUNTES_BOE = {
   "ley-de-enjuiciamiento-civil/art-782": [
     "civil/010.md"
   ],
-  "ley-de-enjuiciamiento-civil/art-787": [
-    "procesalpenal/003.md"
-  ],
   "ley-de-enjuiciamiento-civil/art-8": [
     "civil/006.md"
   ],
@@ -1616,9 +1616,6 @@ window.CITAS_APUNTES_BOE = {
   "ley-de-enjuiciamiento-penal/art-363": [
     "procesalpenal/007.md"
   ],
-  "ley-de-enjuiciamiento-penal/art-368": [
-    "procesalpenal/005.md"
-  ],
   "ley-de-enjuiciamiento-penal/art-379": [
     "procesalpenal/005.md",
     "procesalpenal/006.md"
@@ -1785,8 +1782,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-penal/art-757": [
     "procesalpenal/001.md",
-    "procesalpenal/002.md",
-    "procesalpenal/005.md"
+    "procesalpenal/002.md"
   ],
   "ley-de-enjuiciamiento-penal/art-761": [
     "procesalpenal/003.md"
@@ -1828,6 +1824,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/005.md"
   ],
   "ley-de-enjuiciamiento-penal/art-80": [
+    "procesalpenal/001.md",
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-800": [
@@ -1970,6 +1967,9 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-organica-del-poder-judicial/art-82": [
     "procesalcivil1/002.md"
+  ],
+  "ley-organica-del-poder-judicial/art-84": [
+    "procesalpenal/006.md"
   ],
   "ley-organica-del-poder-judicial/art-88": [
     "procesalpenal/002.md"
