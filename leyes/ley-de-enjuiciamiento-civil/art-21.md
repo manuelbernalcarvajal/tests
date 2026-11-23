@@ -1,0 +1,7 @@
+# Artículo 21. Allanamiento.
+
+1. Cuando el demandado se allane a todas las pretensiones del actor, el tribunal dictará sentencia condenatoria de acuerdo con lo solicitado por éste, pero si el allanamiento se hiciera en fraude de ley o supusiera renuncia contra el interés general o perjuicio de tercero, se dictará auto rechazándolo y seguirá el proceso adelante.
+
+2. Cuando se trate de un allanamiento parcial el tribunal, a instancia del demandante, podrá dictar de inmediato auto acogiendo las pretensiones que hayan sido objeto de dicho allanamiento. Para ello será necesario que, por la naturaleza de dichas pretensiones, sea posible un pronunciamiento separado que no prejuzgue las restantes cuestiones no allanadas, respecto de las cuales continuará el proceso. Este auto será ejecutable conforme a lo establecido en los artículos 517 y siguientes de esta Ley.
+
+3. Si el allanamiento resultase del compromiso con efectos de transacción previsto en el apartado 3 del artículo 437 para los juicios de desahucio por falta de pago de rentas o cantidades debidas, o por expiración legal o contractual del plazo, la resolución que homologue la transacción declarará que, de no cumplirse con el plazo del desalojo establecido en la transacción, ésta quedará sin efecto, y que se llevará a cabo el lanzamiento sin más trámite y sin notificación alguna al condenado, en el día y hora fijadas en la citación si ésta es de fecha posterior, o en el día y hora que se señale en dicha resolución.

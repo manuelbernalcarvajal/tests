@@ -1,0 +1,3 @@
+# Artículo 39.
+
+Si por haber expirado el plazo durante el cual funcionaban legalmente o por haber realizado el fin para el cual se constituyeron, o por ser ya imposible aplicar a éste la actividad y los medios de que disponían, dejasen de funcionar las corporaciones, asociaciones y fundaciones, se dará a sus bienes la aplicación que las leyes, o los estatutos, o las cláusulas fundacionales, les hubiesen en esta previsión asignado. Si nada se hubiere establecido previamente, se aplicarán esos bienes a la realización de fines análogos, en interés de la región, provincia o municipio que principalmente debieran recoger los beneficios de las instituciones extinguidas.

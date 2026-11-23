@@ -1,0 +1,5 @@
+# Artículo 56.
+
+Quienes deseen contraer matrimonio acreditarán previamente en acta o expediente tramitado conforme a la legislación del Registro Civil, que reúnen los requisitos de capacidad o la inexistencia de impedimentos o su dispensa, de acuerdo con lo previsto en este Código.
+
+El Letrado de la Administración de Justicia, Notario, Encargado del Registro Civil o funcionario que tramite el acta o expediente, cuando sea necesario, podrá recabar de las Administraciones o entidades de iniciativa social de promoción y protección de los derechos de las personas con discapacidad, la provisión de apoyos humanos, técnicos y materiales que faciliten la emisión, interpretación y recepción del consentimiento del o los contrayentes. Solo en el caso excepcional de que alguno de los contrayentes presentare una condición de salud que, de modo evidente, categórico y sustancial, pueda impedirle prestar el consentimiento matrimonial pese a las medidas de apoyo, se recabará dictamen médico sobre su aptitud para prestar el consentimiento.

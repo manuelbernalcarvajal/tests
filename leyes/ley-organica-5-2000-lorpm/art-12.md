@@ -1,0 +1,5 @@
+# Artículo 12. Procedimiento de aplicación de medidas en supuestos de pluralidad de infracciones.
+
+1. A los fines previstos en el artículo anterior, en cuanto el Juez sentenciador tenga conocimiento de la existencia de otras medidas firmes en ejecución, pendientes de ejecución o suspendidas condicionalmente, impuestas al mismo menor por otros jueces de menores en anteriores sentencias, y una vez que la medida o medidas por él impuestas sean firmes, ordenará al secretario judicial que dé traslado del testimonio de su sentencia, por el medio más rápido posible, al Juez que haya dictado la primera sentencia firme, el cual será el competente para la ejecución de todas, asumiendo las funciones previstas en el apartado 2 de este artículo.
+
+2. El Juez competente para la ejecución procederá a la refundición y a ordenar la ejecución de todas las medidas impuestas conforme establece el artículo 47 de esta Ley. Desde ese momento, pasará a ser competente a todos los efectos con exclusión de los órganos judiciales que hubieran dictado las posteriores resoluciones.

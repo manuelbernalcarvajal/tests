@@ -1,0 +1,7 @@
+# Artículo 67. Supuestos especiales de inscripción de la defunción.
+
+1. Cuando el cadáver hubiera desaparecido o se hubiera inhumado antes de la inscripción, será necesaria resolución del Secretario judicial declarando el fallecimiento u orden de la autoridad judicial en la que se acredite legalmente el fallecimiento.
+
+2. Si hubiera indicios de muerte violenta o en cualquier caso en que deban incoarse diligencias judiciales, la inscripción de la defunción no supondrá por sí misma la concesión de licencia de enterramiento o incineración. Dicha licencia se expedirá cuando se autorice por el órgano judicial competente.
+
+3. Cuando el fallecimiento hubiere ocurrido con posterioridad a los seis primeros meses de gestación, antes del nacimiento, y siempre que el recién nacido hubiera fallecido antes de recibir el alta médica, después del parto, el certificado médico deberá ser firmado, al menos, por dos facultativos, quienes afirmarán, bajo su responsabilidad que, del parto y, en su caso, de las pruebas realizadas con el material genético de la madre y el hijo, no se desprenden dudas razonables sobre la relación materno filial; haciéndose constar en la inscripción, o en el archivo a que se refiere la disposición adicional cuarta en su caso, la realización de dichas pruebas y el centro sanitario que inicialmente conserve la información relacionada con las mismas, sin perjuicio del traslado de esta información a los archivos definitivos de la Administración correspondiente cuando proceda.

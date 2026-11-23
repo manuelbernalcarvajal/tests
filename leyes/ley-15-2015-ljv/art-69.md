@@ -1,0 +1,5 @@
+# Artículo 69. Defensor judicial en caso de desaparición.
+
+1. En los casos de desaparición de una persona, si se solicitare por parte legitimada o por el Ministerio Fiscal, conforme al artículo 181 del Código Civil, el nombramiento de un defensor, acreditados los requisitos que dicho precepto establece, se nombrará por el Secretario judicial defensor a quien corresponda, previa celebración de comparecencia en el plazo máximo de cinco días desde la presentación de la solicitud, a la que se citará a los interesados y al Ministerio Fiscal y se oirá a los testigos propuestos por el solicitante.
+
+2. En caso de urgencia por seguirse perjuicio si se esperase para el nombramiento hasta la celebración de la comparecencia, el Secretario judicial podrá designar de inmediato defensor a quien corresponda o a quien se proponga por el solicitante, así como adoptar medidas urgentes de protección del patrimonio del desaparecido, continuándose luego los trámites ordinarios del expediente que, en este caso, terminará por resolución por la que se ratifiquen o se revoquen el nombramiento y las medidas acordadas al inicio.

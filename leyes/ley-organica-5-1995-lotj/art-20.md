@@ -1,0 +1,3 @@
+# Artículo 20. Devolución del cuestionario.
+
+Dentro de los cinco días siguientes a la recepción del cuestionario, los candidatos a jurados designados lo devolverán al Magistrado que haya de presidir el Tribunal del Jurado, por correo con franqueo oficial, debidamente cumplimentado, haciendo constar, en su caso, aquellas circunstancias personales asociadas a situaciones de discapacidad que pudieran presentar y que fueran relevantes para el ejercicio regular de esta función; asimismo acompañarán las justificaciones documentales que estimen oportunas y concretarán la solicitud de los medios de apoyo y ajustes razonables que necesiten para desempeñar su función.

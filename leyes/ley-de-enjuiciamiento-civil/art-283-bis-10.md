@@ -1,0 +1,7 @@
+# Artículo 283 bis j). Límites impuestos al uso de pruebas obtenidas exclusivamente a través del acceso al expediente de una autoridad de la competencia.
+
+1. Las pruebas que se encuadren en las categorías definidas en el apartado 6 del artículo anterior, que sean obtenidas por una persona física o jurídica exclusivamente a través del acceso al expediente de una autoridad de la competencia, no serán admisibles en las acciones por daños derivados de infracciones al Derecho de la competencia.
+
+2. Hasta que la autoridad de la competencia haya dado por concluido el procedimiento con la adopción de una decisión o de otro modo, las pruebas que se encuadren en las categorías definidas en el apartado 5 del artículo anterior, que sean obtenidas por una persona física o jurídica exclusivamente a través del acceso al expediente de esa autoridad de la competencia, no se considerarán admisibles en las acciones por daños derivados de infracciones al Derecho de la competencia o bien quedarán protegidas de otro modo con arreglo a las normas aplicables.
+
+3. Las pruebas que sean obtenidas por una persona física o jurídica exclusivamente mediante el acceso al expediente de una autoridad de la competencia y que no estén contempladas en los apartados 1 o 2 de este artículo sólo podrán ser utilizadas en una acción por daños derivados de infracciones al Derecho de la competencia por dicha persona o por la persona física o jurídica que sea sucesora de sus derechos, incluida la persona que haya adquirido su reclamación.

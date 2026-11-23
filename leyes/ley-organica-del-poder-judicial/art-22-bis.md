@@ -1,0 +1,13 @@
+# Artículo 22 bis.
+
+1. En aquellas materias en que una norma expresamente lo permita, los Tribunales españoles serán competentes cuando las partes, con independencia de su domicilio, se hayan sometido expresa o tácitamente a ellos. No surtirán efectos los acuerdos que atribuyan la competencia a los Tribunales españoles ni las estipulaciones similares incluidas en un contrato si son contrarios a lo establecido en los artículos 22 quáter, 22 quinquies, 22 sexies y 22 septies, o si excluyen la competencia de los órganos judiciales españoles exclusivamente competentes conforme lo establecido en el artículo 22, en cuyo caso se estará a lo establecido en dichos preceptos.
+
+La sumisión a los Tribunales españoles en las materias contempladas en las letras d) y e) del artículo 22 quinquies sólo será válida si se fundamenta en un acuerdo de sumisión posterior a que surja la controversia, o ambos contratantes tuvieran ya su domicilio o residencia habitual en España en el momento de celebración del contrato o el demandante fuera el consumidor, asegurado o tomador del seguro.
+
+2. Se entenderá por acuerdo de sumisión expresa aquel pacto por el cual las partes deciden atribuir a los Tribunales españoles el conocimiento de ciertas o todas las controversias que hayan surgido o puedan surgir entre ellas respecto de una determinada relación jurídica, contractual o no contractual. La competencia establecida por sumisión expresa se extenderá a la propia validez del acuerdo de sumisión.
+
+El acuerdo de sumisión expresa deberá constar por escrito, en una cláusula incluida en un contrato o en un acuerdo independiente, o verbalmente con confirmación escrita, así como en alguna forma que se ajuste a los hábitos que las partes tengan establecidos entre ellas, o en el comercio internacional sea conforme a los usos que las partes conozcan o deban conocer y que, en dicho comercio, sean ampliamente conocidos y regularmente observados por las partes en los contratos del mismo tipo en el sector comercial considerado. Se entenderá que media acuerdo escrito cuando resulte de una transmisión efectuada por medios electrónicos que proporcione un registro duradero.
+
+Se considerará igualmente que hay acuerdo escrito cuando esté consignado en un intercambio de escritos de demanda y contestación dentro del proceso iniciado en España, en los cuales la existencia del acuerdo sea afirmada por una parte y no negada por la otra.
+
+3. Con independencia de los casos en los que su competencia resulte de otras disposiciones, serán competentes los Tribunales españoles cuando comparezca ante ellos el demandado. Esta regla no será de aplicación si la comparecencia tiene por objeto impugnar la competencia.

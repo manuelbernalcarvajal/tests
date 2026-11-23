@@ -1,0 +1,13 @@
+# Artículo 236 quinquies.
+
+1. Las resoluciones y actuaciones procesales deberán contener los datos personales que sean adecuados, pertinentes y limitados a lo necesario en relación con los fines para los que son tratados, en especial para garantizar el derecho a la tutela judicial efectiva, sin que, en ningún caso, pueda producirse indefensión.
+
+2. Los Jueces y Magistrados, los Fiscales y los Letrados de la Administración de Justicia, conforme a sus competencias, podrán adoptar las medidas que sean necesarias para la supresión de los datos personales de las resoluciones y de los documentos a los que puedan acceder las partes durante la tramitación del proceso siempre que no sean necesarios para garantizar el derecho a la tutela judicial efectiva, sin que, en ningún caso, pueda producirse indefensión.
+
+3. Los datos personales que las partes conocen a través del proceso deberán ser tratados por éstas de conformidad con la normativa general de protección de datos. Esta obligación también incumbe a los profesionales que representan y asisten a las partes, así como a cualquier otro que intervenga en el procedimiento.
+
+4. Se deberán comunicar a los órganos competentes dependientes del Consejo General del Poder Judicial, de la Fiscalía General del Estado y del Ministerio de Justicia, en lo que proceda, los datos tratados con fines jurisdiccionales que sean estrictamente necesarios para el ejercicio de las funciones de inspección y control establecidas en esta Ley, y su normativa de desarrollo. También se deberán facilitar los datos tratados con fines no jurisdiccionales cuando ello esté justificado por la interposición de un recurso o sea necesario para el ejercicio de las competencias que tengan legalmente atribuidas.
+
+5. Las Oficinas de Comunicación establecidas en esta Ley, en el ejercicio de sus funciones de comunicación institucional, deberán velar por el respeto del derecho fundamental a la protección de datos personales de aquellos que hubieran intervenido en el procedimiento de que se trate. Para cumplir con su finalidad, podrán recabar los datos necesarios de las autoridades competentes.
+
+6. Los Letrados de la Administración de Justicia deberán facilitar a la Abogacía del Estado los datos personales, la información y los documentos que sean requeridos para el desempeño de la representación y defensa del Reino de España ante el Tribunal Europeo de Derechos Humanos y otros órganos internacionales en materia de protección de derechos Humanos, en particular ante el Comité de Naciones Unidas. A tales efectos, se establecerán igualmente los mecanismos de comunicación con la Fiscalía General del Estado, a través de sus unidades competentes.

@@ -1,0 +1,3 @@
+# Artículo 64. Comunicación de la defunción por los centros sanitarios.
+
+La dirección de hospitales, clínicas y establecimientos sanitarios comunicará a la Oficina del Registro Civil competente y al Instituto Nacional de Estadística cada uno de los fallecimientos que hayan tenido lugar en su centro sanitario. La comunicación se remitirá por medios electrónicos en el plazo que se establezca reglamentariamente mediante el envío del formulario oficial debidamente cumplimentado, acompañado del certificado médico firmado por el facultativo. Dicha remisión será realizada por personal del centro sanitario, que usará para ello mecanismos seguros de identificación y firma electrónicos.

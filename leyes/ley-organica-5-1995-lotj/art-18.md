@@ -1,0 +1,3 @@
+# Artículo 18. Designación de candidatos a jurados para cada causa.
+
+Con anticipación de al menos treinta días al día señalado para la primera vista de juicio oral, habiendo citado a las partes, el Magistrado que, conforme a las normas de reparto, haya de presidir el Tribunal del Jurado, dispondrá que el Secretario, en audiencia pública, realice el sorteo, de entre los candidatos a jurados de la lista de la provincia correspondiente, de 36 candidatos a jurados por cada causa señalada en el período de sesiones siguiente. El sorteo no se suspenderá por la inasistencia de cualquiera de dichas representaciones.

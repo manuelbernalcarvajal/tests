@@ -1,0 +1,3 @@
+# Artículo 58. Apreciación de oficio de la competencia territorial.
+
+Cuando la competencia territorial viniere fijada por reglas imperativas, el Letrado de la Administración de Justicia examinará la competencia territorial inmediatamente después de presentada la demanda y, previa audiencia del Ministerio Fiscal y de las partes personadas, si entiende que el Tribunal carece de competencia territorial para conocer del asunto, dará cuenta al Juez para que resuelva lo que proceda mediante auto, remitiendo, en su caso, las actuaciones al Tribunal que considere territorialmente competente. Si fuesen de aplicación fueros electivos se estará a lo que manifieste el demandante, tras el requerimiento que se le dirigirá a tales efectos.
