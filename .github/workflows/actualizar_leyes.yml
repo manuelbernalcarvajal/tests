@@ -1,4 +1,4 @@
-name: Actualizar leyes del BOE
+name: Actualizar leyes del BOE y citas
 
 on:
   schedule:
@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - "leyes/lista_leyes.txt"
+      - "apuntes/**/*.md"
   workflow_dispatch:
 
 permissions:
@@ -30,7 +31,11 @@ jobs:
         run: pip install beautifulsoup4
 
       - name: Descargar y procesar leyes del BOE
+        if: github.event_name != 'push' || contains(join(github.event.commits.*.modified, ','), 'lista_leyes.txt')
         run: python scripts/actualizar_leyes.py
+
+      - name: Indexar referencias cruzadas con apuntes
+        run: python scripts/indexar_citas.py
 
       - name: Guardar cambios en leyes/
         run: |
@@ -38,8 +43,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add leyes/
           if git diff --cached --quiet; then
-            echo "Sin cambios en las leyes."
+            echo "Sin cambios en leyes o citas."
           else
-            git commit -m "chore: actualizar leyes consolidadas del BOE"
+            git commit -m "chore: actualizar leyes BOE y referencias cruzadas"
             git push
           fi
