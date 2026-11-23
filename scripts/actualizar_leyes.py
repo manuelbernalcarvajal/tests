@@ -26,13 +26,16 @@ def slugify(texto: str) -> str:
 
 
 def slug_articulo(encabezado: str) -> str:
-    """Convierte 'Artículo 147 bis.' en 'art-147-bis'."""
-    limpio = encabezado.strip().rstrip(".")
-    # Extraer número y posibles sufijos (bis, ter, quater, etc.)
-    m = re.search(r"art[íi]culo\s+(\d+(?:\s+[a-z]+)?)", limpio, re.IGNORECASE)
+    """Convierte 'Artículo 147 bis.' o 'Artículo 588 bis a. Principios rectores.' en 'art-147-bis' / 'art-588-bis-a'."""
+    m = re.search(
+        r"(?:art[íi]culo|art\.?)\s+(\d+(?:\s+(?:bis|ter|quater|quinquies|sexies|septies|octies|novies|decies|[a-z]))?)",
+        encabezado,
+        re.IGNORECASE,
+    )
     if m:
         parte = slugify(m.group(1))
         return f"art-{parte}"
+    limpio = encabezado.strip().rstrip(".")
     return slugify(limpio)[:50]
 
 
@@ -44,23 +47,21 @@ def descargar_html(url: str) -> str:
 
 
 def extraer_articulos_boe(html: str) -> list[dict]:
-    """Parsea el HTML consolidado del BOE y devuelve lista de artículos."""
+    """Parsea el HTML consolidado del BOE buscando div.bloque y encabezados de artículo."""
     soup = BeautifulSoup(html, "html.parser")
     articulos = []
 
-    # En textos consolidados del BOE, cada artículo suele venir en un div.articulo
-    # con un h5.articulo (o h4/h5) y párrafos p.parrafo / blockquote / etc.
-    bloques = soup.select("div.articulo")
+    bloques = soup.select("div.bloque")
 
     for bloque in bloques:
-        titulo_el = bloque.find(["h5", "h4", "h3"], class_=re.compile(r"articulo", re.I))
+        titulo_el = bloque.find(["h6", "h5", "h4", "h3"], class_=re.compile(r"articulo", re.I))
         if not titulo_el:
-            titulo_el = bloque.find(["h5", "h4", "h3"])
+            titulo_el = bloque.find(["h6", "h5", "h4", "h3"])
         if not titulo_el:
             continue
 
         titulo = " ".join(titulo_el.get_text(" ", strip=True).split())
-        if not re.match(r"^art[íi]culo\b", titulo, re.IGNORECASE):
+        if not re.match(r"^(?:art[íi]culo|art\.?)\b", titulo, re.IGNORECASE):
             continue
 
         # Eliminar enlaces internos de notas/jurisprudencia del BOE que ensucian el texto
