@@ -10,13 +10,33 @@ from bs4 import BeautifulSoup
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LEYES_DIR = BASE_DIR / "leyes"
+APUNTES_DIR = BASE_DIR / "apuntes"
 LISTA_FILE = LEYES_DIR / "lista_leyes.txt"
 CONFIG_JS_FILE = LEYES_DIR / "leyes_config.js"
+CITAS_JS_FILE = LEYES_DIR / "citas_apuntes.js"
 
 MARCADOR_HISTORIAL = "<!-- HISTORIAL_BOE -->"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; EstudioJuridicoMBC/1.0; +https://github.com)"
 }
+
+# Mapeo de carpetas de apuntes -> leyes principales por defecto cuando se cita "art. X" sin siglas
+ASIG_A_LEYES_DEFECTO = {
+    "penal": ["codigo-penal"],
+    "procesalpenal": ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"],
+    "civil": ["codigo-civil", "ley-de-enjuiciamiento-civil"],
+    "procesalcivil1": ["ley-de-enjuiciamiento-civil"],
+}
+
+# Alias explícitos en el texto de los apuntes -> palabras clave del slug de la ley
+ALIAS_LEYES = [
+    (r"\b(?:CP|C[oó]digo\s+Penal)\b", ["codigo-penal"]),
+    (r"\b(?:LECrim|LECr|Ley\s+de\s+Enjuiciamiento\s+Criminal|Ley\s+de\s+Enjuiciamiento\s+Penal)\b", ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"]),
+    (r"\b(?:LEC|Ley\s+de\s+Enjuiciamiento\s+Civil)\b", ["ley-de-enjuiciamiento-civil"]),
+    (r"\b(?:CC|C[oó]digo\s+Civil)\b", ["codigo-civil"]),
+    (r"\b(?:CE|Constituci[oó]n(?:\s+Espa[nñ]ola)?)\b", ["constitucion-espanola"]),
+    (r"\b(?:LOPJ|Ley\s+Org[aá]nica\s+del\s+Poder\s+Judicial)\b", ["ley-organica-del-poder-judicial", "lopj"]),
+]
 
 
 def slugify(texto: str) -> str:
@@ -26,7 +46,7 @@ def slugify(texto: str) -> str:
 
 
 def slug_articulo(encabezado: str) -> str:
-    """Convierte 'Artículo 147 bis.' o 'Artículo 588 bis a. Principios rectores.' en 'art-147-bis' / 'art-588-bis-a'."""
+    """Convierte 'Artículo 588 bis a. Principios rectores.' en 'art-588-bis-a'."""
     m = re.search(
         r"(?:art[íi]culo|art\.?)\s+(\d+(?:\s+(?:bis|ter|quater|quinquies|sexies|septies|octies|novies|decies|[a-z]))?)",
         encabezado,
@@ -46,36 +66,84 @@ def descargar_html(url: str) -> str:
         return resp.read().decode(charset, errors="replace")
 
 
+def limpiar_texto(el) -> str:
+    return " ".join(el.get_text(" ", strip=True).split())
+
+
 def extraer_articulos_boe(html: str) -> list[dict]:
-    """Parsea el HTML consolidado del BOE buscando div.bloque y encabezados de artículo."""
+    """
+    Parsea el HTML consolidado del BOE manteniendo la jerarquía
+    (Libro, Título, Capítulo, Sección) para cada artículo.
+    """
     soup = BeautifulSoup(html, "html.parser")
     articulos = []
+
+    jerarquia = {
+        "libro": "",
+        "titulo": "",
+        "capitulo": "",
+        "seccion": "",
+    }
 
     bloques = soup.select("div.bloque")
 
     for bloque in bloques:
+        # 1. Detectar si el bloque es un encabezado estructural (Libro, Título, Capítulo, Sección)
+        libro_el = bloque.find(["h3", "h4"], class_=re.compile(r"libro", re.I))
+        if libro_el:
+            jerarquia["libro"] = limpiar_texto(libro_el)
+            jerarquia["titulo"] = ""
+            jerarquia["capitulo"] = ""
+            jerarquia["seccion"] = ""
+
+        tit_num = bloque.find(["h3", "h4"], class_=re.compile(r"titulo_num", re.I))
+        tit_nom = bloque.find(["h3", "h4"], class_=re.compile(r"titulo_tit", re.I))
+        if tit_num or tit_nom:
+            partes = [limpiar_texto(x) for x in (tit_num, tit_nom) if x]
+            jerarquia["titulo"] = " — ".join(partes)
+            jerarquia["capitulo"] = ""
+            jerarquia["seccion"] = ""
+
+        cap_num = bloque.find(["h3", "h4"], class_=re.compile(r"capitulo_num", re.I))
+        cap_nom = bloque.find(["h3", "h4"], class_=re.compile(r"capitulo_tit", re.I))
+        if cap_num or cap_nom:
+            partes = [limpiar_texto(x) for x in (cap_num, cap_nom) if x]
+            jerarquia["capitulo"] = " — ".join(partes)
+            jerarquia["seccion"] = ""
+
+        sec_el = bloque.find(["h3", "h4", "h5"], class_=re.compile(r"seccion", re.I))
+        if sec_el:
+            jerarquia["seccion"] = limpiar_texto(sec_el)
+
+        # 2. Detectar si el bloque contiene un artículo
         titulo_el = bloque.find(["h6", "h5", "h4", "h3"], class_=re.compile(r"articulo", re.I))
         if not titulo_el:
             titulo_el = bloque.find(["h6", "h5", "h4", "h3"])
         if not titulo_el:
             continue
 
-        titulo = " ".join(titulo_el.get_text(" ", strip=True).split())
+        titulo = limpiar_texto(titulo_el)
         if not re.match(r"^(?:art[íi]culo|art\.?)\b", titulo, re.IGNORECASE):
             continue
 
-        # Eliminar enlaces internos de notas/jurisprudencia del BOE que ensucian el texto
+        # Extraer nota de última modificación del BOE si existe antes de limpiar ruido
+        nota_mod = ""
+        for pie in bloque.select("p.pie_unico, p.nota"):
+            txt_pie = limpiar_texto(pie)
+            if txt_pie and any(k in txt_pie.lower() for k in ("modifica", "añade", "redacción", "deroga")):
+                nota_mod = txt_pie
+                break
+
         for ruido in bloque.select(".notas, .bloque-notas, a.jurisprudencia, span.referencia"):
             ruido.decompose()
 
         lineas_md = [f"# {titulo}", ""]
 
         for hijo in bloque.find_all(["p", "li", "blockquote"], recursive=True):
-            # Evitar duplicar texto si un <p> está dentro de un <li> o <blockquote> ya procesado
             if hijo.name == "p" and hijo.find_parent(["li", "blockquote"]):
                 continue
 
-            texto = " ".join(hijo.get_text(" ", strip=True).split())
+            texto = limpiar_texto(hijo)
             if not texto:
                 continue
 
@@ -100,9 +168,13 @@ def extraer_articulos_boe(html: str) -> list[dict]:
             "slug": slug,
             "titulo": titulo,
             "markdown": cuerpo_md,
+            "libro": jerarquia["libro"],
+            "tituloNorma": jerarquia["titulo"],
+            "capitulo": jerarquia["capitulo"],
+            "seccion": jerarquia["seccion"],
+            "notaMod": nota_mod,
         })
 
-    # Deduplicar slugs por si alguna disposición repite numeración
     vistos: dict[str, int] = {}
     for art in articulos:
         base = art["slug"]
@@ -120,11 +192,13 @@ def normalizar_hash(texto: str) -> str:
     return hashlib.sha256(limpio.encode("utf-8")).hexdigest()
 
 
-def guardar_articulo_con_historial(ruta_md: Path, nuevo_md: str, fecha_hoy: str) -> tuple[bool, bool]:
+def guardar_articulo_con_historial(
+    ruta_md: Path, nuevo_md: str, fecha_hoy: str, nota_mod: str = ""
+) -> tuple[bool, bool]:
     """
     Guarda el .md del artículo. Si cambió respecto a la versión anterior,
-    conserva la redacción previa debajo de MARCADOR_HISTORIAL.
-    Devuelve (se_modifico, tiene_historial).
+    conserva la redacción previa etiquetada como 'Anterior' con fecha aproximada
+    de derogación/modificación para facilitar su lectura por personas e IAs.
     """
     if not ruta_md.exists():
         ruta_md.write_text(nuevo_md + "\n", encoding="utf-8")
@@ -139,13 +213,12 @@ def guardar_articulo_con_historial(ruta_md: Path, nuevo_md: str, fecha_hoy: str)
         vigente_anterior = contenido_actual.strip()
         historial_previo = ""
 
-    # Si el texto vigente no ha cambiado ni una coma, no tocar el archivo
     if normalizar_hash(vigente_anterior) == normalizar_hash(nuevo_md):
         return False, bool(historial_previo)
 
-    # Sí hubo reforma/cambio: mover la redacción anterior al historial
+    detalle_boe = f" — Nota BOE: {nota_mod}" if nota_mod else ""
     entrada_historial = (
-        f"### Versión anterior (vigente hasta {fecha_hoy})\n\n"
+        f"### Anterior (redacción derogada/modificada aprox. el {fecha_hoy}{detalle_boe})\n\n"
         f"{vigente_anterior}"
     )
 
@@ -160,6 +233,55 @@ def guardar_articulo_con_historial(ruta_md: Path, nuevo_md: str, fecha_hoy: str)
     final_md = f"{nuevo_md}\n\n{MARCADOR_HISTORIAL}\n\n{nuevo_historial}\n"
     ruta_md.write_text(final_md, encoding="utf-8")
     return True, True
+
+
+def construir_citas_apuntes(indice_por_ley: dict[str, set[str]]) -> dict[str, list[str]]:
+    """
+    Escanea apuntes/**/*.md y construye un mapa ligero:
+    { "codigo-penal/art-147": ["penal/001.md"], ... }
+    """
+    citas: dict[str, set[str]] = {}
+    if not APUNTES_DIR.exists() or not indice_por_ley:
+        return {}
+
+    patron_art = re.compile(
+        r"\b(?:art[íi]culos?|arts?\.?)\s+(\d+(?:\s+(?:bis|ter|quater|quinquies|sexies|[a-z]))?)(?:\s*([A-Za-zÁÉÍÓÚÑáéíóúñ\.]{2,25}))?",
+        re.IGNORECASE,
+    )
+
+    for md_file in sorted(APUNTES_DIR.rglob("*.md")):
+        clave_apunte = md_file.relative_to(APUNTES_DIR).as_posix()
+        if clave_apunte == "enproceso.md":
+            continue
+
+        carpeta_asig = clave_apunte.split("/", 1)[0]
+        texto = md_file.read_text(encoding="utf-8", errors="ignore")
+
+        for m in patron_art.finditer(texto):
+            num_raw = m.group(1)
+            cola = m.group(2) or ""
+            art_slug = f"art-{slugify(num_raw)}"
+
+            # Intentar detectar ley explícita justo después del número (ej. "art. 147 CP")
+            leyes_destino = []
+            ventana = texto[m.start(): min(len(texto), m.end() + 35)]
+            for patron_ley, slugs_candidatos in ALIAS_LEYES:
+                if re.search(patron_ley, ventana):
+                    leyes_destino = [s for s in slugs_candidatos if s in indice_por_ley]
+                    if leyes_destino:
+                        break
+
+            # Si no se mencionó sigla explícita, usar ley por defecto de la asignatura
+            if not leyes_destino:
+                candidatos_asig = ASIG_A_LEYES_DEFECTO.get(carpeta_asig, [])
+                leyes_destino = [s for s in candidatos_asig if s in indice_por_ley]
+
+            for ley_slug in leyes_destino:
+                if art_slug in indice_por_ley[ley_slug]:
+                    clave_cita = f"{ley_slug}/{art_slug}"
+                    citas.setdefault(clave_cita, set()).add(clave_apunte)
+
+    return {k: sorted(v) for k, v in sorted(citas.items())}
 
 
 def leer_lista_leyes() -> list[tuple[str, str]]:
@@ -181,6 +303,7 @@ def main() -> None:
     leyes = leer_lista_leyes()
     fecha_hoy = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     catalogo = []
+    indice_por_ley: dict[str, set[str]] = {}
 
     for idx, (nombre, url) in enumerate(leyes):
         ley_slug = slugify(nombre)
@@ -194,24 +317,31 @@ def main() -> None:
 
         indice_articulos = []
         modificados = 0
+        slugs_ley = set()
 
         for art in articulos:
             nombre_archivo = f"{art['slug']}.md"
             ruta_md = carpeta_ley / nombre_archivo
             cambio, tiene_hist = guardar_articulo_con_historial(
-                ruta_md, art["markdown"], fecha_hoy
+                ruta_md, art["markdown"], fecha_hoy, art["notaMod"]
             )
             if cambio:
                 modificados += 1
 
+            slugs_ley.add(art["slug"])
             indice_articulos.append({
                 "id": art["slug"],
                 "titulo": art["titulo"],
                 "archivo": f"leyes/{ley_slug}/{nombre_archivo}",
                 "historial": tiene_hist,
+                "libro": art["libro"],
+                "tituloNorma": art["tituloNorma"],
+                "capitulo": art["capitulo"],
+                "seccion": art["seccion"],
             })
 
-        # Escribir indice-<ley>.js para carga bajo demanda
+        indice_por_ley[ley_slug] = slugs_ley
+
         indice_js_path = carpeta_ley / f"indice-{ley_slug}.js"
         indice_payload = {
             "id": ley_slug,
@@ -239,14 +369,21 @@ def main() -> None:
         })
 
         if idx < len(leyes) - 1:
-            time.sleep(1.5)  # Pausa cortés entre peticiones al BOE
+            time.sleep(1.5)
 
     CONFIG_JS_FILE.write_text(
         "// Catálogo ligero de leyes generado automáticamente. No editar a mano.\n"
         f"window.LEYES_CONFIG = {json.dumps(catalogo, ensure_ascii=False, indent=2)};\n",
         encoding="utf-8",
     )
-    print(f"Catálogo actualizado en {CONFIG_JS_FILE} con {len(catalogo)} leyes.")
+
+    citas_map = construir_citas_apuntes(indice_por_ley)
+    CITAS_JS_FILE.write_text(
+        "// Mapa ligero de citas cruzadas entre leyes y apuntes. No editar a mano.\n"
+        f"window.CITAS_APUNTES_BOE = {json.dumps(citas_map, ensure_ascii=False, indent=2)};\n",
+        encoding="utf-8",
+    )
+    print(f"Catálogo actualizado ({len(catalogo)} leyes) y {len(citas_map)} artículos enlazados con apuntes.")
 
 
 if __name__ == "__main__":
