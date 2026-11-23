@@ -143,7 +143,8 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-civil/art-142": [
     "civil/005.md",
-    "civil/011.md"
+    "civil/011.md",
+    "penal/104.md"
   ],
   "codigo-civil/art-145": [
     "civil/005.md"
@@ -402,6 +403,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-penal/art-1": [
     "penal/002.md",
+    "penal/104.md",
     "procesalpenal/005.md"
   ],
   "codigo-penal/art-100": [
@@ -425,52 +427,63 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/003.md"
   ],
   "codigo-penal/art-13": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-130": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-131": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-132": [
     "penal/002.md"
   ],
   "codigo-penal/art-133": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-136": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-138": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-139": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-14": [
     "penal/000p.md",
     "penal/001.md",
     "penal/002.md",
+    "penal/104.md",
     "procesalpenal/001.md",
     "procesalpenal/002.md"
   ],
   "codigo-penal/art-140": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-140-bis": [
     "penal/000p.md"
   ],
   "codigo-penal/art-142": [
     "civil/011.md",
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-142-bis": [
     "penal/002.md"
   ],
   "codigo-penal/art-147": [
     "civil/011.md",
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-149": [
     "civil/011.md"
@@ -492,13 +505,16 @@ window.CITAS_APUNTES_BOE = {
     "penal/002.md"
   ],
   "codigo-penal/art-171": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-172": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-173": [
     "penal/002.md",
+    "penal/104.md",
     "procesalpenal/005.md"
   ],
   "codigo-penal/art-177-bis": [
@@ -538,6 +554,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-penal/art-234": [
     "penal/002.md",
+    "penal/104.md",
     "procesalpenal/005.md"
   ],
   "codigo-penal/art-235": [
@@ -546,9 +563,13 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-236": [
     "penal/002.md"
   ],
+  "codigo-penal/art-239": [
+    "penal/104.md"
+  ],
   "codigo-penal/art-24": [
     "penal/001.md",
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-244": [
     "penal/002.md"
@@ -637,6 +658,9 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-340-ter": [
     "penal/002.md"
   ],
+  "codigo-penal/art-36": [
+    "penal/104.md"
+  ],
   "codigo-penal/art-368": [
     "procesalpenal/005.md"
   ],
@@ -681,7 +705,8 @@ window.CITAS_APUNTES_BOE = {
     "penal/002.md"
   ],
   "codigo-penal/art-485": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-5": [
     "penal/002.md"
@@ -696,7 +721,8 @@ window.CITAS_APUNTES_BOE = {
     "penal/001.md"
   ],
   "codigo-penal/art-53": [
-    "penal/002.md"
+    "penal/002.md",
+    "penal/104.md"
   ],
   "codigo-penal/art-58": [
     "penal/001.md"
@@ -734,6 +760,7 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-80": [
     "penal/001.md",
     "penal/002.md",
+    "penal/104.md",
     "procesalpenal/001.md",
     "procesalpenal/005.md",
     "procesalpenal/006.md"
@@ -2096,7 +2123,6 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/007.md"
   ],
   "ley-de-enjuiciamiento-penal/art-962": [
-    "penal/104.md",
     "procesalpenal/001.md",
     "procesalpenal/005.md"
   ],
