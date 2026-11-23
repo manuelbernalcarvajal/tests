@@ -594,7 +594,6 @@
       return safeHtml;
     }
 
-    // Traductor: asigId + temaId (vía apuntes_config.js) -> clave del .md en CITAS_APUNTES_BOE ("civil/004.md")
     function traducirClaveMdApunte(asigId, temaId) {
       return mdKeyByAsigTema.get(`${asigId}::${temaId}`) || `${asigId}/${temaId}.md`;
     }
@@ -621,7 +620,7 @@
         }
       }
 
-      return refs.slice(0, 20);
+      return refs.slice(0, 30);
     }
 
     function cargarIndiceLeyBajoDemanda(leyMeta) {
@@ -667,7 +666,43 @@
       }
     }
 
-    async function construirTarjetasLeyesCitadas(noteDocs, highlightList, seqId) {
+    function puntuarArticuloBOE(artMeta, leyNombre, textoArt, parsed, highlightList) {
+      const normTitle = normalizar(artMeta.titulo || "");
+      const normCrumb = normalizar([artMeta.libro, artMeta.tituloNorma, artMeta.capitulo, leyNombre].filter(Boolean).join(" "));
+      const normBody = normalizar(textoArt || "");
+      const normAll = `${normTitle}\n${normCrumb}\n${normBody}`;
+
+      // Si hay términos excluidos o frases exactas que no están en el artículo, penalizar fuerte
+      if (parsed.negativeTerms.some((neg) => normAll.includes(neg))) {
+        return -1;
+      }
+      if (parsed.exactPhrases.length > 0 && !parsed.exactPhrases.every((p) => normAll.includes(p))) {
+        return 0.2;
+      }
+
+      let score = 0.5; // Base mínima por estar citado por un apunte relevante
+      const terms = [...new Set(highlightList)].filter((t) => t && t.length >= 2);
+
+      for (const term of terms) {
+        const safe = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const isNum = /^\d+$/.test(term);
+        const rx = isNum ? new RegExp(`\\b${safe}\\b`, "i") : new RegExp(safe, "i");
+
+        if (rx.test(normTitle)) score += isNum ? 4.5 : 3.0;
+        if (rx.test(normCrumb)) score += isNum ? 2.5 : 1.8;
+
+        if (rx.test(normBody)) {
+          const globalRx = isNum ? new RegExp(`\\b${safe}\\b`, "gi") : new RegExp(safe, "gi");
+          const matches = normBody.match(globalRx);
+          const count = matches ? Math.min(matches.length, 6) : 1;
+          score += (isNum ? 2.0 : 1.1) + (count - 1) * 0.35;
+        }
+      }
+
+      return Number(score.toFixed(1));
+    }
+
+    async function construirTarjetasLeyesCitadas(noteDocs, parsed, highlightList, seqId) {
       if (activeScope === "notes") return [];
       const refs = obtenerArticulosCitadosPorApuntes(noteDocs);
       if (refs.length === 0) return [];
@@ -682,7 +717,7 @@
       await Promise.all(leyesNecesarias.map((meta) => cargarIndiceLeyBajoDemanda(meta)));
       if (seqId !== searchSeq) return [];
 
-      const cards = [];
+      const candidatos = [];
       for (const { leyId, artId } of refs) {
         const leyMeta = leyMetaMap.get(leyId);
         const indiceData = window.INDICES_LEYES?.[leyId];
@@ -692,7 +727,17 @@
         const textoArt = await obtenerTextoArticuloBOE(artMeta.archivo);
         if (seqId !== searchSeq) return [];
 
-        const href = `leyes.html?ley=${encodeURIComponent(leyId)}&art=${encodeURIComponent(artId)}`;
+        const score = puntuarArticuloBOE(artMeta, leyMeta.nombre, textoArt, parsed, highlightList);
+        if (score < 0) continue;
+
+        candidatos.push({ leyMeta, artMeta, textoArt, score });
+      }
+
+      // Ordenar de mayor a menor puntuación dentro de los artículos recuperados
+      candidatos.sort((a, b) => b.score - a.score);
+
+      return candidatos.map(({ leyMeta, artMeta, textoArt, score }) => {
+        const href = `leyes.html?ley=${encodeURIComponent(leyMeta.id)}&art=${encodeURIComponent(artMeta.id)}`;
         const crumb = [artMeta.libro, artMeta.tituloNorma, artMeta.capitulo].filter(Boolean).join(" › ") || leyMeta.nombre;
         const snippetHtml = formatearExtracto(textoArt || artMeta.titulo, highlightList);
 
@@ -702,7 +747,7 @@
           <div class="result-header">
             <span class="result-asig">${escapeHtml(leyMeta.nombre)}</span>
             <a href="${href}" class="result-title">${escapeHtml(artMeta.titulo)}</a>
-            <span class="result-score">BOE</span>
+            <span class="result-score">${score.toFixed(1)} pts · BOE</span>
           </div>
           <div class="result-section-crumb">📜 ${escapeHtml(crumb)}</div>
           <div class="result-snippet">${snippetHtml}</div>
@@ -713,10 +758,8 @@
             <a href="${href}" class="link-viewer">Ver artículo en visor BOE →</a>
           </div>
         `;
-        cards.push(card);
-      }
-
-      return cards;
+        return card;
+      });
     }
 
     async function ejecutarBusqueda() {
@@ -813,10 +856,11 @@
         });
       }
 
-      // 2. Incorporar después solo los artículos de las leyes citadas por esos apuntes
+      // 2. Buscar, puntuar y ordenar los artículos citados por esos apuntes
       if (activeScope !== "notes") {
         const lawCards = await construirTarjetasLeyesCitadas(
           topNoteDocs.map((x) => x.doc),
+          parsed,
           highlightList,
           currentSeq
         );
