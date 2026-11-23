@@ -1,0 +1,13 @@
+# Artículo 109 bis.
+
+1. Las víctimas del delito que no hubieran renunciado a su derecho podrán ejercer la acción penal en cualquier momento antes del trámite de calificación del delito, si bien ello no permitirá retrotraer ni reiterar las actuaciones ya practicadas antes de su personación. Si se personasen una vez transcurrido el término para formular escrito de acusación podrán ejercitar la acción penal hasta el inicio del juicio oral adhiriéndose al escrito de acusación formulado por el Ministerio Fiscal o del resto de las acusaciones personadas.
+
+En el caso de muerte o desaparición de la víctima a consecuencia del delito, la acción penal podrá ser ejercida por su cónyuge no separado legalmente o de hecho y por los hijos de ésta o del cónyuge no separado legalmente o de hecho que en el momento de la muerte o desaparición de la víctima convivieran con ellos; por la persona que hasta el momento de la muerte o desaparición hubiera estado unida a ella por una análoga relación de afectividad y por los hijos de ésta que en el momento de la muerte o desaparición de la víctima convivieran con ella; por sus progenitores y parientes en línea recta o colateral dentro del tercer grado que se encontraren bajo su guarda, personas sujetas a su tutela o curatela o que se encontraren bajo su acogimiento familiar.
+
+En caso de no existir los anteriores, podrá ser ejercida por los demás parientes en línea recta y por sus hermanos, con preferencia, entre ellos, del que ostentara la representación legal de la víctima.
+
+2. El ejercicio de la acción penal por alguna de las personas legitimadas conforme a este artículo no impide su ejercicio posterior por cualquier otro de los legitimados. Cuando exista una pluralidad de víctimas, todas ellas podrán personarse independientemente con su propia representación. Sin embargo, en estos casos, cuando pueda verse afectado el buen orden del proceso o el derecho a un proceso sin dilaciones indebidas, el Juez o Tribunal, en resolución motivada y tras oír a todas las partes, podrá imponer que se agrupen en una o varias representaciones y que sean dirigidos por la misma o varias defensas, en razón de sus respectivos intereses.
+
+3. La acción penal también podrá ser ejercitada por las asociaciones de víctimas y por las personas jurídicas a las que la ley reconoce legitimación para defender los derechos de las víctimas, siempre que ello fuera autorizado por la víctima del delito.
+
+Cuando el delito o falta cometida tenga por finalidad impedir u obstaculizar a los miembros de las corporaciones locales el ejercicio de sus funciones públicas, podrá también personarse en la causa la Administración local en cuyo territorio se hubiere cometido el hecho punible.

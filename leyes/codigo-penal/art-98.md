@@ -1,0 +1,7 @@
+# Artículo 98.
+
+1. A los efectos del artículo anterior, cuando se trate de una medida de seguridad privativa de libertad o de una medida de libertad vigilada que deba ejecutarse después del cumplimiento de una pena privativa de libertad, el Juez de Vigilancia Penitenciaria estará obligado a elevar al menos anualmente, una propuesta de mantenimiento, cese, sustitución o suspensión de la misma. Para formular dicha propuesta el Juez de Vigilancia Penitenciaria deberá valorar los informes emitidos por los facultativos y profesionales que asistan al sometido a medida de seguridad o por las Administraciones Públicas competentes y, en su caso, el resultado de las demás actuaciones que a este fin ordene.
+
+2. Cuando se trate de cualquier otra medida no privativa de libertad, el Juez o Tribunal sentenciador recabará directamente de las Administraciones, facultativos y profesionales a que se refiere el apartado anterior, los oportunos informes acerca de la situación y la evolución del condenado, su grado de rehabilitación y el pronóstico de reincidencia o reiteración delictiva.
+
+3. En todo caso, el Juez o Tribunal sentenciador resolverá motivadamente a la vista de la propuesta o los informes a los que respectivamente se refieren los dos apartados anteriores, oída la propia persona sometida a la medida, así como el Ministerio Fiscal y las demás partes. Se oirá asimismo a las víctimas del delito que no estuvieren personadas cuando así lo hubieran solicitado al inicio o en cualquier momento de la ejecución de la sentencia y permanezcan localizables a tal efecto.

@@ -1,0 +1,11 @@
+# Artículo 367 ter.
+
+1. Podrá decretarse la destrucción de los efectos judiciales, dejando muestras suficientes, cuando resultare necesaria o conveniente por la propia naturaleza de los efectos intervenidos o por el peligro real o potencial que comporte su almacenamiento o custodia, previa audiencia al Ministerio Fiscal y al propietario, si fuere conocido, o a la persona en cuyo poder fueron hallados los efectos cuya destrucción se pretende.
+
+Cuando se trate de drogas tóxicas, estupefacientes o sustancias psicotrópicas, la autoridad administrativa bajo cuya custodia se encuentren, una vez realizados los informes analíticos pertinentes, asegurada la conservación de las muestras mínimas e imprescindibles que, conforme a criterios científicos, resulten necesarias para garantizar ulteriores comprobaciones o investigaciones, y previa comunicación al Juez instructor, procederá a su inmediata destrucción si, trascurrido el plazo de un mes desde que se efectuó aquella, la autoridad judicial no hubiera ordenado mediante resolución motivada la conservación íntegra de dichas sustancias. En todo caso, lo conservado se custodiará siempre a disposición del órgano judicial competente.
+
+2. En todo caso, el Secretario judicial extenderá la oportuna diligencia y, si se hubiera acordado la destrucción, deberá quedar constancia en los autos de la naturaleza, calidad, cantidad, peso y medida de los efectos destruidos. Si no hubiese tasación anterior, también se dejará constancia de su valor cuando su fijación fuere imposible después de la destrucción.
+
+3. Lo dispuesto en los dos apartados anteriores será también aplicable a los efectos intervenidos en relación con la comisión de delitos contra la propiedad intelectual e industrial. Podrá igualmente procederse a su destrucción anticipada una vez que tales efectos hayan sido examinados pericialmente, asegurando la conservación de las muestras que resulten necesarias para garantizar ulteriores comprobaciones o investigaciones, salvo que la autoridad judicial acuerde mediante resolución motivada su conservación íntegra en el plazo de un mes desde la solicitud de destrucción.
+
+4. Si los objetos no pudieren, por su naturaleza, conservarse en su forma primitiva, el Juez resolverá lo que estime conveniente para conservarlos del mejor modo posible.

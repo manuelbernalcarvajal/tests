@@ -1,0 +1,5 @@
+# Artículo 13.
+
+Se consideran como primeras diligencias la de consignar las pruebas del delito que puedan desaparecer, la de recoger y poner en custodia cuanto conduzca a su comprobación y a la identificación del delincuente, la de detener, en su caso, a los presuntos responsables del delito y la de proteger a los ofendidos o perjudicados por el mismo, a sus familiares o a otras personas, o evitar la reiteración delictiva, pudiendo acordarse a tal efecto las medidas cautelares a las que se refiere el artículo 544 bis o la orden de protección prevista en el artículo 544 ter de esta ley.
+
+En la instrucción de delitos cometidos a través de internet, del teléfono o de cualquier otra tecnología de la información o de la comunicación, el juzgado podrá acordar, como primeras diligencias, de oficio o a instancia de parte, las medidas cautelares consistentes en la retirada provisional de contenidos ilícitos, en la interrupción provisional de los servicios que ofrezcan dichos contenidos o en el bloqueo provisional de unos y otros cuando radiquen en el extranjero.

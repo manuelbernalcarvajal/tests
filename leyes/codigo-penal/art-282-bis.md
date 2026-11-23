@@ -1,0 +1,5 @@
+# Artículo 282 bis.
+
+Los que, como administradores de hecho o de derecho de una sociedad emisora de valores negociados en los mercados de valores, falsearan la información económico-financiera contenida en los folletos de emisión de cualesquiera instrumentos financieros o las informaciones que la sociedad debe publicar y difundir conforme a la legislación del mercado de valores sobre sus recursos, actividades y negocios presentes y futuros, con el propósito de captar inversores o depositantes, colocar cualquier tipo de activo financiero, u obtener financiación por cualquier medio, serán castigados con la pena de prisión de uno a cuatro años, sin perjuicio de lo dispuesto en el artículo 308 de este Código.
+
+En el supuesto de que se llegue a obtener la inversión, el depósito, la colocación del activo o la financiación, con perjuicio para el inversor, depositante, adquiriente de los activos financieros o acreedor, se impondrá la pena en la mitad superior. Si el perjuicio causado fuera de notoria gravedad, la pena a imponer será de uno a seis años de prisión y multa de seis a doce meses.

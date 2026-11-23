@@ -1,0 +1,3 @@
+# Artículo 731 bis.
+
+El Tribunal, de oficio o a instancia de parte, por razones de utilidad, seguridad o de orden público, así como en aquellos supuestos en que la comparecencia de quien haya de intervenir en cualquier tipo de procedimiento penal como imputado, testigo, perito, o en otra condición resulte gravosa o perjudicial, y, especialmente, cuando se trate de un menor, podrá acordar que su actuación se realice a través de videoconferencia u otro sistema similar que permita la comunicación bidireccional y simultánea de la imagen y el sonido, de acuerdo con lo dispuesto en el apartado 3 del artículo 229 de la Ley Orgánica del Poder Judicial.
