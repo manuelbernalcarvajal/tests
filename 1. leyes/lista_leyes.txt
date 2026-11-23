@@ -1,0 +1,3 @@
+# Formato: Nombre de la Ley | URL consolidada de boe.es
+Código Penal | https://www.boe.es/eli/es/lo/1995/11/23/10/con
+Ley de Enjuiciamiento Penal | https://www.boe.es/eli/es/rd/1882/09/14/(1)/con
