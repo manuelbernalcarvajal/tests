@@ -107,44 +107,45 @@ def normalizar_token_articulo(token: str) -> str | None:
     return f"art-{base}" if base else None
 
 
-def expandir_expresion_articulos(expr: str, llevar_solo_al_primero: bool = True) -> tuple[list[str], str]:
+def expandir_expresion_articulos(expr: str) -> tuple[list[str], str]:
     """
-    Devuelve (lista_slugs, tipo_cita).
-    Si es rango ("10 al 15" o "10 a 15") y llevar_solo_al_primero=True, enlaza al primero
-    (y si se prefiere expandir, puede activar llevar_solo_al_primero=False).
+    Devuelve (lista_slugs, tipo_cita):
+    - Enumeraciones ("3 y 4", "1860 ... y 122..."): devuelve todos los artículos citados.
+    - Rangos ("10 al 15", "10 a 15", "10-15"): devuelve inicio y fin.
     """
     resultados: list[str] = []
     tipo = "directa"
 
-    # Detectar rangos tipo "10 al 15", "10 a 15", "10-15"
-    m_rango_completo = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", expr.strip(), re.IGNORECASE)
-    if m_rango_completo:
-        tipo = "rango_al_primero"
-        inicio = int(m_rango_completo.group(1))
-        fin = int(m_rango_completo.group(2))
-        if llevar_solo_al_primero:
-            return [f"art-{inicio}"], tipo
-        if inicio <= fin and (fin - inicio) <= 30:
-            return [f"art-{n}" for n in range(inicio, fin + 1)], "rango_expandido"
+    m_rango_total = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", expr.strip(), re.IGNORECASE)
+    if m_rango_total:
+        tipo = "rango_extremos"
+        inicio = int(m_rango_total.group(1))
+        fin = int(m_rango_total.group(2))
+        resultados.append(f"art-{inicio}")
+        if fin != inicio:
+            resultados.append(f"art-{fin}")
+        return list(dict.fromkeys(resultados)), tipo
 
     partes = re.split(r"\s*(?:,|\by\b|\be\b)\s*", expr.strip(), flags=re.IGNORECASE)
     for parte in partes:
         parte_limpia = parte.strip()
-        if not parte_limpia or parte_limpia.lower() in {"del", "de", "al", "a"}:
+        if not parte_limpia or parte_limpia.lower() in {"del", "de", "al", "a", "la", "el", "los", "las"}:
             continue
 
         m_rango_sub = re.match(r"^(\d+)\s*(?:a|al|-|–)\s*(\d+)$", parte_limpia, re.IGNORECASE)
         if m_rango_sub:
-            tipo = "rango_al_primero"
+            tipo = "rango_extremos"
             inicio = int(m_rango_sub.group(1))
+            fin = int(m_rango_sub.group(2))
             resultados.append(f"art-{inicio}")
+            if fin != inicio:
+                resultados.append(f"art-{fin}")
             continue
 
         slug = normalizar_token_articulo(parte_limpia)
         if slug:
             resultados.append(slug)
 
-    # Deduplicar conservando orden
     unicos = list(dict.fromkeys(resultados))
     return unicos, tipo
 
@@ -209,7 +210,7 @@ def main() -> None:
         for m in PATRON_BLOQUE_CITA.finditer(texto):
             expr = m.group(1)
             es_y_ss = bool(re.search(r"\by\s+(?:ss\.?|siguientes?|sgtes\.?)\b", m.group(0), re.IGNORECASE))
-            art_slugs, tipo_cita = expandir_expresion_articulos(expr, llevar_solo_al_primero=True)
+            art_slugs, tipo_cita = expandir_expresion_articulos(expr)
             if not art_slugs:
                 continue
 
@@ -230,7 +231,7 @@ def main() -> None:
                 stats["total"] += 1
                 if es_defecto:
                     stats["en_medios_o_defecto"] += 1
-                if es_y_ss or tipo_cita == "rango_al_primero":
+                if es_y_ss or tipo_cita == "rango_extremos":
                     stats["rango_o_ss"] += 1
 
                 encontrado = False
@@ -253,7 +254,7 @@ def main() -> None:
 
     print(f"Indexación completada: {len(resultado_final)} artículos únicos enlazados.")
     print(f"Menciones procesadas: {stats['total']} | Enlazadas: {stats['enlazadas']} | Sin match en ley: {stats['sin_match']}")
-    print(f"Rangos / 'y ss.' (al 1.º): {stats['rango_o_ss']} | Por defecto/contexto ('en medios'): {stats['en_medios_o_defecto']}")
+    print(f"Rangos (extremos) / 'y ss.' (al 1.º): {stats['rango_o_ss']} | Por defecto/contexto ('en medios'): {stats['en_medios_o_defecto']}")
 
 
 if __name__ == "__main__":
