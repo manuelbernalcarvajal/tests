@@ -109,6 +109,8 @@
     .option-btn { width: 100%; text-align: left; background: #fff; border: 2px solid var(--border); padding: 14px 16px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; font-size: 1rem; transition: all 0.15s; }
     .option-btn:hover { border-color: var(--accent); background: #f0f7ff; }
     .option-btn.selected { border-color: var(--accent); background: #eff6ff; font-weight: 600; }
+    .option-btn.correct-opt { border-color: var(--success); background: #f0fdf4; font-weight: 600; }
+    .option-btn.wrong-opt { border-color: var(--danger); background: #fef2f2; }
     
     .progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
     .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s ease; }
@@ -122,6 +124,64 @@
     .badge-pass { background: #dcfce7; color: #166534; }
     .badge-fail { background: #fee2e2; color: #991b1b; }
     .hide { display: none; }
+
+    /* Plus Modo Trivial (discreto al final de view-menu) */
+    .trivial-footer-box {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+    .btn-trivial-toggle {
+      background: transparent;
+      color: var(--neutral);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 7px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-trivial-toggle:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .trivial-panel {
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #f8fafc;
+    }
+    .trivial-cols {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .trivial-col-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--neutral);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .trivial-feedback {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    .trivial-feedback.ok {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #14532d;
+    }
+    .trivial-feedback.fail {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #7f1d1d;
+    }
 
     footer {
       position: fixed;
@@ -173,6 +233,27 @@
         <button type="button" id="btn-start-filtered" class="btn">Empezar test</button>
       </div>
     </div>
+
+    <!-- Plus discreto al final: Modo Trivial (Quest infinito) -->
+    <div class="trivial-footer-box">
+      <button type="button" id="btn-toggle-trivial" class="btn-trivial-toggle">🎲 Modo trivial</button>
+      <div id="trivial-setup" class="trivial-panel hide">
+        <div style="font-size: 0.88rem; color: var(--neutral);">Elige asignaturas y temas (por defecto <strong>TODO</strong>) y ve encadenando preguntas corregidas al momento.</div>
+        <div class="trivial-cols">
+          <div>
+            <div class="trivial-col-title">Asignaturas</div>
+            <div id="trivial-asig-list" class="topic-list" style="max-height: 190px;"></div>
+          </div>
+          <div>
+            <div class="trivial-col-title">Temas</div>
+            <div id="trivial-topic-list" class="topic-list" style="max-height: 190px;"></div>
+          </div>
+        </div>
+        <div class="btn-group" style="margin-top: 12px;">
+          <button type="button" id="btn-start-trivial" class="btn btn-todo" style="padding: 9px 16px; font-size: 0.88rem;">Iniciar trivial</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Pantalla 2: Examen en Curso -->
@@ -187,13 +268,40 @@
     <h3 id="question-text" style="line-height: 1.45; margin-bottom: 18px;"></h3>
     <div id="options-container"></div>
     <p style="font-size: 0.8rem; color: var(--neutral); margin-top: 6px;">
-      * Clic sobre la opción marcada para desmarcarla y dejarla en blanco (no penaliza).
+- Clic sobre la opción marcada para desmarcarla y dejarla en blanco (no penaliza).
     </p>
 
     <div class="nav-bar">
       <button id="btn-prev" class="btn" style="background: var(--neutral);">Anterior</button>
       <button id="btn-next" class="btn">Siguiente</button>
     </div>
+  </div>
+
+  <!-- Pantalla Trivial (Quest infinito) -->
+  <div id="view-trivial" class="card hide">
+    <div style="display: flex; justify-content: space-between; align-items: center; color: var(--neutral); font-size: 0.88rem; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
+      <span id="trivial-status-label" style="font-weight: 600;">Modo trivial · Respondidas: 0 | ✅ 0 | ❌ 0</span>
+      <button type="button" id="btn-stop-trivial" class="btn" style="background: var(--danger); padding: 7px 14px; font-size: 0.85rem;">Parar</button>
+    </div>
+    <h3 id="trivial-question-text" style="line-height: 1.45; margin-bottom: 16px;"></h3>
+    <div id="trivial-options-container"></div>
+    <div id="trivial-feedback" class="trivial-feedback hide"></div>
+    <div class="nav-bar" style="justify-content: flex-end;">
+      <button type="button" id="btn-trivial-next" class="btn hide">Siguiente pregunta →</button>
+    </div>
+  </div>
+
+  <!-- Resumen Modo Trivial -->
+  <div id="view-trivial-summary" class="card hide">
+    <h2>Resumen del Modo Trivial</h2>
+    <div id="trivial-summary-box" style="background: #f8fafc; border: 1px solid var(--border); padding: 16px; border-radius: 8px; margin: 16px 0 20px 0; line-height: 1.65;"></div>
+    <div class="btn-group" style="margin-top: 0; margin-bottom: 22px;">
+      <button type="button" id="btn-trivial-filter-errors" class="btn" style="background: var(--danger); padding: 9px 14px; font-size: 0.88rem;">Ver solo fallos</button>
+      <button type="button" id="btn-trivial-filter-all" class="btn" style="background: var(--neutral); padding: 9px 14px; font-size: 0.88rem;">Ver todas</button>
+      <button type="button" class="btn" onclick="location.reload()" style="padding: 9px 14px; font-size: 0.88rem;">Volver al menú</button>
+    </div>
+    <h3>Revisión</h3>
+    <div id="trivial-review-list"></div>
   </div>
 
   <!-- Pantalla 3: Calificación y Revisión -->
@@ -573,6 +681,8 @@
       const entry = buttonMap.get(materiaParam);
       openTopicSelector(materiaParam, entry.title, entry.files, temasParam, entry.el);
     }
+
+    initTrivialPlus(config);
   }
 
   function launchExam(categoryTitle, sourceQuestions, numQuestions = DEFAULT_QUESTIONS) {
@@ -708,6 +818,292 @@
       <hr style="border: 0; border-top: 1px solid var(--border); margin: 8px 0;">
       <strong>Puntuación neta obtenida:</strong> ${puntosNetos.toFixed(2)} sobre ${total} puntos posibles.
     `;
+  }
+
+  /* === PLUS MODO TRIVIAL (QUEST INFINITO) === */
+  function initTrivialPlus(config) {
+    const categories = Object.keys(config);
+    const asigListEl = document.getElementById("trivial-asig-list");
+    const topicListEl = document.getElementById("trivial-topic-list");
+    const setupEl = document.getElementById("trivial-setup");
+    const startBtn = document.getElementById("btn-start-trivial");
+
+    let trivialPool = [];
+    let trivialDeck = [];
+    let trivialAnswered = [];
+    let currentTrivialQ = null;
+    let trivialLocked = false;
+
+    async function loadCategoryQuestions(cat) {
+      if (categoryCache.has(cat)) return categoryCache.get(cat);
+      const files = config[cat] || [];
+      bufferPreguntas = [];
+      await Promise.all(files.map(cargarScript));
+      const list = [...bufferPreguntas];
+      categoryCache.set(cat, list);
+      return list;
+    }
+
+    function getSelectedTrivialCategories() {
+      const allBox = document.getElementById("trivial-asig-all");
+      const boxes = Array.from(document.querySelectorAll(".trivial-asig-cb"));
+      if (allBox && allBox.checked) return categories;
+      return boxes.filter(b => b.checked).map(b => b.value);
+    }
+
+    function getSelectedTrivialTopics() {
+      const allBox = document.getElementById("trivial-topic-all");
+      const boxes = Array.from(document.querySelectorAll(".trivial-topic-cb"));
+      if (allBox && allBox.checked) return null; // null = TODO
+      return boxes.filter(b => b.checked).map(b => b.value);
+    }
+
+    async function refreshTrivialTopics() {
+      const selectedCats = getSelectedTrivialCategories();
+      topicListEl.innerHTML = "";
+      if (selectedCats.length === 0) {
+        startBtn.disabled = true;
+        return;
+      }
+
+      const arrays = await Promise.all(selectedCats.map(loadCategoryQuestions));
+      const combined = arrays.flat();
+      const topicsSet = new Set(combined.map(q => q.tema || DEFAULT_TOPIC));
+      const topics = Array.from(topicsSet);
+
+      const allRow = document.createElement("label");
+      allRow.className = "topic-item all-item";
+      const allCb = document.createElement("input");
+      allCb.type = "checkbox";
+      allCb.id = "trivial-topic-all";
+      allCb.checked = true;
+      allRow.appendChild(allCb);
+      const allSpan = document.createElement("span");
+      allSpan.textContent = `TODO (${combined.length})`;
+      allRow.appendChild(allSpan);
+      topicListEl.appendChild(allRow);
+
+      const itemCbs = [];
+      topics.forEach(t => {
+        const cnt = combined.filter(q => (q.tema || DEFAULT_TOPIC) === t).length;
+        const row = document.createElement("label");
+        row.className = "topic-item";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "trivial-topic-cb";
+        cb.value = t;
+        cb.checked = true;
+        cb.addEventListener("change", () => {
+          allCb.checked = itemCbs.every(x => x.checked);
+          updateTrivialStartState(combined);
+        });
+        row.appendChild(cb);
+        const span = document.createElement("span");
+        span.textContent = `${t} (${cnt})`;
+        row.appendChild(span);
+        topicListEl.appendChild(row);
+        itemCbs.push(cb);
+      });
+
+      allCb.addEventListener("change", () => {
+        itemCbs.forEach(cb => { cb.checked = allCb.checked; });
+        updateTrivialStartState(combined);
+      });
+
+      updateTrivialStartState(combined);
+    }
+
+    function updateTrivialStartState(combined) {
+      const chosenTopics = getSelectedTrivialTopics();
+      const filtered = chosenTopics === null
+        ? combined
+        : combined.filter(q => chosenTopics.includes(q.tema || DEFAULT_TOPIC));
+      trivialPool = filtered;
+      startBtn.disabled = filtered.length === 0;
+    }
+
+    function renderTrivialAsigs() {
+      asigListEl.innerHTML = "";
+      const allRow = document.createElement("label");
+      allRow.className = "topic-item all-item";
+      const allCb = document.createElement("input");
+      allCb.type = "checkbox";
+      allCb.id = "trivial-asig-all";
+      allCb.checked = true;
+      allRow.appendChild(allCb);
+      const allSpan = document.createElement("span");
+      allSpan.textContent = "TODO";
+      allRow.appendChild(allSpan);
+      asigListEl.appendChild(allRow);
+
+      const itemCbs = [];
+      categories.forEach(cat => {
+        const row = document.createElement("label");
+        row.className = "topic-item";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "trivial-asig-cb";
+        cb.value = cat;
+        cb.checked = true;
+        cb.addEventListener("change", () => {
+          allCb.checked = itemCbs.every(x => x.checked);
+          refreshTrivialTopics();
+        });
+        row.appendChild(cb);
+        const span = document.createElement("span");
+        span.textContent = cat;
+        row.appendChild(span);
+        asigListEl.appendChild(row);
+        itemCbs.push(cb);
+      });
+
+      allCb.addEventListener("change", () => {
+        itemCbs.forEach(cb => { cb.checked = allCb.checked; });
+        refreshTrivialTopics();
+      });
+
+      refreshTrivialTopics();
+    }
+
+    document.getElementById("btn-toggle-trivial").addEventListener("click", () => {
+      const opening = setupEl.classList.contains("hide");
+      setupEl.classList.toggle("hide");
+      if (opening && asigListEl.children.length === 0) {
+        renderTrivialAsigs();
+      }
+    });
+
+    function nextTrivialQuestion() {
+      if (trivialDeck.length === 0) {
+        trivialDeck = shuffle(trivialPool);
+      }
+      const raw = trivialDeck.pop();
+      const shuffledOpts = shuffle(raw.opciones.map((text, idx) => ({
+        text,
+        isCorrect: idx === raw.correcta
+      })));
+      currentTrivialQ = {
+        pregunta: raw.pregunta,
+        tema: raw.tema || DEFAULT_TOPIC,
+        explicacion: raw.explicacion,
+        opciones: shuffledOpts
+      };
+      trivialLocked = false;
+
+      const okCount = trivialAnswered.filter(r => r.isOk).length;
+      const failCount = trivialAnswered.length - okCount;
+      document.getElementById("trivial-status-label").textContent =
+        `Modo trivial · Respondidas: ${trivialAnswered.length} | ✅ ${okCount} | ❌ ${failCount}`;
+
+      document.getElementById("trivial-question-text").textContent =
+        `${trivialAnswered.length + 1}. ${currentTrivialQ.pregunta}`;
+
+      const fb = document.getElementById("trivial-feedback");
+      fb.className = "trivial-feedback hide";
+      fb.innerHTML = "";
+      document.getElementById("btn-trivial-next").classList.add("hide");
+
+      const optsBox = document.getElementById("trivial-options-container");
+      optsBox.innerHTML = "";
+
+      currentTrivialQ.opciones.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "option-btn";
+        btn.textContent = opt.text;
+        btn.onclick = () => {
+          if (trivialLocked) return;
+          trivialLocked = true;
+          const isOk = !!opt.isCorrect;
+          const correctOpt = currentTrivialQ.opciones.find(o => o.isCorrect);
+
+          Array.from(optsBox.children).forEach((b, i) => {
+            b.disabled = true;
+            if (currentTrivialQ.opciones[i].isCorrect) b.classList.add("correct-opt");
+            else if (i === idx && !isOk) b.classList.add("wrong-opt");
+          });
+
+          trivialAnswered.push({
+            pregunta: currentTrivialQ.pregunta,
+            tema: currentTrivialQ.tema,
+            explicacion: currentTrivialQ.explicacion,
+            chosenText: opt.text,
+            correctText: correctOpt ? correctOpt.text : "",
+            isOk
+          });
+
+          const okCountNow = trivialAnswered.filter(r => r.isOk).length;
+          const failCountNow = trivialAnswered.length - okCountNow;
+          document.getElementById("trivial-status-label").textContent =
+            `Modo trivial · Respondidas: ${trivialAnswered.length} | ✅ ${okCountNow} | ❌ ${failCountNow}`;
+
+          fb.className = `trivial-feedback ${isOk ? "ok" : "fail"}`;
+          fb.innerHTML = isOk
+            ? `<strong>✅ Correcto</strong>${currentTrivialQ.explicacion ? `<br><em>${currentTrivialQ.explicacion}</em>` : ""}`
+            : `<strong>❌ Incorrecto</strong> · Correcta: <strong>${correctOpt ? correctOpt.text : ""}</strong>${currentTrivialQ.explicacion ? `<br><em>${currentTrivialQ.explicacion}</em>` : ""}`;
+
+          document.getElementById("btn-trivial-next").classList.remove("hide");
+        };
+        optsBox.appendChild(btn);
+      });
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (trivialPool.length === 0) return;
+      trivialAnswered = [];
+      trivialDeck = shuffle(trivialPool);
+      document.getElementById("view-menu").classList.add("hide");
+      document.getElementById("view-trivial").classList.remove("hide");
+      nextTrivialQuestion();
+    });
+
+    document.getElementById("btn-trivial-next").addEventListener("click", nextTrivialQuestion);
+
+    function renderTrivialReview(onlyErrors) {
+      const list = document.getElementById("trivial-review-list");
+      list.innerHTML = "";
+      const items = trivialAnswered
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => !onlyErrors || !r.isOk);
+
+      if (items.length === 0) {
+        list.innerHTML = `<p style="color: var(--neutral);">${onlyErrors ? "No hay fallos que revisar." : "Aún no has respondido preguntas."}</p>`;
+        return;
+      }
+
+      items.forEach(({ r, i }) => {
+        const div = document.createElement("div");
+        div.className = `review-item ${r.isOk ? "ok" : ""}`;
+        div.innerHTML = `
+          <p><strong>${i + 1}. ${r.pregunta}</strong> <span style="font-size: 0.8rem; color: var(--neutral);">[${r.tema}]</span></p>
+          <p>Tu respuesta: <strong>${r.chosenText}</strong> ${r.isOk ? "✅" : "❌"}</p>
+          ${!r.isOk ? `<p style="color: var(--success);">Solución: <strong>${r.correctText}</strong></p>` : ""}
+          ${r.explicacion ? `<p style="font-size: 0.9rem; color: #475569; margin-top: 8px;"><em>${r.explicacion}</em></p>` : ""}
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    document.getElementById("btn-stop-trivial").addEventListener("click", () => {
+      document.getElementById("view-trivial").classList.add("hide");
+      document.getElementById("view-trivial-summary").classList.remove("hide");
+
+      const total = trivialAnswered.length;
+      const okCount = trivialAnswered.filter(r => r.isOk).length;
+      const failCount = total - okCount;
+      const net = Math.max(0, okCount - failCount * (1 / 3));
+
+      document.getElementById("trivial-summary-box").innerHTML = `
+        <strong>Preguntas respondidas:</strong> ${total}<br>
+        <strong>Aciertos:</strong> ${okCount}<br>
+        <strong>Fallos:</strong> ${failCount}<br>
+        <strong>Puntuación neta (+1 / -0,33):</strong> ${net.toFixed(2)}
+      `;
+      renderTrivialReview(false);
+    });
+
+    document.getElementById("btn-trivial-filter-errors").addEventListener("click", () => renderTrivialReview(true));
+    document.getElementById("btn-trivial-filter-all").addEventListener("click", () => renderTrivialReview(false));
   }
 
   window.addEventListener('DOMContentLoaded', init);
