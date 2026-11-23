@@ -1,0 +1,60 @@
+{
+  "alias_leyes": {
+    "codigo-penal": [
+      "CP",
+      "C.P.",
+      "Código Penal"
+    ],
+    "ley-de-enjuiciamiento-penal": [
+      "LECrim",
+      "LECr",
+      "L.E.Crim.",
+      "Ley de Enjuiciamiento Criminal",
+      "Ley de Enjuiciamiento Penal"
+    ],
+    "ley-de-enjuiciamiento-criminal": [
+      "LECrim",
+      "LECr",
+      "L.E.Crim.",
+      "Ley de Enjuiciamiento Criminal",
+      "Ley de Enjuiciamiento Penal"
+    ],
+    "ley-de-enjuiciamiento-civil": [
+      "LEC",
+      "L.E.C.",
+      "Ley de Enjuiciamiento Civil"
+    ],
+    "codigo-civil": [
+      "CC",
+      "C.c.",
+      "Código Civil"
+    ],
+    "constitucion-espanola": [
+      "CE",
+      "C.E.",
+      "Constitución",
+      "Constitución Española"
+    ],
+    "ley-organica-del-poder-judicial": [
+      "LOPJ",
+      "L.O.P.J.",
+      "Ley Orgánica del Poder Judicial"
+    ],
+    "ley-de-la-jurisdiccion-voluntaria": [
+      "LJV",
+      "Ley de Jurisdicción Voluntaria",
+      "Ley de la Jurisdicción Voluntaria"
+    ],
+    "trlgdcu": [
+      "TRLGDCU",
+      "LGDCU",
+      "Ley General para la Defensa de los Consumidores y Usuarios"
+    ]
+  },
+  "asignaturas_defecto": {
+    "penal": ["codigo-penal"],
+    "procesalpenal": ["ley-de-enjuiciamiento-penal", "ley-de-enjuiciamiento-criminal"],
+    "civil": ["codigo-civil", "ley-de-enjuiciamiento-civil"],
+    "procesalcivil1": ["ley-de-enjuiciamiento-civil"]
+  }
+}
