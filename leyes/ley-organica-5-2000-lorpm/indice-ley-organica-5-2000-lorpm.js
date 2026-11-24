@@ -4,7 +4,7 @@ window.INDICES_LEYES["ley-organica-5-2000-lorpm"] = {
   "id": "ley-organica-5-2000-lorpm",
   "nombre": "Ley Orgánica 5/2000 LORPM",
   "urlBoe": "https://www.boe.es/eli/es/lo/2000/01/12/5/con",
-  "actualizado": "2026-11-23",
+  "actualizado": "2026-11-24",
   "articulos": [
     {
       "id": "art-1",

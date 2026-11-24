@@ -4,7 +4,7 @@ window.INDICES_LEYES["ley-20-2011-del-registro-civil"] = {
   "id": "ley-20-2011-del-registro-civil",
   "nombre": "Ley 20/2011 del Registro Civil",
   "urlBoe": "https://www.boe.es/eli/es/l/2011/07/21/20/con",
-  "actualizado": "2026-11-23",
+  "actualizado": "2026-11-24",
   "articulos": [
     {
       "id": "art-1",
