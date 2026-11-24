@@ -823,7 +823,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/007.md"
   ],
   "constitucion-espanola/art-18": [
-    "procesalpenal/001.md"
+    "procesalpenal/001.md",
+    "procesalpenal/004.md"
   ],
   "constitucion-espanola/art-2": [
     "procesalpenal/003.md"
@@ -1761,7 +1762,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-18": [
-    "procesalpenal/002.md"
+    "procesalpenal/002.md",
+    "procesalpenal/004.md"
   ],
   "ley-de-enjuiciamiento-penal/art-19": [
     "procesalpenal/002.md",
@@ -1927,7 +1929,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/007.md"
   ],
   "ley-de-enjuiciamiento-penal/art-299": [
-    "procesalpenal/001.md"
+    "procesalpenal/001.md",
+    "procesalpenal/004.md"
   ],
   "ley-de-enjuiciamiento-penal/art-3": [
     "procesalpenal/002.md"
@@ -1964,6 +1967,9 @@ window.CITAS_APUNTES_BOE = {
   "ley-de-enjuiciamiento-penal/art-363": [
     "procesalpenal/007.md"
   ],
+  "ley-de-enjuiciamiento-penal/art-368": [
+    "procesalpenal/004.md"
+  ],
   "ley-de-enjuiciamiento-penal/art-379": [
     "procesalpenal/005.md",
     "procesalpenal/006.md"
@@ -1985,7 +1991,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/001.md"
   ],
   "ley-de-enjuiciamiento-penal/art-416": [
-    "procesalpenal/002.md"
+    "procesalpenal/002.md",
+    "procesalpenal/004.md"
   ],
   "ley-de-enjuiciamiento-penal/art-420": [
     "procesalpenal/001.md"
@@ -2028,7 +2035,11 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-penal/art-544-bis": [
     "procesalpenal/001.md",
-    "procesalpenal/003.md"
+    "procesalpenal/003.md",
+    "procesalpenal/004.md"
+  ],
+  "ley-de-enjuiciamiento-penal/art-544-ter": [
+    "procesalpenal/004.md"
   ],
   "ley-de-enjuiciamiento-penal/art-545": [
     "procesalpenal/001.md",
@@ -2105,6 +2116,9 @@ window.CITAS_APUNTES_BOE = {
   "ley-de-enjuiciamiento-penal/art-709": [
     "procesalpenal/001.md"
   ],
+  "ley-de-enjuiciamiento-penal/art-714": [
+    "procesalpenal/004.md"
+  ],
   "ley-de-enjuiciamiento-penal/art-73": [
     "procesalpenal/002.md"
   ],
@@ -2138,13 +2152,15 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/008.md"
   ],
   "ley-de-enjuiciamiento-penal/art-773": [
-    "procesalpenal/003.md"
+    "procesalpenal/003.md",
+    "procesalpenal/004.md"
   ],
   "ley-de-enjuiciamiento-penal/art-775": [
     "procesalpenal/005.md"
   ],
   "ley-de-enjuiciamiento-penal/art-779": [
     "procesalpenal/003.md",
+    "procesalpenal/004.md",
     "procesalpenal/005.md",
     "procesalpenal/008.md"
   ],
