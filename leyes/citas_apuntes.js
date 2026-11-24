@@ -1856,7 +1856,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/002.md",
     "procesalpenal/003.md",
     "procesalpenal/005.md",
-    "procesalpenal/008.md"
+    "procesalpenal/008.md",
+    "procesalpenal/009.md"
   ],
   "ley-de-enjuiciamiento-penal/art-241": [
     "procesalpenal/001.md"
@@ -1920,7 +1921,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/007.md"
   ],
   "ley-de-enjuiciamiento-penal/art-294": [
-    "procesalpenal/007.md"
+    "procesalpenal/007.md",
+    "procesalpenal/009.md"
   ],
   "ley-de-enjuiciamiento-penal/art-295": [
     "procesalpenal/007.md"
@@ -2017,10 +2019,17 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-502": [
-    "procesalpenal/001.md"
+    "procesalpenal/001.md",
+    "procesalpenal/009.md"
   ],
   "ley-de-enjuiciamiento-penal/art-503": [
     "procesalpenal/007.md"
+  ],
+  "ley-de-enjuiciamiento-penal/art-504": [
+    "procesalpenal/009.md"
+  ],
+  "ley-de-enjuiciamiento-penal/art-505": [
+    "procesalpenal/009.md"
   ],
   "ley-de-enjuiciamiento-penal/art-51": [
     "procesalpenal/006.md"
@@ -2029,6 +2038,9 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/001.md",
     "procesalpenal/003.md",
     "procesalpenal/007.md"
+  ],
+  "ley-de-enjuiciamiento-penal/art-528": [
+    "procesalpenal/009.md"
   ],
   "ley-de-enjuiciamiento-penal/art-53": [
     "procesalpenal/002.md"
@@ -2039,7 +2051,8 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/004.md"
   ],
   "ley-de-enjuiciamiento-penal/art-544-ter": [
-    "procesalpenal/004.md"
+    "procesalpenal/004.md",
+    "procesalpenal/009.md"
   ],
   "ley-de-enjuiciamiento-penal/art-545": [
     "procesalpenal/001.md",
