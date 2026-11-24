@@ -8,3 +8,4 @@ Ley Orgánica 5/2000 LORPM | https://www.boe.es/eli/es/lo/2000/01/12/5/con
 Ley Orgánica 5/1995 LOTJ | https://www.boe.es/eli/es/lo/1995/05/22/5/con
 Ley 15/2015 LJV | https://www.boe.es/eli/es/l/2015/07/02/15/con
 Ley 20/2011 del Registro Civil | https://www.boe.es/eli/es/l/2011/07/21/20/con
+Constitución Española | https://www.boe.es/eli/es/c/1978/12/27/(1)/con
