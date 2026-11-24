@@ -54,7 +54,8 @@ window.CONFIG_TESTS = {
     "test/procesalcivil1/021.js",
     "test/procesalcivil1/022.js",
     "test/procesalcivil1/023.js",
-    "test/procesalcivil1/024.js"
+    "test/procesalcivil1/024.js",
+    "test/procesalcivil1/025.js",
   ],
   "Penal": [
     "test/penal/001.js",
