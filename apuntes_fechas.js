@@ -43,7 +43,7 @@ window.FECHAS_APUNTES = {
   "procesalpenal/002.md": "2026-11-19T23:21:18+01:00",
   "procesalpenal/003.md": "2026-11-19T23:28:38+01:00",
   "procesalpenal/005.md": "2026-11-19T23:34:29+01:00",
-  "procesalpenal/006.md": "2026-11-24T16:28:24+01:00",
+  "procesalpenal/006.md": "2026-11-24T16:35:20+01:00",
   "procesalpenal/007.md": "2026-11-19T23:43:22+01:00",
-  "procesalpenal/008.md": "2026-11-24T16:22:11+01:00"
+  "procesalpenal/008.md": "2026-11-24T16:29:09+01:00"
 };
