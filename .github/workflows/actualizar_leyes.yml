@@ -2,13 +2,7 @@ name: Actualizar leyes del BOE y citas
 
 on:
   schedule:
-    - cron: "0 4 * * 0"
-  push:
-    branches:
-      - main
-    paths:
-      - "leyes/lista_leyes.txt"
-      - "apuntes/**/*.md"
+    - cron: "0 12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -17,7 +11,6 @@ permissions:
 jobs:
   actualizar-boe:
     runs-on: ubuntu-latest
-
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v4
@@ -31,7 +24,6 @@ jobs:
         run: pip install beautifulsoup4
 
       - name: Descargar y procesar leyes del BOE
-        if: github.event_name != 'push' || contains(join(github.event.commits.*.modified, ','), 'lista_leyes.txt')
         run: python scripts/actualizar_leyes.py
 
       - name: Indexar referencias cruzadas con apuntes
