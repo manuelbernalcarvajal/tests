@@ -10,8 +10,8 @@
   }
 
   /* ==========================================================================
-     1. INYECCIÓN DE ESTILOS RESPONSIVE (<= 768px) + AISLAMIENTO DE IMPRESIÓN
-     ========================================================================== */
+   * 1. INYECCIÓN DE ESTILOS RESPONSIVE (<= 768px) + AISLAMIENTO DE IMPRESIÓN
+   * ========================================================================== */
   function injectStyles() {
     if (document.getElementById("mbc-mobile-css")) return;
 
@@ -343,6 +343,62 @@
         }
 
         /* ====================================================================
+           LEYES.HTML (Visor Consolidado BOE)
+           ==================================================================== */
+        body.mbc-leyes {
+          height: auto !important;
+          min-height: 100vh !important;
+          overflow: visible !important;
+          overflow-x: hidden !important;
+        }
+        body.mbc-leyes header {
+          padding: 10px 12px !important;
+          gap: 8px !important;
+        }
+        body.mbc-leyes header > a,
+        body.mbc-leyes header button,
+        body.mbc-leyes .view-switch {
+          font-size: 12.5px !important;
+        }
+        body.mbc-leyes .header-actions {
+          margin-left: 0 !important;
+          width: 100% !important;
+          justify-content: space-between !important;
+        }
+        body.mbc-leyes .layout {
+          display: block !important;
+          overflow: visible !important;
+        }
+        body.mbc-leyes aside {
+          width: 100% !important;
+          max-height: 210px !important;
+          overflow-y: auto !important;
+        }
+        body.mbc-leyes main {
+          overflow: visible !important;
+          padding: 14px 10px 36px 10px !important;
+        }
+        body.mbc-leyes .estructura-grid {
+          grid-template-columns: 1fr !important;
+        }
+        body.mbc-leyes .art-card {
+          padding: 16px 14px !important;
+        }
+        body.mbc-leyes .art-body p,
+        body.mbc-leyes .art-body li {
+          text-align: left !important;
+          hyphens: none !important;
+          -webkit-hyphens: none !important;
+        }
+        body.mbc-leyes .nav-articulos {
+          flex-direction: column !important;
+          gap: 8px !important;
+        }
+        body.mbc-leyes .nav-articulos button {
+          width: 100% !important;
+        }
+
+        /* ====================================================================
            SEARCH.HTML (Buscador)
            ==================================================================== */
         body.mbc-search {
@@ -488,6 +544,7 @@
 
         body,
         body.mbc-apuntes,
+        body.mbc-leyes,
         body.mbc-search,
         body.mbc-test,
         body.mbc-libro,
@@ -525,8 +582,8 @@
   }
 
   /* ==========================================================================
-     2. BOTÓN FLOTANTE "VOLVER ARRIBA" GLOBAL
-     ========================================================================== */
+   * 2. BOTÓN FLOTANTE "VOLVER ARRIBA" GLOBAL
+   * ========================================================================== */
   function setupScrollTopButton() {
     if (document.getElementById("mbc-scroll-top")) return;
 
@@ -553,8 +610,8 @@
   }
 
   /* ==========================================================================
-     3. MEJORAS ESPECÍFICAS POR VISTA
-     ========================================================================== */
+   * 3. MEJORAS ESPECÍFICAS POR VISTA
+   * ========================================================================== */
 
   // --- APUNTES.HTML: Drawer lateral del índice + Botones Tema Anterior/Siguiente ---
   function enhanceApuntes() {
@@ -654,6 +711,27 @@
 
       const contentObserver = new MutationObserver(renderThemeNav);
       contentObserver.observe(docContent, { childList: true });
+    }
+  }
+
+  // --- LEYES.HTML: Scroll al subir en main/window + ajuste de altura ---
+  function enhanceLeyes() {
+    document.body.classList.add("mbc-leyes");
+
+    const mainScroll = document.getElementById("main-scroll");
+    const btnTop = document.getElementById("mbc-scroll-top");
+
+    if (mainScroll && btnTop) {
+      btnTop.addEventListener("click", (e) => {
+        e.stopImmediatePropagation();
+        mainScroll.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, true);
+
+      mainScroll.addEventListener("scroll", () => {
+        if (!isMobile()) return;
+        btnTop.classList.toggle("visible", mainScroll.scrollTop > 350 || window.scrollY > 350);
+      }, { passive: true });
     }
   }
 
@@ -805,8 +883,8 @@
   }
 
   /* ==========================================================================
-     4. ARRANQUE AUTOMÁTICO SEGÚN LA PÁGINA ACTUAL
-     ========================================================================== */
+   * 4. ARRANQUE AUTOMÁTICO SEGÚN LA PÁGINA ACTUAL
+   * ========================================================================== */
   function init() {
     injectStyles();
     setupScrollTopButton();
@@ -815,6 +893,8 @@
 
     if (document.getElementById("doc-content") || path.includes("apuntes.html")) {
       enhanceApuntes();
+    } else if (document.getElementById("select-ley") || path.includes("leyes.html")) {
+      enhanceLeyes();
     } else if (document.getElementById("view-menu") || path.includes("test.html")) {
       enhanceTest();
     } else if (document.getElementById("search-input") || path.includes("search.html")) {
