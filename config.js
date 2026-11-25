@@ -66,6 +66,6 @@ window.CONFIG_TESTS = {
   ],
   "Penal": [
     "test/penal/001.js",
-    "test/penal/002.js" 
+    "test/penal/002.js"
   ],
 };
