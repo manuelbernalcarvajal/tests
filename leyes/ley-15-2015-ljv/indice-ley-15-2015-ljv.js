@@ -4,7 +4,7 @@ window.INDICES_LEYES["ley-15-2015-ljv"] = {
   "id": "ley-15-2015-ljv",
   "nombre": "Ley 15/2015 LJV",
   "urlBoe": "https://www.boe.es/eli/es/l/2015/07/02/15/con",
-  "actualizado": "2026-11-25",
+  "actualizado": "2026-11-26",
   "articulos": [
     {
       "id": "art-1",

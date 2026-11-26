@@ -4,7 +4,7 @@ window.INDICES_LEYES["ley-organica-5-1995-lotj"] = {
   "id": "ley-organica-5-1995-lotj",
   "nombre": "Ley Orgánica 5/1995 LOTJ",
   "urlBoe": "https://www.boe.es/eli/es/lo/1995/05/22/5/con",
-  "actualizado": "2026-11-25",
+  "actualizado": "2026-11-26",
   "articulos": [
     {
       "id": "art-1",

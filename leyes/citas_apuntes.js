@@ -1,5 +1,8 @@
 // Mapa ligero de citas cruzadas entre leyes y apuntes. Generado por scripts/indexar_citas.py.
 window.CITAS_APUNTES_BOE = {
+  "codigo-civil/art-1": [
+    "civil/901.md"
+  ],
   "codigo-civil/art-10": [
     "civil/004.md",
     "civil/006.md"
@@ -41,13 +44,24 @@ window.CITAS_APUNTES_BOE = {
     "civil/001.md"
   ],
   "codigo-civil/art-114": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
+  ],
+  "codigo-civil/art-117": [
+    "civil/901.md"
+  ],
+  "codigo-civil/art-118": [
+    "civil/901.md"
   ],
   "codigo-civil/art-12": [
     "civil/006.md"
   ],
+  "codigo-civil/art-120": [
+    "civil/901.md"
+  ],
   "codigo-civil/art-121": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1212": [
     "civil/005.md"
@@ -55,11 +69,20 @@ window.CITAS_APUNTES_BOE = {
   "codigo-civil/art-123": [
     "civil/005.md"
   ],
+  "codigo-civil/art-124": [
+    "civil/901.md"
+  ],
+  "codigo-civil/art-125": [
+    "civil/901.md"
+  ],
   "codigo-civil/art-1267": [
     "civil/001.md"
   ],
   "codigo-civil/art-1290": [
     "civil/001.md"
+  ],
+  "codigo-civil/art-1316": [
+    "civil/901.md"
   ],
   "codigo-civil/art-1319": [
     "civil/008.md"
@@ -68,8 +91,15 @@ window.CITAS_APUNTES_BOE = {
     "civil/007.md",
     "civil/008.md"
   ],
+  "codigo-civil/art-1346": [
+    "civil/901.md"
+  ],
+  "codigo-civil/art-1347": [
+    "civil/901.md"
+  ],
   "codigo-civil/art-1348": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1349": [
     "civil/008.md"
@@ -86,14 +116,23 @@ window.CITAS_APUNTES_BOE = {
   "codigo-civil/art-1354": [
     "civil/008.md"
   ],
+  "codigo-civil/art-1355": [
+    "civil/901.md"
+  ],
+  "codigo-civil/art-1357": [
+    "civil/901.md"
+  ],
   "codigo-civil/art-1359": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1362": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1366": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1376": [
     "civil/008.md"
@@ -117,13 +156,16 @@ window.CITAS_APUNTES_BOE = {
     "civil/008.md"
   ],
   "codigo-civil/art-1396": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1397": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1398": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-14": [
     "civil/005.md",
@@ -133,10 +175,12 @@ window.CITAS_APUNTES_BOE = {
     "civil/008.md"
   ],
   "codigo-civil/art-1403": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1404": [
-    "civil/008.md"
+    "civil/008.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-142": [
     "civil/005.md",
@@ -188,6 +232,12 @@ window.CITAS_APUNTES_BOE = {
   "codigo-civil/art-18": [
     "civil/007.md"
   ],
+  "codigo-civil/art-1826": [
+    "civil/901.md"
+  ],
+  "codigo-civil/art-1831": [
+    "civil/901.md"
+  ],
   "codigo-civil/art-1888": [
     "civil/001.md"
   ],
@@ -195,7 +245,8 @@ window.CITAS_APUNTES_BOE = {
     "civil/003.md"
   ],
   "codigo-civil/art-1964": [
-    "civil/005.md"
+    "civil/005.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-1968": [
     "civil/011.md"
@@ -229,7 +280,8 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-civil/art-3": [
     "civil/006.md",
-    "civil/009.md"
+    "civil/009.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-32": [
     "civil/001.md"
@@ -241,7 +293,8 @@ window.CITAS_APUNTES_BOE = {
     "civil/007.md"
   ],
   "codigo-civil/art-4": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-40": [
     "civil/007.md"
@@ -259,10 +312,12 @@ window.CITAS_APUNTES_BOE = {
     "civil/009.md"
   ],
   "codigo-civil/art-5": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-59": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-590": [
     "civil/003.md"
@@ -270,7 +325,8 @@ window.CITAS_APUNTES_BOE = {
   "codigo-civil/art-6": [
     "civil/001.md",
     "civil/006.md",
-    "civil/009.md"
+    "civil/009.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-60": [
     "civil/006.md"
@@ -299,7 +355,8 @@ window.CITAS_APUNTES_BOE = {
   "codigo-civil/art-7": [
     "civil/001.md",
     "civil/003.md",
-    "civil/004.md"
+    "civil/004.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-706": [
     "civil/010.md"
@@ -322,16 +379,19 @@ window.CITAS_APUNTES_BOE = {
     "civil/015.md"
   ],
   "codigo-civil/art-8": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-80": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-809": [
     "civil/010.md"
   ],
   "codigo-civil/art-82": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-831": [
     "civil/007.md"
@@ -343,19 +403,22 @@ window.CITAS_APUNTES_BOE = {
     "civil/010.md"
   ],
   "codigo-civil/art-85": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-86": [
     "civil/006.md"
   ],
   "codigo-civil/art-87": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-88": [
     "civil/006.md"
   ],
   "codigo-civil/art-89": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "codigo-civil/art-9": [
     "civil/004.md",
@@ -881,12 +944,14 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/001.md"
   ],
   "constitucion-espanola/art-89": [
+    "civil/901.md",
     "penal/001.md"
   ],
   "constitucion-espanola/art-9": [
     "procesalcivil1/001.md"
   ],
   "ley-de-enjuiciamiento-civil/art-1": [
+    "civil/901.md",
     "procesalcivil1/003.md"
   ],
   "ley-de-enjuiciamiento-civil/art-10": [
@@ -931,25 +996,36 @@ window.CITAS_APUNTES_BOE = {
     "civil/005.md"
   ],
   "ley-de-enjuiciamiento-civil/art-114": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-117": [
+    "civil/901.md",
     "procesalcivil1/020.md"
   ],
   "ley-de-enjuiciamiento-civil/art-118": [
+    "civil/901.md",
     "procesalpenal/003.md"
   ],
   "ley-de-enjuiciamiento-civil/art-12": [
     "civil/006.md"
   ],
+  "ley-de-enjuiciamiento-civil/art-120": [
+    "civil/901.md"
+  ],
   "ley-de-enjuiciamiento-civil/art-121": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-123": [
     "civil/005.md"
   ],
   "ley-de-enjuiciamiento-civil/art-124": [
+    "civil/901.md",
     "procesalcivil1/011.md"
+  ],
+  "ley-de-enjuiciamiento-civil/art-125": [
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-129-bis": [
     "procesalcivil1/023.md"
@@ -1201,7 +1277,8 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-3": [
     "civil/006.md",
-    "civil/009.md"
+    "civil/009.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-30": [
     "procesalcivil1/005.md"
@@ -1299,6 +1376,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-4": [
     "civil/006.md",
+    "civil/901.md",
     "procesalcivil1/004.md"
   ],
   "ley-de-enjuiciamiento-civil/art-40": [
@@ -1443,6 +1521,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-5": [
     "civil/006.md",
+    "civil/901.md",
     "procesalcivil1/004.md"
   ],
   "ley-de-enjuiciamiento-civil/art-50": [
@@ -1471,6 +1550,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalcivil1/024.md"
   ],
   "ley-de-enjuiciamiento-civil/art-54": [
+    "civil/901.md",
     "procesalcivil1/003.md"
   ],
   "ley-de-enjuiciamiento-civil/art-541": [
@@ -1481,10 +1561,12 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-59": [
     "civil/006.md",
+    "civil/901.md",
     "procesalcivil1/003.md"
   ],
   "ley-de-enjuiciamiento-civil/art-6": [
     "civil/009.md",
+    "civil/901.md",
     "procesalcivil1/001.md",
     "procesalcivil1/005.md"
   ],
@@ -1574,16 +1656,20 @@ window.CITAS_APUNTES_BOE = {
     "civil/010.md"
   ],
   "ley-de-enjuiciamiento-civil/art-8": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-80": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-82": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-85": [
-    "civil/006.md"
+    "civil/006.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-86": [
     "civil/006.md",
@@ -1591,6 +1677,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-87": [
     "civil/006.md",
+    "civil/901.md",
     "procesalcivil1/002.md"
   ],
   "ley-de-enjuiciamiento-civil/art-88": [
@@ -1609,7 +1696,8 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-90": [
     "civil/006.md",
-    "civil/015.md"
+    "civil/015.md",
+    "civil/901.md"
   ],
   "ley-de-enjuiciamiento-civil/art-92": [
     "civil/006.md",
