@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Perdido en la Fuerza | Portal Jurídico MBC</title>
+  <style>
+    :root {
+      --bg: #070d12;
+      --panel: #0e1a22;
+      --panel-2: #132430;
+      --text: #e6f1f5;
+      --muted: #8fa8b5;
+      --force: #4ade80;
+      --force-dim: rgba(74, 222, 128, 0.16);
+      --accent: #38bdf8;
+      --border: #1e3544;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1.25rem;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(74, 222, 128, 0.08), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(56, 189, 248, 0.08), transparent 45%),
+        var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 780px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--force);
+      background: var(--force-dim);
+      border: 1px solid rgba(74, 222, 128, 0.35);
+      padding: 0.3rem 0.7rem;
+      border-radius: 999px;
+    }
+
+    .ruta-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.65rem;
+      border-radius: 8px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(250px, 1.1fr) 1fr;
+      gap: 1.25rem;
+      align-items: center;
+      background: #05090d;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.15rem;
+    }
+
+    @media (max-width: 680px) {
+      .stage {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    pre.yoda-ascii {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+      font-size: clamp(0.62rem, 1.35vw, 0.82rem);
+      line-height: 1.15;
+      color: var(--force);
+      text-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+      overflow-x: auto;
+      user-select: none;
+    }
+
+    .force-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .force-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .quote {
+      font-size: 1.02rem;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--panel-2);
+      border-left: 3px solid var(--force);
+      padding: 0.85rem 1rem;
+      border-radius: 0 10px 10px 0;
+      min-height: 5.2rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .status-line {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .status-line strong {
+      color: var(--force);
+    }
+
+    .progress-wrap {
+      width: 100%;
+      height: 8px;
+      background: var(--panel-2);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, var(--force), var(--accent));
+      transition: width 0.1s linear;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+
+    button, a.btn {
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.62rem 0.95rem;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover, a.btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    a.btn.primary {
+      background: var(--force);
+      color: #052e16;
+      border-color: var(--force);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="top-bar">
+      <div class="badge">Error 404 · Ruta inexistente</div>
+      <div class="ruta-pill" id="ruta-actual">/</div>
+    </div>
+
+    <section class="stage">
+      <pre class="yoda-ascii" id="yoda-anim" aria-label="Animación ASCII de Yoda usando la Fuerza"></pre>
+
+      <div class="force-box">
+        <div class="force-label">La Fuerza te devuelve a index.html</div>
+        <div class="quote" id="frase-yoda">Cargando sabiduría...</div>
+        <div class="status-line" id="estado-redirect">
+          Lanzándote con la Fuerza en <strong id="segundos">7</strong> s...
+        </div>
+        <div class="progress-wrap" aria-hidden="true">
+          <div class="progress-bar" id="barra-progreso"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="actions">
+      <a class="btn primary" id="btn-ahora" href="index.html">Ir ya a index.html</a>
+      <button type="button" id="btn-frase">Otra frase de Yoda</button>
+      <button type="button" id="btn-pausar">Pausar / Reanudar</button>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const FRASES_YODA = [
+        "\"Mmm... esta ruta no existe. Perdido en el hiperespacio estás, joven Padawan.\"",
+        "\"Hacerlo o no hacerlo, no hay intento. Pero a index.html volver ahora debes.\"",
+        "\"Buscabas un archivo que no está... o mal escrita la URL has dejado. ¡Hmph!\"",
+        "\"Dificultad en encontrar este enlace veo. Mucho miedo a las mayúsculas, quizá.\"",
+        "\"De vuelta a index.html con la Fuerza te lanzo. Agárrate bien, sí.\"",
+        "\"Un error 404 no es el fin del camino. Solo un desvío en el sendero.\"",
+        "\"Escrito aún no está lo que buscas aquí, o movido de sitio ha sido.\"",
+        "\"La paciencia del Jedi es grande... pero este servidor no encontró nada.\"",
+        "\"Si en un enlace pinchaste y fallo dio, culpa del enlace no siempre es. A veces, sí.\"",
+        "\"Al inicio regresar debes, si sabiduría y orden deseas hallar.\"",
+        "\"Mucho ruido en la barra de direcciones veo. Limpia tu ruta, joven aprendiz.\"",
+        "\"No hay 404 que resista a un empujón bien dado de la Fuerza.\"",
+        "\"Como plazos procesales que vencen, así caducan algunas rutas. ¡Hmph!\"",
+        "\"Mirar bien antes de pulsar debes; o si no, con Yoda acabarás.\"",
+        "\"Un archivo fantasma has invocado. En index.html la respuesta aguarda.\"",
+        "\"Fuerte es la Fuerza en este portal... salvo cuando pides rutas inventadas.\"",
+        "\"¿Un recurso perdido buscas? A casa te envío antes de que llegue el Lado Oscuro.\"",
+        "\"Tropezar es humano; pulsar mal un enlace, muy frecuente también.\"",
+        "\"De Dagobah no vengo, pero de este 404 te saco volando.\"",
+        "\"A index.html viajas ahora. Que la Fuerza te acompañe en el clic.\"",
+        "\"Demasiada prisa llevabas al escribir. Calma, y a index.html volvemos.\"",
+        "\"Ni en los archivos Jedi figura esta dirección. ¡Increíble, es!\"",
+        "\"Una coma, un guion, una letra... y todo se tuerce. Como en la ley misma.\"",
+        "\"No es este el archivo que estás buscando. Mueve el cursor a index.html.\"",
+        "\"Lanzamiento iniciado con la Fuerza. Destino: index.html. Rumbo: seguro.\"",
+        "\"Sabio es quien vuelve al inicio cuando el mapa falla.\"",
+        "\"¿Acaso un tema en proceso buscabas? En index.html verás qué hay listo.\"",
+        "\"El Lado Oscuro oculta enlaces rotos; la Luz te devuelve al menú.\"",
+        "\"Corto será el vuelo hasta index.html. No cierres los ojos, aprendiz.\"",
+        "\"Un 404 ha aparecido. Sorpresa no es, cuando se teclea a ciegas.\"",
+        "\"Firme el pulso, clara la mente... y directa la vuelta a index.html.\"",
+        "\"Si perdido te sientes, al índice principal regresa sin dudar.\"",
+        "\"Muchos caminos hay en la web, pero este lleva directo a ninguna parte.\"",
+        "\"¡Hmph! Otra vez esa dirección inexistente. A index.html te mando ya.\"",
+        "\"La Fuerza fluye por el código... menos por este archivo que no existe.\"",
+        "\"Un salto con la Fuerza te doy. Aterrizaje suave en index.html, espero.\"",
+        "\"No culpes al navegador, joven Padawan. Revisa la ruta o vuelve al inicio.\"",
+        "\"Donde no hay recurso, no hay lectura. A index.html marchamos.\"",
+        "\"Pequeño soy, pero con la Fuerza te devuelvo a index.html en un instante.\"",
+        "\"Hasta el Maestro Yoda a veces escribe mal una URL. Bueno... casi nunca.\"",
+        "\"En silencio medito sobre este 404... y decido mandarte a index.html.\"",
+        "\"Sin mapa no hay tesoro; sin ruta válida, solo hay 404.\"",
+        "\"Deja atrás este callejón sin salida. Index.html te espera.\"",
+        "\"Acelerando el retorno estamos. Sujeta el ratón, sí.\"",
+        "\"No hay atajos rotos que valgan la pena. Vuelve al inicio.\"",
+        "\"Una página en blanco en la memoria de la web esto es. Regresemos.\"",
+        "\"Con calma y precisión, a index.html te impulsa la Fuerza.\"",
+        "\"Si el enlace falló, no te desesperes. Nuevo intento en index.html harás.\"",
+        "\"Misteriosa es la ruta que elegiste... pero inexistente también.\"",
+        "\"¡Zas! Con la Fuerza te aparto de este 404 y te pongo en index.html.\"",
+        "\"Sabiduría no es adivinar URLs; es saber volver a index.html.\"",
+        "\"Un suspiro hondo toma. En unos segundos en index.html estarás.\"",
+        "\"Ni con sable láser se abre una ruta que no existe. Vuelve al inicio.\"",
+        "\"Perdido andabas, lo sé. Sentido lo he en la Fuerza.\"",
+        "\"Hacia index.html va el impulso. Listo para partir, estás.\"",
+        "\"No todo lo que brilla es enlace válido. ¡Hmph!\"",
+        "\"Un paso atrás a veces es el salto más largo hacia adelante.\"",
+        "\"Este 404 pasará, como pasan todas las cosas. Index.html quedará.\"",
+        "\"Con la mano alzada te envío de vuelta. Sin billete de vuelta a este error.\"",
+        "\"¿Buscabas apuntes, leyes o test? Empieza limpio en index.html.\"",
+        "\"La duda nubla la vista; la ruta errónea, también. Vuelve al inicio.\"",
+        "\"Un empujón verde y luminoso te lleva directo a index.html.\"",
+        "\"No hay error pequeño cuando bloquea tu estudio. Al inicio vamos.\"",
+        "\"Sabio consejo te doy: de index.html parte y no te perderás.\"",
+        "\"El destino de esta petición era el vacío. Cambiemos su rumbo.\"",
+        "\"¡Hmph! Otro enlace que se perdió por el camino. A index.html contigo.\"",
+        "\"Fuerza, foco y retorno a index.html. Así se hace.\"",
+        "\"Si el camino se cierra, otro se abre en el menú principal.\"",
+        "\"No temas al 404; es solo la Fuerza indicándote que rectifiques.\"",
+        "\"Volando vas hacia index.html. ¡Buen viaje, joven Padawan!\"",
+        "\"Hasta en el mejor temario hay rutas que aún no nacieron.\"",
+        "\"Con precisión quirúrgica —y un poco de Fuerza— vuelves a index.html.\"",
+        "\"Demasiados rodeos diste ya. Derecho a index.html te lanzo.\"",
+        "\"El equilibrio de la web exige que vuelvas a index.html.\"",
+        "\"Sin enfadarte te lo digo: esa dirección no existe. ¡Hmph!\"",
+        "\"Un destello de la Fuerza y de vuelta al inicio estás.\"",
+        "\"Aprender del error es el camino Jedi. Ahora, a index.html.\"",
+        "\"Ni un solo byte de este archivo existe aquí. Regresemos.\"",
+        "\"Toma impulso, respira... y directo a index.html.\"",
+        "\"La ruta correcta aguarda más cerca de lo que crees: en index.html.\"",
+        "\"Un desvío inesperado tuvimos. Corregido queda con la Fuerza.\"",
+        "\"No es magia, es redirección con estilo Jedi.\"",
+        "\"Al puerto seguro de index.html te conduce la Fuerza.\"",
+        "\"¿Qué buscabas exactamente? En index.html lo hallarás más fácil.\"",
+        "\"Pacífico es el retorno cuando sabes dónde está index.html.\"",
+        "\"Un toque de la Fuerza bastará para sacarte de aquí.\"",
+        "\"Si la dirección falla, no insistas en el vacío. Vuelve al inicio.\"",
+        "\"Fuerte el impulso, limpia la llegada a index.html.\"",
+        "\"Como un eco en la cueva, así suena este 404. Volvamos.\"",
+        "\"Listo el impulso de la Fuerza. Rumbo a index.html fijado.\"",
+        "\"El camino del estudioso no se detiene por un 404.\"",
+        "\"¡Hmph! Otra visita a la nada. A index.html te llevo ya.\"",
+        "\"Con serenidad Jedi aceptamos el 404 y volvemos a index.html.\"",
+        "\"La Fuerza te empuja con suavidad hacia la portada.\"",
+        "\"No pierdas más tiempo en rutas rotas. Index.html te aguarda.\"",
+        "\"Un giro de muñeca y de vuelta al inicio vas.\"",
+        "\"Clara la señal es: esta ruta no existe. Regresa a index.html.\"",
+        "\"De la Fuerza viene el empujón; de ti, el siguiente clic.\"",
+        "\"Hasta pronto, ruta perdida. Hola de nuevo, index.html.\"",
+        "\"Hecho está. Con la Fuerza a index.html te envío ahora mismo.\""
+      ];
+
+      const FRAMES = [
+`       .     .       .  ✦
+    .     /\\_/\\     .      ~~~>>
+       ( o.o )   .    ~~~>> [index.html]
+        > ^ <       ~~~>>
+       /|   |\\   .
+      (_|   |_)  ✦
+     /  |   |  \\
+    /   |   |   \\`,
+`         .   .     ✦
+      .   /\\_/\\   .      ~~>>>
+         ( ^.^ )     ~~>>> [index.html]
+          > ~ <   .    ~~>>>
+         /|   |\\/   ✦
+        (_|   | )
+       /  |   |/
+      /   |   |`,
+`       ✦   .     .
+          /\\_/\\  .  ✦    ~>>>>
+         ( -.- )        ~>>>> [index.html]
+          > ^ <   .     ~>>>>
+         /|   |\\    .
+        (_|   |_)  ✦
+       /  |   |  \\
+      /   |   |   \\`,
+`    .       .     .   ✦
+        /\\_/\\   .         >>>>
+       ( O.O )  ✦       >>>> [index.html]
+        > ! <      .      >>>>
+       /|   |\\/  .
+      (_|   | )     ✦
+     /  |   |/
+    /   |   |`
+      ];
+
+      const rutaEl = document.getElementById("ruta-actual");
+      const animEl = document.getElementById("yoda-anim");
+      const fraseEl = document.getElementById("frase-yoda");
+      const segEl = document.getElementById("segundos");
+      const estadoEl = document.getElementById("estado-redirect");
+      const barraEl = document.getElementById("barra-progreso");
+      const btnFrase = document.getElementById("btn-frase");
+      const btnPausar = document.getElementById("btn-pausar");
+
+      if (rutaEl) {
+        rutaEl.textContent = (window.location.pathname + window.location.search) || "/";
+      }
+
+      let ultimaIdx = -1;
+      function mostrarFraseAleatoria() {
+        let idx = Math.floor(Math.random() * FRASES_YODA.length);
+        if (idx === ultimaIdx && FRASES_YODA.length > 1) {
+          idx = (idx + 1) % FRASES_YODA.length;
+        }
+        ultimaIdx = idx;
+        if (fraseEl) fraseEl.textContent = FRASES_YODA[idx];
+      }
+
+      mostrarFraseAleatoria();
+
+      let frameIdx = 0;
+      setInterval(() => {
+        if (animEl) animEl.textContent = FRAMES[frameIdx % FRAMES.length];
+        frameIdx += 1;
+      }, 260);
+      if (animEl) animEl.textContent = FRAMES[0];
+
+      const DURACION_MS = 7000;
+      let restanteMs = DURACION_MS;
+      let pausado = false;
+      let ultimoTick = performance.now();
+
+      function irAIndex() {
+        window.location.replace("index.html");
+      }
+
+      const timer = setInterval(() => {
+        const ahora = performance.now();
+        const delta = ahora - ultimoTick;
+        ultimoTick = ahora;
+
+        if (!pausado) {
+          restanteMs = Math.max(0, restanteMs - delta);
+          const segRestantes = Math.ceil(restanteMs / 1000);
+          if (segEl) segEl.textContent = String(segRestantes);
+          if (barraEl) {
+            barraEl.style.width = `${(restanteMs / DURACION_MS) * 100}%`;
+          }
+          if (restanteMs <= 0) {
+            clearInterval(timer);
+            irAIndex();
+          }
+        }
+      }, 100);
+
+      if (btnFrase) {
+        btnFrase.addEventListener("click", () => {
+          mostrarFraseAleatoria();
+        });
+      }
+
+      if (btnPausar) {
+        btnPausar.addEventListener("click", () => {
+          pausado = !pausado;
+          ultimoTick = performance.now();
+          if (estadoEl) {
+            estadoEl.innerHTML = pausado
+              ? "Redirección <strong>pausada</strong>. Meditando con Yoda..."
+              : `Lanzándote con la Fuerza en <strong id="segundos">${Math.max(1, Math.ceil(restanteMs / 1000))}</strong> s...`;
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
