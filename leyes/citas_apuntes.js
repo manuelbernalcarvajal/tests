@@ -449,6 +449,9 @@ window.CITAS_APUNTES_BOE = {
     "penal/104.md",
     "procesalpenal/005.md"
   ],
+  "codigo-penal/art-10": [
+    "penal/003.md"
+  ],
   "codigo-penal/art-100": [
     "penal/001.md"
   ],
@@ -471,6 +474,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-penal/art-13": [
     "penal/002.md",
+    "penal/004.md",
     "penal/104.md"
   ],
   "codigo-penal/art-130": [
@@ -504,6 +508,7 @@ window.CITAS_APUNTES_BOE = {
     "penal/000p.md",
     "penal/001.md",
     "penal/002.md",
+    "penal/004.md",
     "penal/104.md",
     "procesalpenal/001.md",
     "procesalpenal/002.md"
@@ -577,6 +582,7 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-173": [
     "penal/002.md",
     "penal/003.md",
+    "penal/004.md",
     "penal/104.md",
     "procesalpenal/005.md"
   ],
@@ -596,7 +602,8 @@ window.CITAS_APUNTES_BOE = {
     "penal/002.md"
   ],
   "codigo-penal/art-2": [
-    "penal/001.md"
+    "penal/001.md",
+    "penal/004.md"
   ],
   "codigo-penal/art-20": [
     "penal/001.md",
@@ -619,6 +626,21 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-22": [
     "penal/002.md",
     "penal/104.md"
+  ],
+  "codigo-penal/art-225-bis": [
+    "penal/004.md"
+  ],
+  "codigo-penal/art-226": [
+    "penal/004.md"
+  ],
+  "codigo-penal/art-227": [
+    "penal/004.md"
+  ],
+  "codigo-penal/art-229": [
+    "penal/004.md"
+  ],
+  "codigo-penal/art-232": [
+    "penal/004.md"
   ],
   "codigo-penal/art-234": [
     "penal/002.md",
@@ -658,6 +680,9 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-25": [
     "penal/001.md"
   ],
+  "codigo-penal/art-250": [
+    "penal/002.md"
+  ],
   "codigo-penal/art-252": [
     "penal/002.md"
   ],
@@ -692,7 +717,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-penal/art-3": [
     "penal/001.md",
-    "penal/003.md"
+    "penal/004.md"
   ],
   "codigo-penal/art-31": [
     "penal/001.md"
@@ -711,6 +736,7 @@ window.CITAS_APUNTES_BOE = {
   ],
   "codigo-penal/art-33": [
     "penal/002.md",
+    "penal/004.md",
     "penal/104.md",
     "procesalpenal/006.md"
   ],
@@ -745,6 +771,9 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-386": [
     "penal/002.md"
   ],
+  "codigo-penal/art-389": [
+    "penal/002.md"
+  ],
   "codigo-penal/art-397": [
     "penal/002.md"
   ],
@@ -754,9 +783,6 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-4": [
     "penal/001.md",
     "procesalpenal/006.md"
-  ],
-  "codigo-penal/art-402-bis": [
-    "penal/002.md"
   ],
   "codigo-penal/art-416": [
     "penal/003.md"
@@ -776,12 +802,16 @@ window.CITAS_APUNTES_BOE = {
   "codigo-penal/art-470": [
     "penal/002.md"
   ],
+  "codigo-penal/art-48": [
+    "penal/003.md"
+  ],
   "codigo-penal/art-485": [
     "penal/002.md",
     "penal/104.md"
   ],
   "codigo-penal/art-5": [
     "penal/002.md",
+    "penal/004.md",
     "procesalpenal/006.md"
   ],
   "codigo-penal/art-503": [
@@ -836,6 +866,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/006.md"
   ],
   "codigo-penal/art-84": [
+    "penal/004.md",
     "procesalpenal/008.md"
   ],
   "codigo-penal/art-86": [
@@ -884,6 +915,9 @@ window.CITAS_APUNTES_BOE = {
   "constitucion-espanola/art-132": [
     "civil/003.md"
   ],
+  "constitucion-espanola/art-139": [
+    "penal/002.md"
+  ],
   "constitucion-espanola/art-149": [
     "civil/003.md",
     "civil/013.md"
@@ -930,6 +964,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/002.md"
   ],
   "constitucion-espanola/art-3": [
+    "penal/003.md",
     "procesalpenal/002.md"
   ],
   "constitucion-espanola/art-33": [
@@ -1052,9 +1087,6 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-civil/art-146": [
     "civil/007.md"
-  ],
-  "ley-de-enjuiciamiento-civil/art-147": [
-    "penal/002.md"
   ],
   "ley-de-enjuiciamiento-civil/art-149": [
     "civil/007.md",
@@ -1798,6 +1830,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-14": [
+    "penal/004.md",
     "procesalpenal/001.md",
     "procesalpenal/002.md",
     "procesalpenal/005.md",
@@ -1811,6 +1844,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/002.md"
   ],
   "ley-de-enjuiciamiento-penal/art-147": [
+    "penal/002.md",
     "procesalpenal/005.md",
     "procesalpenal/008.md"
   ],
@@ -1858,7 +1892,6 @@ window.CITAS_APUNTES_BOE = {
     "penal/002.md"
   ],
   "ley-de-enjuiciamiento-penal/art-172": [
-    "penal/002.md",
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-173": [
@@ -1940,6 +1973,9 @@ window.CITAS_APUNTES_BOE = {
   ],
   "ley-de-enjuiciamiento-penal/art-233": [
     "procesalpenal/008.md"
+  ],
+  "ley-de-enjuiciamiento-penal/art-234": [
+    "penal/002.md"
   ],
   "ley-de-enjuiciamiento-penal/art-236": [
     "procesalpenal/008.md"
@@ -2087,7 +2123,6 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/003.md"
   ],
   "ley-de-enjuiciamiento-penal/art-389": [
-    "penal/002.md",
     "procesalpenal/007.md"
   ],
   "ley-de-enjuiciamiento-penal/art-4": [
@@ -2100,6 +2135,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/001.md"
   ],
   "ley-de-enjuiciamiento-penal/art-416": [
+    "penal/003.md",
     "procesalpenal/002.md",
     "procesalpenal/004.md"
   ],
@@ -2123,6 +2159,7 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-5": [
+    "penal/004.md",
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-502": [
@@ -2387,12 +2424,12 @@ window.CITAS_APUNTES_BOE = {
     "procesalpenal/007.md"
   ],
   "ley-de-enjuiciamiento-penal/art-962": [
+    "penal/004.md",
     "procesalpenal/001.md",
     "procesalpenal/005.md",
     "procesalpenal/006.md"
   ],
   "ley-de-enjuiciamiento-penal/art-963": [
-    "penal/002.md",
     "procesalpenal/002.md",
     "procesalpenal/005.md"
   ],
