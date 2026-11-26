@@ -1,9 +1,10 @@
 (function () {
   "use strict";
 
-  const SITE_NAME = "MBC";
+  const SITE_NAME = "Portal Jurídico MBC";
+  const CANONICAL_ORIGIN = "https://testmaster.bcloud.es.eu.org";
   const DEFAULT_DESCRIPTION =
-    "Apuntes jurídicos y textos consolidados del BOE con navegación por temas y bloques.";
+    "Apuntes jurídicos y textos consolidados del BOE organizados por temas y capítulos.";
 
   function upsertMeta(attrName, attrValue, content) {
     let el = document.querySelector(`meta[${attrName}="${attrValue}"]`);
@@ -25,10 +26,20 @@
     link.setAttribute("href", href);
   }
 
+  function upsertJsonLd(payload) {
+    let script = document.getElementById("mbc-seo-jsonld");
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.id = "mbc-seo-jsonld";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(payload);
+  }
+
   function buildCanonicalUrl(paramsObj) {
-    const url = new URL(window.location.href);
-    url.search = "";
-    url.hash = "";
+    const pathname = window.location.pathname || "/index.html";
+    const url = new URL(pathname, CANONICAL_ORIGIN);
     for (const [key, val] of Object.entries(paramsObj)) {
       if (val !== undefined && val !== null && String(val).trim() !== "") {
         url.searchParams.set(key, String(val).trim());
@@ -51,12 +62,18 @@
     return archivo.includes("enproceso.md") || titulo.includes("/pendiente/");
   }
 
-  function obtenerClaveBloque(art) {
-    return (
-      [art.libro, art.tituloNorma, art.capitulo, art.seccion]
-        .filter(Boolean)
-        .join(" › ") || ""
-    );
+  function obtenerClaveCapitulo(art) {
+    if (!art) return "";
+    for (const campo of ["capitulo", "tituloNorma", "libro"]) {
+      const val = (art[campo] || "").trim();
+      if (val) return `${campo}:${val}`;
+    }
+    return "";
+  }
+
+  function obtenerNombreCapituloLegible(art) {
+    if (!art) return "";
+    return (art.capitulo || art.tituloNorma || art.libro || "").trim();
   }
 
   function actualizarApuntes() {
@@ -68,10 +85,11 @@
     const temaId = (selTema && selTema.value) || params.get("tema") || "";
 
     if (!asigId || typeof APUNTES_CONFIG === "undefined") {
-      document.title = `Apuntes | ${SITE_NAME}`;
+      const canonical = buildCanonicalUrl({});
+      document.title = `Apuntes de Derecho | ${SITE_NAME}`;
       upsertMeta("name", "description", DEFAULT_DESCRIPTION);
       upsertMeta("name", "robots", "index, follow");
-      upsertCanonical(buildCanonicalUrl({}));
+      upsertCanonical(canonical);
       return;
     }
 
@@ -79,14 +97,15 @@
     if (!asig) return;
 
     if (!temaId) {
+      const canonical = buildCanonicalUrl({ asig: asig.id });
       document.title = `${asig.asignatura} — Apuntes | ${SITE_NAME}`;
       upsertMeta(
         "name",
         "description",
-        `Apuntes y temario de ${asig.asignatura}.`
+        `Apuntes y temario completo de ${asig.asignatura}.`
       );
       upsertMeta("name", "robots", "index, follow");
-      upsertCanonical(buildCanonicalUrl({ asig: asig.id }));
+      upsertCanonical(canonical);
       return;
     }
 
@@ -95,24 +114,31 @@
 
     const tituloLimpio = limpiarTituloTema(tema.titulo);
     const pendiente = esTemaPendiente(tema);
+    const canonical = buildCanonicalUrl({ asig: asig.id, tema: tema.id });
+    const title = `${tituloLimpio} — ${asig.asignatura} | ${SITE_NAME}`;
+    const desc = pendiente
+      ? `Tema en preparación: ${tituloLimpio} (${asig.asignatura}).`
+      : `Apuntes y desarrollo de ${tituloLimpio} en ${asig.asignatura}.`;
 
-    document.title = `${tituloLimpio} — ${asig.asignatura} | ${SITE_NAME}`;
-    upsertMeta(
-      "name",
-      "description",
-      pendiente
-        ? `Tema en preparación: ${tituloLimpio} (${asig.asignatura}).`
-        : `Apuntes y desarrollo de ${tituloLimpio} en ${asig.asignatura}.`
-    );
-
-    // Noindex temporal mientras esté en proceso; vuelve a indexarse solo al completarse
+    document.title = title;
+    upsertMeta("name", "description", desc);
     upsertMeta(
       "name",
       "robots",
       pendiente ? "noindex, follow" : "index, follow"
     );
+    upsertCanonical(canonical);
 
-    upsertCanonical(buildCanonicalUrl({ asig: asig.id, tema: tema.id }));
+    if (!pendiente) {
+      upsertJsonLd({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: tituloLimpio,
+        about: asig.asignatura,
+        url: canonical,
+        inLanguage: "es",
+      });
+    }
   }
 
   function cargarIndiceSiHaceFalta(leyMeta, onReady) {
@@ -164,45 +190,67 @@
     const leyMeta = window.LEYES_CONFIG.find((l) => l.id === leyId);
     if (!leyMeta) return;
 
-    document.title = `${leyMeta.nombre} — Visor BOE | ${SITE_NAME}`;
+    const canonicalLey = buildCanonicalUrl({ ley: leyMeta.id });
+    document.title = `${leyMeta.nombre} — Texto Consolidado BOE | ${SITE_NAME}`;
     upsertMeta(
       "name",
       "description",
-      `Texto consolidado de ${leyMeta.nombre} organizado por bloques y artículos.`
+      `Texto consolidado vigente de ${leyMeta.nombre} organizado por capítulos y artículos.`
     );
-    upsertCanonical(buildCanonicalUrl({ ley: leyMeta.id }));
+    upsertCanonical(canonicalLey);
 
-    if (!artId || !leyMeta.indiceScript) return;
+    if (!artId || !leyMeta.indiceScript) {
+      upsertJsonLd({
+        "@context": "https://schema.org",
+        "@type": "Legislation",
+        name: leyMeta.nombre,
+        url: canonicalLey,
+        inLanguage: "es",
+      });
+      return;
+    }
 
     cargarIndiceSiHaceFalta(leyMeta, (indiceData) => {
       const arts = Array.isArray(indiceData.articulos) ? indiceData.articulos : [];
       const art = arts.find((a) => a.id === artId);
       if (!art) return;
 
-      const bloque = obtenerClaveBloque(art);
-      const primerArtDelBloque = bloque
-        ? arts.find((a) => obtenerClaveBloque(a) === bloque) || art
+      const capKey = obtenerClaveCapitulo(art);
+      const capNombre = obtenerNombreCapituloLegible(art);
+      const primerArtDelCapitulo = capKey
+        ? arts.find((a) => obtenerClaveCapitulo(a) === capKey) || art
         : art;
 
-      document.title = bloque
-        ? `${bloque} (${art.titulo}) — ${leyMeta.nombre} | ${SITE_NAME}`
+      const canonicalCapitulo = buildCanonicalUrl({
+        ley: leyMeta.id,
+        art: primerArtDelCapitulo.id,
+      });
+
+      const title = capNombre
+        ? `${capNombre} — ${leyMeta.nombre} | ${SITE_NAME}`
         : `${art.titulo} — ${leyMeta.nombre} | ${SITE_NAME}`;
 
-      upsertMeta(
-        "name",
-        "description",
-        bloque
-          ? `${leyMeta.nombre}: ${bloque} (${art.titulo}). Texto consolidado del BOE.`
-          : `${leyMeta.nombre}: ${art.titulo}. Texto consolidado del BOE.`
-      );
+      const desc = capNombre
+        ? `${leyMeta.nombre}: ${capNombre} (${art.titulo}). Texto consolidado del BOE.`
+        : `${leyMeta.nombre}: ${art.titulo}. Texto consolidado del BOE.`;
 
-      // Consolida hacia el primer artículo del bloque (vista por bloques)
-      upsertCanonical(
-        buildCanonicalUrl({
-          ley: leyMeta.id,
-          art: primerArtDelBloque.id,
-        })
-      );
+      document.title = title;
+      upsertMeta("name", "description", desc);
+      // Consolida hacia el primer artículo del capítulo (coincide 1:1 con sitemap.xml)
+      upsertCanonical(canonicalCapitulo);
+
+      upsertJsonLd({
+        "@context": "https://schema.org",
+        "@type": "Legislation",
+        name: capNombre ? `${leyMeta.nombre} — ${capNombre}` : `${leyMeta.nombre} — ${art.titulo}`,
+        isPartOf: {
+          "@type": "Legislation",
+          name: leyMeta.nombre,
+          url: canonicalLey,
+        },
+        url: canonicalCapitulo,
+        inLanguage: "es",
+      });
     });
   }
 
@@ -211,7 +259,19 @@
       actualizarLeyes();
     } else if (document.getElementById("select-asignatura")) {
       actualizarApuntes();
+    } else {
+      upsertCanonical(buildCanonicalUrl({}));
     }
+  }
+
+  function envolverHistoryMethod(methodName) {
+    const original = window.history[methodName];
+    if (typeof original !== "function") return;
+    window.history[methodName] = function () {
+      const res = original.apply(this, arguments);
+      setTimeout(ejecutar, 0);
+      return res;
+    };
   }
 
   function engancharEventos() {
@@ -229,9 +289,15 @@
       selLey.addEventListener("change", () => setTimeout(actualizarLeyes, 0));
     }
 
+    envolverHistoryMethod("replaceState");
+    envolverHistoryMethod("pushState");
     window.addEventListener("popstate", ejecutar);
   }
 
   engancharEventos();
-  ejecutar();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ejecutar);
+  } else {
+    ejecutar();
+  }
 })();
