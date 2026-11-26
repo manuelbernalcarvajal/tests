@@ -2,7 +2,7 @@ name: Actualizar leyes del BOE y citas
 
 on:
   schedule:
-    - cron: "0 14 * * *"
+    - cron: "19 18 * * *"
   workflow_dispatch:
 
 permissions:
