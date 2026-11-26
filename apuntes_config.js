@@ -17,7 +17,7 @@ const APUNTES_CONFIG = [
       { id: "011", titulo: "T11: Reclamaciones relacionadas con la responsabilidad extracontractual", archivo: "apuntes/civil/011.md" },
       { id: "013", titulo: "T12: Los derechos civiles forales y especiales. El derecho interregional en España", archivo: "apuntes/civil/013.md" },
       { id: "014", titulo: "T13: Cooperación judicial civil internacional. Las relaciones jurídicoprivadas internacionales", archivo: "apuntes/civil/014.md" },
-      { id: "115", titulo: "Extra: Guia orientativa de casos practicos", archivo: "apuntes/civil/ext001" }
+      { id: "115", titulo: "Extra: Guia orientativa de casos practicos", archivo: "apuntes/civil/901.md" }
     ]
   },
   {
