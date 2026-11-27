@@ -4,7 +4,7 @@ window.INDICES_LEYES["ley-de-enjuiciamiento-civil"] = {
   "id": "ley-de-enjuiciamiento-civil",
   "nombre": "Ley de Enjuiciamiento Civil",
   "urlBoe": "https://www.boe.es/eli/es/l/2000/01/07/1/con",
-  "actualizado": "2026-11-26",
+  "actualizado": "2026-11-27",
   "articulos": [
     {
       "id": "art-1",

@@ -4,7 +4,7 @@ window.INDICES_LEYES["ley-organica-del-poder-judicial"] = {
   "id": "ley-organica-del-poder-judicial",
   "nombre": "Ley Orgánica del Poder Judicial",
   "urlBoe": "https://www.boe.es/eli/es/lo/1985/07/01/6/con",
-  "actualizado": "2026-11-26",
+  "actualizado": "2026-11-27",
   "articulos": [
     {
       "id": "art-1",
