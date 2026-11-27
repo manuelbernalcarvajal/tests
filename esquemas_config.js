@@ -30,6 +30,9 @@ const ESQUEMAS_CONFIG = [
     id: "penal",
     temas: [
       { id: "001", titulo: "T01: Ejecución de sanciones y régimen penitenciario", archivo: "esquemas/penal/001.md" },
+      { id: "002", titulo: "T02: Delitos leves. Lesiones y homicidio", archivo: "esquemas/penal/002.md" },
+      { id: "003", titulo: "T03: Violencia de género y doméstica", archivo: "esquemas/penal/003.md" },
+      { id: "004", titulo: "T04: Libertad sexual. Relaciones familiares", archivo: "esquemas/penal/004.md" },
     ]
   }
 ];
