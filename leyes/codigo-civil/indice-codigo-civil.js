@@ -4,7 +4,7 @@ window.INDICES_LEYES["codigo-civil"] = {
   "id": "codigo-civil",
   "nombre": "Código Civil",
   "urlBoe": "https://www.boe.es/eli/es/rd/1889/07/24/(1)/con",
-  "actualizado": "2026-11-27",
+  "actualizado": "2026-11-28",
   "articulos": [
     {
       "id": "art-1",

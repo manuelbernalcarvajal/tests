@@ -4,7 +4,7 @@ window.INDICES_LEYES["codigo-penal"] = {
   "id": "codigo-penal",
   "nombre": "Código Penal",
   "urlBoe": "https://www.boe.es/eli/es/lo/1995/11/23/10/con",
-  "actualizado": "2026-11-27",
+  "actualizado": "2026-11-28",
   "articulos": [
     {
       "id": "art-1",

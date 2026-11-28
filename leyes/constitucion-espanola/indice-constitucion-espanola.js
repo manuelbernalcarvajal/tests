@@ -4,7 +4,7 @@ window.INDICES_LEYES["constitucion-espanola"] = {
   "id": "constitucion-espanola",
   "nombre": "Constitución Española",
   "urlBoe": "https://www.boe.es/eli/es/c/1978/12/27/(1)/con",
-  "actualizado": "2026-11-27",
+  "actualizado": "2026-11-28",
   "articulos": [
     {
       "id": "art-1",
